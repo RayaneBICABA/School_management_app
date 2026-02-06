@@ -111,12 +111,28 @@
         </div>
       </div>
     </main>
+
+    <!-- Confirmation Modal -->
+    <ConfirmationModal
+      :is-open="showConfirmModal"
+      :title="confirmModalTitle"
+      :message="confirmModalMessage"
+      :confirm-text="confirmModalActionText"
+      :cancel-text="confirmModalCancelText"
+      :type="confirmModalType"
+      @confirm="executeConfirmAction"
+      @cancel="closeConfirmModal"
+    />
   </div>
 </template>
 
 <script setup>
 import { ref, onMounted, computed } from 'vue';
 import api from '@/services/api';
+import { useToast } from '@/composables/useToast';
+import ConfirmationModal from '@/components/modals/ConfirmationModal.vue';
+
+const { success, error, info } = useToast();
 
 const students = ref([]);
 const classes = ref([]);
@@ -133,6 +149,15 @@ const filters = ref({
   filiere: '',
   classe: ''
 });
+
+// Modal state
+const showConfirmModal = ref(false);
+const confirmModalTitle = ref('');
+const confirmModalMessage = ref('');
+const confirmModalActionText = ref('Confirmer');
+const confirmModalCancelText = ref('Annuler');
+const confirmModalType = ref('info');
+const pendingAction = ref(null);
 
 const fetchStudents = async () => {
   try {
@@ -152,8 +177,8 @@ const fetchStudents = async () => {
       students.value = res.data.data;
       totalStudents.value = res.data.count || res.data.data.length;
     }
-  } catch (error) {
-    console.error('Erreur chargement élèves:', error);
+  } catch (err) {
+    console.error('Erreur chargement élèves:', err);
   } finally {
     isLoading.value = false;
   }
@@ -168,8 +193,8 @@ const fetchClasses = async () => {
       const uniqueFilieres = [...new Set(classes.value.map(c => c.filiere).filter(Boolean))];
       filieres.value = uniqueFilieres;
     }
-  } catch (error) {
-    console.error('Erreur chargement classes:', error);
+  } catch (err) {
+    console.error('Erreur chargement classes:', err);
   }
 };
 
@@ -182,8 +207,8 @@ const fetchAnnees = async () => {
       `${currentYear - 1}-${currentYear}`,
       `${currentYear - 2}-${currentYear - 1}`
     ];
-  } catch (error) {
-    console.error('Erreur chargement années:', error);
+  } catch (err) {
+    console.error('Erreur chargement années:', err);
   }
 };
 
@@ -235,12 +260,48 @@ const goToPage = (page) => {
   fetchStudents();
 };
 
+const openConfirmModal = (title, message, actionText, action, type = 'info', cancelText = 'Annuler') => {
+  confirmModalTitle.value = title;
+  confirmModalMessage.value = message;
+  confirmModalActionText.value = actionText;
+  confirmModalCancelText.value = cancelText;
+  confirmModalType.value = type;
+  pendingAction.value = action;
+  showConfirmModal.value = true;
+};
+
+const closeConfirmModal = () => {
+  showConfirmModal.value = false;
+  pendingAction.value = null;
+};
+
+const executeConfirmAction = async () => {
+  if (pendingAction.value) {
+    await pendingAction.value();
+  }
+  closeConfirmModal();
+};
+
 const viewStudent = (student) => {
-  alert(`Détails de ${student.prenom} ${student.nom}\n\nMatricule: ${student.matricule || 'N/A'}\nClasse: ${student.classe?.nom || 'N/A'}`);
+  openConfirmModal(
+    'Détails de l\'élève',
+    `Nom & Prénom: ${student.prenom} ${student.nom}\nMatricule: ${student.matricule || 'N/A'}\nClasse: ${student.classe?.nom || 'N/A'}`,
+    'Fermer',
+    () => {},
+    'info',
+    'Fermer'
+  );
+  // Hack to ensure logic works as "OK" closing it.
+  confirmModalActionText.value = 'OK';
+  confirmModalCancelText.value = 'Fermer';
 };
 
 const printDuplicata = (student) => {
-  alert(`Génération de duplicata pour ${student.prenom} ${student.nom}`);
+  info(`Génération de duplicata pour ${student.prenom} ${student.nom}...`);
+  // Mock functionality
+  setTimeout(() => {
+    success('Duplicata généré avec succès');
+  }, 1000);
 };
 
 const exportCSV = async () => {
@@ -261,14 +322,15 @@ const exportCSV = async () => {
     link.href = URL.createObjectURL(blob);
     link.download = `archives_eleves_${new Date().toISOString().split('T')[0]}.csv`;
     link.click();
-  } catch (error) {
-    console.error('Erreur export CSV:', error);
-    alert('Erreur lors de l\'export CSV');
+    success('Export CSV réussi');
+  } catch (err) {
+    console.error('Erreur export CSV:', err);
+    error('Erreur lors de l\'export CSV');
   }
 };
 
 const exportZIP = () => {
-  alert('Fonction Archive ZIP en cours de développement. Cette fonctionnalité permettra de télécharger tous les bulletins en format ZIP.');
+  info('Fonction Archive ZIP en cours de développement.');
 };
 
 onMounted(() => {

@@ -177,13 +177,31 @@
         </div>
       </div>
     </div>
+
+    <!-- Confirmation Modal -->
+    <ConfirmationModal
+      :is-open="showConfirmModal"
+      :title="confirmModalTitle"
+      :message="confirmModalMessage"
+      :confirm-text="confirmModalActionText"
+      :cancel-text="confirmModalCancelText"
+      :type="confirmModalType"
+      @confirm="executeConfirmAction"
+      @cancel="closeConfirmModal"
+    />
   </div>
+</template>
+
 </template>
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import * as XLSX from 'xlsx'
 import api from '@/services/api'
+import { useToast } from '@/composables/useToast'
+import ConfirmationModal from '@/components/modals/ConfirmationModal.vue'
+
+const { success, error, warning } = useToast()
 
 const searchQuery = ref('')
 const filtreNiveau = ref('Tous les niveaux')
@@ -198,12 +216,18 @@ const stats = ref({
 const fileInput = ref(null)
 
 const classeDestination = ref(null)
-
 const nonAffectes = ref([])
-
 const classes = ref([])
-
 const affectationsRecentes = ref([])
+
+// Confirmation Modal State
+const showConfirmModal = ref(false)
+const confirmModalTitle = ref('')
+const confirmModalMessage = ref('')
+const confirmModalActionText = ref('Confirmer')
+const confirmModalCancelText = ref('Annuler')
+const confirmModalType = ref('info')
+const pendingAction = ref(null)
 
 onMounted(async () => {
   await fetchData()
@@ -237,7 +261,6 @@ const fetchData = async () => {
       classeDestination.value = classes.value[0]
     }
 
-
     nonAffectes.value = allStudents
       .filter(s => !s.classe)
       .map(s => ({
@@ -256,9 +279,9 @@ const fetchData = async () => {
     stats.value.nonAffectes = nonAffectes.value.length
     stats.value.classesDisponibles = classes.value.length
 
-  } catch (error) {
-    console.error('Error fetching data:', error)
-    alert('Erreur lors du chargement des données')
+  } catch (err) {
+    console.error('Error fetching data:', err)
+    error('Erreur lors du chargement des données')
   }
 }
 
@@ -296,12 +319,12 @@ const removeSelection = (eleveId) => {
 
 const assignerSelection = async () => {
   if (!classeDestination.value) {
-    alert('Veuillez sélectionner une classe de destination')
+    warning('Veuillez sélectionner une classe de destination')
     return
   }
 
   if (selectedEleves.value.length === 0) {
-    alert('Veuillez sélectionner au moins un élève')
+    warning('Veuillez sélectionner au moins un élève')
     return
   }
 
@@ -313,13 +336,13 @@ const assignerSelection = async () => {
       })
     }
 
-    alert(`${selectedEleves.value.length} élève(s) affecté(s) à ${classeDestination.value.nom}`)
+    success(`${selectedEleves.value.length} élève(s) affecté(s) à ${classeDestination.value.nom}`)
     
     // Refresh data to show updated assignments
     await fetchData()
-  } catch (error) {
-    console.error('Error assigning students:', error)
-    alert('Erreur lors de l\'affectation: ' + (error.response?.data?.error || error.message))
+  } catch (err) {
+    console.error('Error assigning students:', err)
+    error('Erreur lors de l\'affectation: ' + (err.response?.data?.error || err.message))
   }
 }
 
@@ -328,7 +351,7 @@ const handleFileUpload = async (event) => {
   if (!file) return
 
   if (!classeDestination.value) {
-    alert('Veuillez sélectionner une classe de destination')
+    warning('Veuillez sélectionner une classe de destination')
     return
   }
 
@@ -340,13 +363,13 @@ const handleFileUpload = async (event) => {
 
     // Validate columns
     if (jsonData.length === 0) {
-      alert('Le fichier Excel est vide')
+      warning('Le fichier Excel est vide')
       return
     }
 
     const firstRow = jsonData[0]
     if (!firstRow.Matricule || !firstRow.Nom || !firstRow.Prenom) {
-      alert('Le fichier doit contenir les colonnes: Matricule, Nom, Prénom')
+      warning('Le fichier doit contenir les colonnes: Matricule, Nom, Prénom')
       return
     }
 
@@ -357,32 +380,57 @@ const handleFileUpload = async (event) => {
     })
 
     if (response.data.success) {
-      alert(response.data.message)
+      success(response.data.message)
       await fetchData() // Refresh data
       fileInput.value.value = '' // Reset file input
     }
-  } catch (error) {
-    console.error('Error importing students:', error)
-    alert('Erreur lors de l\'importation: ' + (error.response?.data?.error || error.message))
+  } catch (err) {
+    console.error('Error importing students:', err)
+    error('Erreur lors de l\'importation: ' + (err.response?.data?.error || err.message))
   }
 }
 
-const deleteStudent = async (eleve) => {
-  if (!confirm(`Êtes-vous sûr de vouloir supprimer ${eleve.nom} ?`)) {
-    return
-  }
+const openConfirmModal = (title, message, actionText, action, type = 'danger', cancelText = 'Annuler') => {
+  confirmModalTitle.value = title
+  confirmModalMessage.value = message
+  confirmModalActionText.value = actionText
+  confirmModalCancelText.value = cancelText
+  confirmModalType.value = type
+  pendingAction.value = action
+  showConfirmModal.value = true
+}
 
-  try {
-    await api.deleteUser(eleve._id)
-    alert('Élève supprimé avec succès')
-    await fetchData() // Refresh data
-  } catch (error) {
-    console.error('Error deleting student:', error)
-    alert('Erreur lors de la suppression: ' + (error.response?.data?.error || error.message))
+const closeConfirmModal = () => {
+  showConfirmModal.value = false
+  pendingAction.value = null
+}
+
+const executeConfirmAction = async () => {
+  if (pendingAction.value) {
+    await pendingAction.value()
   }
+  closeConfirmModal()
+}
+
+const deleteStudent = (eleve) => {
+  openConfirmModal(
+    'Supprimer l\'élève',
+    `Êtes-vous sûr de vouloir supprimer ${eleve.nom} ?`,
+    'Supprimer',
+    async () => {
+      try {
+        await api.deleteUser(eleve._id)
+        success('Élève supprimé avec succès')
+        await fetchData() // Refresh data
+      } catch (err) {
+        console.error('Error deleting student:', err)
+        error('Erreur lors de la suppression: ' + (err.response?.data?.error || err.message))
+      }
+    }
+  )
 }
 
 const finaliserRepartition = () => {
-  alert('Répartition finalisée')
+  success('Répartition finalisée')
 }
 </script>

@@ -85,7 +85,9 @@
 <script setup>
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
+import { useToast } from '@/composables/useToast'
 
+const { success } = useToast()
 const router = useRouter()
 
 const evaluation = ref({
@@ -100,7 +102,7 @@ const evaluation = ref({
 const submitEvaluation = () => {
   console.log('Proviseur Evaluation created:', evaluation.value)
   // Animation ou redirection
-  alert('Évaluation diffusée avec succès !')
+  success('Évaluation diffusée avec succès !')
   router.push('/proviseur')
 }
 </script>

@@ -145,12 +145,28 @@
         </div>
       </div>
     </div>
+
+    <!-- Confirmation Modal -->
+    <ConfirmationModal
+      :is-open="showConfirmModal"
+      :title="confirmModalTitle"
+      :message="confirmModalMessage"
+      :confirm-text="confirmModalActionText"
+      :cancel-text="confirmModalCancelText"
+      :type="confirmModalType"
+      @confirm="executeConfirmAction"
+      @cancel="closeConfirmModal"
+    />
   </div>
 </template>
 
 <script setup>
 import { ref, onMounted } from 'vue';
 import api from '@/services/api';
+import { useToast } from '@/composables/useToast';
+import ConfirmationModal from '@/components/modals/ConfirmationModal.vue';
+
+const { success, error, info } = useToast();
 
 const classes = ref([]);
 const bulletins = ref([]);
@@ -161,14 +177,23 @@ const selectedClasse = ref('');
 const selectedPeriode = ref('');
 const selectedStatut = ref('FINALISE');
 
+// Modal state
+const showConfirmModal = ref(false);
+const confirmModalTitle = ref('');
+const confirmModalMessage = ref('');
+const confirmModalActionText = ref('Confirmer');
+const confirmModalCancelText = ref('Annuler');
+const confirmModalType = ref('info');
+const pendingAction = ref(null);
+
 const loadClasses = async () => {
   try {
     const res = await api.getClasses();
     if (res.data.success) {
       classes.value = res.data.data;
     }
-  } catch (error) {
-    console.error('Erreur chargement classes:', error);
+  } catch (err) {
+    console.error('Erreur chargement classes:', err);
   }
 };
 
@@ -200,8 +225,8 @@ const loadBulletins = async () => {
     }
 
     bulletins.value = allBulletins;
-  } catch (error) {
-    console.error('Erreur chargement bulletins:', error);
+  } catch (err) {
+    console.error('Erreur chargement bulletins:', err);
   } finally {
     isLoading.value = false;
   }
@@ -221,20 +246,48 @@ const clearSelection = () => {
   selectedBulletins.value = [];
 };
 
-const markAsDistributed = async () => {
-  if (!confirm(`Marquer ${selectedBulletins.value.length} bulletin(s) comme distribué(s) ?`)) {
-    return;
-  }
+const openConfirmModal = (title, message, actionText, action, type = 'info', cancelText = 'Annuler') => {
+  confirmModalTitle.value = title;
+  confirmModalMessage.value = message;
+  confirmModalActionText.value = actionText;
+  confirmModalCancelText.value = cancelText;
+  confirmModalType.value = type;
+  pendingAction.value = action;
+  showConfirmModal.value = true;
+};
 
-  try {
-    await api.distributeBulletins(selectedBulletins.value);
-    alert('Bulletins marqués comme distribués avec succès !');
-    selectedBulletins.value = [];
-    loadBulletins();
-  } catch (error) {
-    console.error('Erreur distribution bulletins:', error);
-    alert('Erreur lors de la distribution des bulletins');
+const closeConfirmModal = () => {
+  showConfirmModal.value = false;
+  pendingAction.value = null;
+};
+
+const executeConfirmAction = async () => {
+  if (pendingAction.value) {
+    await pendingAction.value();
   }
+  closeConfirmModal();
+};
+
+const markAsDistributed = () => {
+  if (selectedBulletins.value.length === 0) return;
+
+  openConfirmModal(
+    'Distribution des bulletins',
+    `Marquer ${selectedBulletins.value.length} bulletin(s) comme distribué(s) ?`,
+    'Confirmer',
+    async () => {
+      try {
+        await api.distributeBulletins(selectedBulletins.value);
+        success('Bulletins marqués comme distribués avec succès !');
+        selectedBulletins.value = [];
+        loadBulletins();
+      } catch (err) {
+        console.error('Erreur distribution bulletins:', err);
+        error('Erreur lors de la distribution des bulletins');
+      }
+    },
+    'warning'
+  );
 };
 
 const printBulletin = (bulletin) => {
@@ -277,7 +330,23 @@ Statut: ${getStatutLabel(bulletin.statut)}
 Date de génération: ${new Date(bulletin.dateGeneration).toLocaleDateString()}
 ${bulletin.dateDistribution ? `Date de distribution: ${new Date(bulletin.dateDistribution).toLocaleDateString()}` : ''}
   `;
-  alert(details);
+  
+  // Use modal as an info dialog
+  openConfirmModal(
+    'Détails du Bulletin',
+    details,
+    'Fermer',
+    () => {}, // No action on confirm/close
+    'info',
+    'Fermer' // Hack: both buttons close it essentially, or user clicks backdrop
+  );
+  // Ideally we disable one button or hide it, but this works for now.
+  // Actually, let's just make 'Annuler' defined as empty string if we can. 
+  // But ConfirmationModal doesn't hide it. So 'Fermer' on both or just one is fine.
+  // I set Confirm to "Fermer" and Cancel to "Fermer" (via default or explicit).
+  // Let's just set Confirm to "OK".
+  confirmModalActionText.value = 'OK';
+  confirmModalCancelText.value = 'Fermer';
 };
 
 const getStatutClass = (statut) => {

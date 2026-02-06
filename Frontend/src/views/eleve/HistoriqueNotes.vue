@@ -18,56 +18,54 @@
         <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
           <div class="flex flex-col gap-3 rounded-xl p-6 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-sm">
             <div class="flex justify-between items-center">
-              <p class="text-slate-500 dark:text-slate-400 text-sm font-medium">Moyenne Générale</p>
+              <p class="text-slate-500 dark:text-slate-400 text-sm font-medium">Moyenne ({{ selectedPeriod === 'all' ? 'Globale' : selectedPeriod }})</p>
               <div class="bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400 p-1 rounded-full">
                 <span class="material-symbols-outlined text-[18px]">trending_up</span>
               </div>
             </div>
-            <p class="text-slate-900 dark:text-white text-3xl font-black">14.5/20</p>
-            <p class="text-green-600 dark:text-green-400 text-sm font-medium flex items-center gap-1">
-              <span>+0.5 pts</span>
-              <span class="text-slate-400 text-xs">vs semestre précédent</span>
+            <p class="text-slate-900 dark:text-white text-3xl font-black">{{ average }}<span class="text-lg font-normal text-slate-400">/20</span></p>
+            <p class="text-slate-500 dark:text-slate-400 text-sm font-medium flex items-center gap-1">
+               Calculée sur {{ filteredNotes.length }} note(s) validée(s)
             </p>
           </div>
-          <div class="flex flex-col gap-3 rounded-xl p-6 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-sm">
-            <div class="flex justify-between items-center">
-              <p class="text-slate-500 dark:text-slate-400 text-sm font-medium">Rang Global</p>
-              <div class="bg-primary/10 text-primary p-1 rounded-full">
-                <span class="material-symbols-outlined text-[18px]">leaderboard</span>
-              </div>
-            </div>
-            <p class="text-slate-900 dark:text-white text-3xl font-black">5ème<span class="text-lg font-normal text-slate-400">/32</span></p>
-            <p class="text-slate-500 dark:text-slate-400 text-sm font-medium">Stable</p>
-          </div>
-          <div class="flex flex-col gap-3 rounded-xl p-6 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-sm">
-            <div class="flex justify-between items-center">
-              <p class="text-slate-500 dark:text-slate-400 text-sm font-medium">Crédits validés</p>
-              <div class="bg-orange-100 dark:bg-orange-900/30 text-orange-600 dark:text-orange-400 p-1 rounded-full">
-                <span class="material-symbols-outlined text-[18px]">verified</span>
-              </div>
-            </div>
-            <p class="text-slate-900 dark:text-white text-3xl font-black">45 ECTS</p>
-            <p class="text-slate-500 dark:text-slate-400 text-sm font-medium">Objectif: 60 ECTS</p>
+          
+          <!-- Hiding static stats for now as they are not calculated -->
+          <div v-if="false" class="flex flex-col gap-3 rounded-xl p-6 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-sm">
+             <!-- ... -->
           </div>
         </div>
 
         <!-- Filters Area -->
         <div class="flex flex-wrap items-center gap-3 bg-white dark:bg-slate-800 p-2 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm">
-          <button class="flex h-10 shrink-0 items-center justify-center gap-x-2 rounded-lg bg-primary text-white pl-4 pr-3 text-sm font-semibold">
-            <span>Semestre 1</span>
-            <span class="material-symbols-outlined text-[20px]">expand_more</span>
-          </button>
-          <button class="flex h-10 shrink-0 items-center justify-center gap-x-2 rounded-lg bg-slate-50 dark:bg-slate-700 text-slate-700 dark:text-slate-200 pl-4 pr-3 text-sm font-medium border border-transparent hover:border-slate-300 dark:hover:border-slate-500">
-            <span>Tout afficher</span>
-          </button>
-          <div class="h-6 w-px bg-slate-200 dark:bg-slate-700 mx-1"></div>
-          <button class="flex h-10 shrink-0 items-center justify-center gap-x-2 rounded-lg bg-slate-50 dark:bg-slate-700 text-slate-700 dark:text-slate-200 pl-4 pr-3 text-sm font-medium border border-transparent">
-            <span>Matière</span>
-            <span class="material-symbols-outlined text-[20px]">filter_list</span>
-          </button>
+          
+          <div class="flex gap-2">
+              <button 
+                v-for="period in periods" 
+                :key="period"
+                @click="selectedPeriod = period"
+                class="flex h-10 shrink-0 items-center justify-center gap-x-2 rounded-lg px-4 text-sm font-semibold transition-colors"
+                :class="selectedPeriod === period ? 'bg-primary text-white' : 'bg-slate-50 dark:bg-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-600'"
+              >
+                {{ period }}
+              </button>
+              
+              <button 
+                @click="selectedPeriod = 'all'"
+                class="flex h-10 shrink-0 items-center justify-center gap-x-2 rounded-lg px-4 text-sm font-semibold transition-colors"
+                :class="selectedPeriod === 'all' ? 'bg-primary text-white' : 'bg-slate-50 dark:bg-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-600'"
+              >
+                Tout
+              </button>
+          </div>
+
           <div class="ml-auto relative w-full max-w-xs md:block hidden">
             <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-[20px]">search</span>
-            <input class="w-full h-10 pl-10 pr-4 rounded-lg bg-slate-50 dark:bg-slate-700 border-none text-sm focus:ring-2 focus:ring-primary/20" placeholder="Rechercher une épreuve..." type="text"/>
+            <input 
+                v-model="searchQuery"
+                class="w-full h-10 pl-10 pr-4 rounded-lg bg-slate-50 dark:bg-slate-700 border-none text-sm focus:ring-2 focus:ring-primary/20" 
+                placeholder="Rechercher une matière..." 
+                type="text"
+            />
           </div>
         </div>
 
@@ -78,141 +76,47 @@
               <thead>
                 <tr class="bg-slate-50 dark:bg-slate-900/50 border-bottom border-slate-200 dark:border-slate-700">
                   <th class="px-6 py-4 text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 w-1/3">Matière</th>
-                  <th class="px-6 py-4 text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Date</th>
-                  <th class="px-6 py-4 text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Note</th>
+                  <th class="px-6 py-4 text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Date Val.</th>
+                  <th class="px-6 py-4 text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Moyenne</th>
                   <th class="px-6 py-4 text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 text-center">Coefficient</th>
-                  <th class="px-6 py-4 text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 text-right">Rang</th>
+                  <th class="px-6 py-4 text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 text-right">Détails</th>
                 </tr>
               </thead>
               <tbody class="divide-y divide-slate-100 dark:divide-slate-700">
-                <!-- Row 1 -->
-                <tr class="hover:bg-slate-50 dark:hover:bg-slate-700/30 transition-colors">
-                  <td class="px-6 py-5">
-                    <div class="flex items-center gap-3">
-                      <div class="size-10 rounded-lg bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center text-blue-600">
-                        <span class="material-symbols-outlined">calculate</span>
-                      </div>
-                      <div class="flex flex-col">
-                        <span class="text-sm font-bold text-slate-900 dark:text-white">Mathématiques</span>
-                        <span class="text-xs text-slate-400">DS N°3 : Dérivées</span>
-                      </div>
-                    </div>
-                  </td>
-                  <td class="px-6 py-5 text-sm text-slate-500 dark:text-slate-400">12/10/2023</td>
-                  <td class="px-6 py-5">
-                    <div class="inline-flex items-center justify-center rounded-lg h-9 px-4 bg-primary/10 text-primary text-sm font-black border border-primary/20">
-                      16/20
-                    </div>
-                  </td>
-                  <td class="px-6 py-5 text-sm font-semibold text-slate-700 dark:text-slate-200 text-center">4</td>
-                  <td class="px-6 py-5 text-right">
-                    <span class="inline-flex items-center gap-1 text-sm font-bold text-slate-900 dark:text-white bg-slate-100 dark:bg-slate-700 px-3 py-1 rounded-full">
-                      2 <span class="text-slate-400 font-normal">/ 30</span>
-                    </span>
-                  </td>
+                <tr v-if="loading" class="text-center py-8">
+                    <td colspan="5" class="py-8 text-slate-500">Chargement des notes...</td>
                 </tr>
-                <!-- Row 2 -->
-                <tr class="hover:bg-slate-50 dark:hover:bg-slate-700/30 transition-colors">
-                  <td class="px-6 py-5">
-                    <div class="flex items-center gap-3">
-                      <div class="size-10 rounded-lg bg-orange-100 dark:bg-orange-900/30 flex items-center justify-center text-orange-600">
-                        <span class="material-symbols-outlined">public</span>
-                      </div>
-                      <div class="flex flex-col">
-                        <span class="text-sm font-bold text-slate-900 dark:text-white">Histoire-Géo</span>
-                        <span class="text-xs text-slate-400">Interrogation écrite</span>
-                      </div>
-                    </div>
-                  </td>
-                  <td class="px-6 py-5 text-sm text-slate-500 dark:text-slate-400">15/10/2023</td>
-                  <td class="px-6 py-5">
-                    <div class="inline-flex items-center justify-center rounded-lg h-9 px-4 bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-200 text-sm font-black border border-slate-200 dark:border-slate-600">
-                      11/20
-                    </div>
-                  </td>
-                  <td class="px-6 py-5 text-sm font-semibold text-slate-700 dark:text-slate-200 text-center">2</td>
-                  <td class="px-6 py-5 text-right">
-                    <span class="inline-flex items-center gap-1 text-sm font-bold text-slate-900 dark:text-white bg-slate-100 dark:bg-slate-700 px-3 py-1 rounded-full">
-                      15 <span class="text-slate-400 font-normal">/ 30</span>
-                    </span>
-                  </td>
+                <tr v-else-if="filteredNotes.length === 0" class="text-center py-8">
+                    <td colspan="5" class="py-8 text-slate-500">Aucune note validée pour cette période.</td>
                 </tr>
-                <!-- Row 3 -->
-                <tr class="hover:bg-slate-50 dark:hover:bg-slate-700/30 transition-colors">
+                
+                <tr v-for="note in filteredNotes" :key="note._id" class="hover:bg-slate-50 dark:hover:bg-slate-700/30 transition-colors">
                   <td class="px-6 py-5">
                     <div class="flex items-center gap-3">
-                      <div class="size-10 rounded-lg bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center text-purple-600">
-                        <span class="material-symbols-outlined">science</span>
+                      <div class="size-10 rounded-lg flex items-center justify-center" :class="getSubjectColorBg(note.matiere?.nom)">
+                        <span class="material-symbols-outlined">{{ getSubjectIcon(note.matiere?.nom) }}</span>
                       </div>
                       <div class="flex flex-col">
-                        <span class="text-sm font-bold text-slate-900 dark:text-white">Physique-Chimie</span>
-                        <span class="text-xs text-slate-400">TP : Oxydoréduction</span>
+                        <span class="text-sm font-bold text-slate-900 dark:text-white">{{ note.matiere?.nom }}</span>
+                        <!-- Display first evaluation type or generic -->
+                        <span class="text-xs text-slate-400">{{ note.periode }}</span>
                       </div>
                     </div>
                   </td>
-                  <td class="px-6 py-5 text-sm text-slate-500 dark:text-slate-400">18/10/2023</td>
+                  <td class="px-6 py-5 text-sm text-slate-500 dark:text-slate-400">{{ formatDate(note.dateValidation) }}</td>
                   <td class="px-6 py-5">
-                    <div class="inline-flex items-center justify-center rounded-lg h-9 px-4 bg-primary/10 text-primary text-sm font-black border border-primary/20">
-                      14/20
+                    <div class="inline-flex items-center justify-center rounded-lg h-9 w-16 text-sm font-black border" :class="getNoteColor(note.moyenne)">
+                      {{ note.moyenne?.toFixed(1) }}/20
                     </div>
                   </td>
-                  <td class="px-6 py-5 text-sm font-semibold text-slate-700 dark:text-slate-200 text-center">3</td>
+                  <td class="px-6 py-5 text-sm font-semibold text-slate-700 dark:text-slate-200 text-center">{{ note.matiere?.coefficient || 1 }}</td>
                   <td class="px-6 py-5 text-right">
-                    <span class="inline-flex items-center gap-1 text-sm font-bold text-slate-900 dark:text-white bg-slate-100 dark:bg-slate-700 px-3 py-1 rounded-full">
-                      8 <span class="text-slate-400 font-normal">/ 30</span>
-                    </span>
-                  </td>
-                </tr>
-                <!-- Row 4 -->
-                <tr class="hover:bg-slate-50 dark:hover:bg-slate-700/30 transition-colors">
-                  <td class="px-6 py-5">
-                    <div class="flex items-center gap-3">
-                      <div class="size-10 rounded-lg bg-pink-100 dark:bg-pink-900/30 flex items-center justify-center text-pink-600">
-                        <span class="material-symbols-outlined">menu_book</span>
-                      </div>
-                      <div class="flex flex-col">
-                        <span class="text-sm font-bold text-slate-900 dark:text-white">Français</span>
-                        <span class="text-xs text-slate-400">Commentaire composé</span>
-                      </div>
-                    </div>
-                  </td>
-                  <td class="px-6 py-5 text-sm text-slate-500 dark:text-slate-400">22/10/2023</td>
-                  <td class="px-6 py-5">
-                    <div class="inline-flex items-center justify-center rounded-lg h-9 px-4 bg-primary/10 text-primary text-sm font-black border border-primary/20">
-                      13/20
-                    </div>
-                  </td>
-                  <td class="px-6 py-5 text-sm font-semibold text-slate-700 dark:text-slate-200 text-center">2</td>
-                  <td class="px-6 py-5 text-right">
-                    <span class="inline-flex items-center gap-1 text-sm font-bold text-slate-900 dark:text-white bg-slate-100 dark:bg-slate-700 px-3 py-1 rounded-full">
-                      12 <span class="text-slate-400 font-normal">/ 30</span>
-                    </span>
-                  </td>
-                </tr>
-                <!-- Row 5 -->
-                <tr class="hover:bg-slate-50 dark:hover:bg-slate-700/30 transition-colors">
-                  <td class="px-6 py-5">
-                    <div class="flex items-center gap-3">
-                      <div class="size-10 rounded-lg bg-teal-100 dark:bg-teal-900/30 flex items-center justify-center text-teal-600">
-                        <span class="material-symbols-outlined">language</span>
-                      </div>
-                      <div class="flex flex-col">
-                        <span class="text-sm font-bold text-slate-900 dark:text-white">Anglais</span>
-                        <span class="text-xs text-slate-400">Expression Orale</span>
-                      </div>
-                    </div>
-                  </td>
-                  <td class="px-6 py-5 text-sm text-slate-500 dark:text-slate-400">25/10/2023</td>
-                  <td class="px-6 py-5">
-                    <div class="inline-flex items-center justify-center rounded-lg h-9 px-4 bg-primary/10 text-primary text-sm font-black border border-primary/20">
-                      17/20
-                    </div>
-                  </td>
-                  <td class="px-6 py-5 text-sm font-semibold text-slate-700 dark:text-slate-200 text-center">2</td>
-                  <td class="px-6 py-5 text-right">
-                    <span class="inline-flex items-center gap-1 text-sm font-bold text-slate-900 dark:text-white bg-slate-100 dark:bg-slate-700 px-3 py-1 rounded-full">
-                      1 <span class="text-slate-400 font-normal">/ 30</span>
-                    </span>
+                    <!-- Check breakdown if available in 'notes' array inside note doc -->
+                     <div class="flex justify-end gap-1">
+                        <span v-for="(n, idx) in note.notes" :key="idx" class="text-xs px-2 py-1 bg-slate-100 dark:bg-slate-700 rounded text-slate-600 dark:text-slate-300" :title="'Coef: ' + n.coefficient">
+                            {{ n.valeur }}
+                        </span>
+                     </div>
                   </td>
                 </tr>
               </tbody>
@@ -268,34 +172,163 @@
 </template>
 
 <script setup>
-import { onMounted } from 'vue';
+import { ref, onMounted, computed, watch } from 'vue';
+import api from '@/services/api';
+
+const loading = ref(true);
+const user = ref(null);
+const classe = ref(null);
+const notes = ref([]);
+const periods = ref([]);
+const selectedPeriod = ref('');
+const searchQuery = ref('');
+
+// Computed
+const filteredNotes = computed(() => {
+  let filtered = notes.value;
+  
+  // Filter by Period
+  if (selectedPeriod.value && selectedPeriod.value !== 'all') {
+    filtered = filtered.filter(n => n.periode === selectedPeriod.value);
+  }
+  
+  // Filter by Search (Matière)
+  if (searchQuery.value) {
+    const q = searchQuery.value.toLowerCase();
+    filtered = filtered.filter(n => 
+      n.matiere?.nom?.toLowerCase().includes(q)
+    );
+  }
+  
+  return filtered;
+});
+
+const average = computed(() => {
+  if (filteredNotes.value.length === 0) return 'N/A';
+  
+  let totalPoints = 0;
+  let totalCoef = 0;
+  
+  filteredNotes.value.forEach(note => {
+    // Assuming 'note.moyenne' is the average for that evaluation/subject entry
+    // or if the note object represents a single grade entry, we use value * coef.
+    // However, the display shows single grades. 
+    // If 'notes' array in DB is [ {valeur: 15, coef: 2} ], we need to flatten or aggregate.
+    // The previous implementation assumed rows were "Matières" with multiple notes?
+    // Let's assume the API returns individual Grade documents or Note documents which group grades.
+    
+    // Based on Controller: exports.createNotes creates a Note document with an array of "notes": [{valeur, coefficient}]
+    // And also has "moyenne" calculated.
+    if (note.moyenne !== undefined && note.matiere) {
+       totalPoints += note.moyenne * (note.matiere.coefficient || 1);
+       totalCoef += (note.matiere.coefficient || 1);
+    }
+  });
+  
+  if (totalCoef === 0) return 'N/A';
+  return (totalPoints / totalCoef).toFixed(2);
+});
+
+// Fetch Data
+const fetchData = async () => {
+  loading.value = true;
+  try {
+    // 1. Get Me
+    const userRes = await api.getMe();
+    user.value = userRes.data.data;
+    
+    // 2. Get Class Info (for Filiere)
+    if (user.value.classe) {
+      const classId = user.value.classe._id || user.value.classe;
+      const classRes = await api.getClasse(classId);
+      classe.value = classRes.data.data;
+      
+    // 3. Get Notes
+    await fetchNotes();
+    
+    // 4. Derive available periods from data + defaults based on filiere as fallback
+    const distinctPeriods = [...new Set(notes.value.map(n => n.periode))].filter(Boolean).sort();
+    
+    if (distinctPeriods.length > 0) {
+        periods.value = distinctPeriods;
+        // Default to the first found period usually (or last if chronologically sorted, but let's stick to first or all)
+        selectedPeriod.value = periods.value[0];
+    } else {
+         // Fallback if no notes yet
+         if (classe.value && classe.value.filiere === 'Technique') {
+            periods.value = ['Semestre 1', 'Semestre 2'];
+         } else {
+            periods.value = ['Trimestre 1', 'Trimestre 2', 'Trimestre 3'];
+         }
+         selectedPeriod.value = periods.value[0];
+    }
+    
+    }
+  } catch (error) {
+    console.error('Error fetching data:', error);
+  } finally {
+    loading.value = false;
+  }
+};
+
+const fetchNotes = async () => {
+  if (!user.value) return;
+  
+  try {
+     const params = {
+        eleve: user.value._id,
+        statut: 'VALIDEE'
+     };
+     
+     const res = await api.getNotes(params);
+     notes.value = res.data.data;
+     
+  } catch (error) {
+     console.error('Error fetching notes:', error);
+  }
+};
+
+// UI Helpers
+const getSubjectIcon = (subjectName) => {
+    const s = (subjectName || '').toLowerCase();
+    if (s.includes('math')) return 'calculate';
+    if (s.includes('hist') || s.includes('geo')) return 'public';
+    if (s.includes('phys') || s.includes('chimie') || s.includes('sci')) return 'science';
+    if (s.includes('fran') || s.includes('litt')) return 'menu_book';
+    if (s.includes('angl') || s.includes('lang')) return 'language';
+    if (s.includes('sport') || s.includes('eps')) return 'sports_soccer';
+    return 'assignment'; // default
+};
+
+const getSubjectColorBg = (subjectName) => {
+    const s = (subjectName || '').toLowerCase();
+    if (s.includes('math')) return 'bg-blue-100 dark:bg-blue-900/30 text-blue-600';
+    if (s.includes('hist') || s.includes('geo')) return 'bg-orange-100 dark:bg-orange-900/30 text-orange-600';
+    if (s.includes('phys') || s.includes('chimie')) return 'bg-purple-100 dark:bg-purple-900/30 text-purple-600';
+    if (s.includes('fran')) return 'bg-pink-100 dark:bg-pink-900/30 text-pink-600';
+    if (s.includes('angl')) return 'bg-teal-100 dark:bg-teal-900/30 text-teal-600';
+    return 'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300';
+};
+
+const formatDate = (dateString) => {
+  if (!dateString) return '-';
+  return new Date(dateString).toLocaleDateString('fr-FR');
+};
+
+const getNoteColor = (valeur) => {
+  if (valeur >= 16) return 'bg-green-100 text-green-700 border-green-200';
+  if (valeur >= 12) return 'bg-blue-100 text-blue-700 border-blue-200';
+  if (valeur >= 10) return 'bg-slate-100 text-slate-700 border-slate-200';
+  return 'bg-red-50 text-red-700 border-red-200';
+};
 
 onMounted(() => {
-  // Add Material Symbols font
+  fetchData();
+  
+  // Font loading (kept from original)
   const link = document.createElement('link');
   link.href = 'https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap';
   link.rel = 'stylesheet';
   document.head.appendChild(link);
-
-  // Add Lexend font
-  const lexendLink = document.createElement('link');
-  lexendLink.href = 'https://fonts.googleapis.com/css2?family=Lexend:wght@100;300;400;500;600;700;800;900&display=swap';
-  lexendLink.rel = 'stylesheet';
-  document.head.appendChild(lexendLink);
-
-  // Add custom styles
-  const style = document.createElement('style');
-  style.textContent = `
-    body {
-      font-family: 'Lexend', sans-serif;
-    }
-    .material-symbols-outlined {
-      font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
-    }
-    .filled-icon {
-      font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24;
-    }
-  `;
-  document.head.appendChild(style);
 });
 </script>

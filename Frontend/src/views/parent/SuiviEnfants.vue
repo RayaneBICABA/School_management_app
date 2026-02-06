@@ -25,19 +25,18 @@
             </div>
           </div>
 
-          <!-- Child Stats -->
           <div class="p-4 bg-slate-50 dark:bg-slate-800/50">
             <div class="grid grid-cols-3 gap-4 text-center">
               <div>
-                <p class="text-lg font-bold text-primary">{{ child.average }}</p>
+                <p class="text-lg font-bold text-primary">{{ child.average || '-' }}</p>
                 <p class="text-xs text-slate-500 dark:text-slate-400">Moyenne</p>
               </div>
               <div>
-                <p class="text-lg font-bold text-green-600">{{ child.attendance }}</p>
+                <p class="text-lg font-bold text-green-600">{{ child.attendance || '-' }}</p>
                 <p class="text-xs text-slate-500 dark:text-slate-400">Assiduité</p>
               </div>
               <div>
-                <p class="text-lg font-bold text-orange-500">{{ child.absences }}</p>
+                <p class="text-lg font-bold text-orange-500">{{ child.absences || '-' }}</p>
                 <p class="text-xs text-slate-500 dark:text-slate-400">Absences</p>
               </div>
             </div>
@@ -58,57 +57,99 @@
 
       <!-- Add Child Button -->
       <div class="mt-8 flex justify-center">
-        <button @click="addChild" class="flex items-center gap-2 rounded-lg h-12 px-6 border-2 border-dashed border-primary/40 text-primary font-bold hover:bg-primary/5 transition-colors">
+        <button @click="showAddModal = true" class="flex items-center gap-2 rounded-lg h-12 px-6 border-2 border-dashed border-primary/40 text-primary font-bold hover:bg-primary/5 transition-colors">
           <span class="material-symbols-outlined text-xl">add_circle</span>
           <span>Ajouter un enfant</span>
         </button>
       </div>
     </div>
+    <!-- Add Child Modal -->
+    <div v-if="showAddModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
+        <div class="bg-white dark:bg-slate-900 rounded-xl shadow-xl w-full max-w-md p-6 border border-slate-200 dark:border-slate-800">
+            <h3 class="text-xl font-bold mb-4">Ajouter un enfant</h3>
+            <p class="text-sm text-slate-500 mb-4">Entrez le matricule de votre enfant pour le lier à votre compte.</p>
+            
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-xs font-bold uppercase text-slate-500 mb-1">Matricule</label>
+                    <input v-model="matriculeToAdd" type="text" class="w-full px-4 py-3 rounded-lg bg-slate-50 dark:bg-slate-800 border-none focus:ring-2 focus:ring-primary/50" placeholder="Ex: 2023-XY-1234">
+                </div>
+                
+                <div class="flex gap-3 justify-end mt-6">
+                    <button @click="showAddModal = false" class="px-4 py-2 rounded-lg text-slate-500 font-bold hover:bg-slate-100 dark:hover:bg-slate-800">Annuler</button>
+                    <button @click="submitAddChild" :disabled="isLoading" class="px-6 py-2 rounded-lg bg-primary text-white font-bold hover:bg-primary-dark disabled:opacity-50 flex items-center gap-2">
+                        <span v-if="isLoading" class="material-symbols-outlined animate-spin text-sm">sync</span>
+                        Ajouter
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
   </div>
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
+import api from '@/services/api'
+import { useToast } from '@/composables/useToast'
 
 const router = useRouter()
+const { toastSuccess, toastError } = useToast()
 
-// Données des enfants
-const children = ref([
-  {
-    id: 1,
-    name: 'Lucas Dupont',
-    class: '3ème B',
-    filiere: 'Filière Scientifique',
-    matricule: '2023-ST-0452',
-    avatar: 'https://lh3.googleusercontent.com/aida-public/AB6AXuBnCBdSTipcVY1NBRpS9uK9fD98-A0nhIihrg67vwPvUkxkV8RfHbxgDn9_XtHGOchaY9anwwPR3NlbS9rOvgiJfn7LiIVvrlpA_ntUnBBk9TjcF5IlWgR3W47jMX7FruaEUiElpXmCD7ospQ5_CXayGk_31A3-WX12AaSnilQ73inpgMkkMt6sRT-qmXcTggoqSERHnPXhjzjlS9-380JFBY19Xy9xBHii6UKXURSUAE_5YNweIcS9JQITT8sABQQ7T9VZ2DumTVs',
-    average: '15.4',
-    attendance: '98%',
-    absences: '4h'
-  },
-  {
-    id: 2,
-    name: 'Emma Dupont',
-    class: '5ème A',
-    filiere: 'Filière Générale',
-    matricule: '2023-ST-0453',
-    avatar: 'https://lh3.googleusercontent.com/aida-public/AB6AXuB2Q-mSuKO5BceEU7Ow7-o6cQlZPqtLeDwyLDV4P1rbCPkbo4GDtZBSXXQhPdzTsHKHdH_AxQA8gV-kfSHhlLDLoOSgrHZBlXXnTkfDRGHXe3ztpkNpAcRkWyuhfs_JWTcUORAgT0u1HTB9x56ENV2wN2KCHLfTMxZoUsE6OlmOH8LNu6hyB58cn9FuJX2KVWGieaYi1dHA1s0xmicUfy02LdhE7RGFscceAEN0dpHC9tTtg0y4Ie5zfL7VcXtDih3NbGguvUhsGcY',
-    average: '14.2',
-    attendance: '96%',
-    absences: '8h'
-  }
-])
+const children = ref([])
+const showAddModal = ref(false)
+const matriculeToAdd = ref('')
+const isLoading = ref(false)
 
-// Fonctions
+// Fetch children
+const fetchChildren = async () => {
+    try {
+        const res = await api.getChildren();
+        children.value = res.data.data.map(child => ({
+            id: child._id,
+            name: `${child.prenom} ${child.nom}`,
+            class: child.classe ? `${child.classe.niveau} ${child.classe.section}` : 'Sans classe',
+            filiere: child.classe ? child.classe.filiere : '-',
+            matricule: child.matricule,
+            avatar: child.photo === 'no-photo.jpg' 
+                ? 'https://ui-avatars.com/api/?name=' + child.prenom + '+' + child.nom + '&background=random' 
+                : '/uploads/' + child.photo,
+            // Mock stats for now as backend aggregate is complex
+            average: '-',
+            attendance: '-', 
+            absences: '-'
+        }));
+    } catch (error) {
+        console.error(error);
+    }
+};
+
+// Add Child
+const submitAddChild = async () => {
+    if (!matriculeToAdd.value) return;
+    
+    isLoading.value = true;
+    try {
+        await api.addChild(matriculeToAdd.value);
+        toastSuccess('Enfant ajouté avec succès');
+        matriculeToAdd.value = '';
+        showAddModal.value = false;
+        fetchChildren();
+    } catch (error) {
+        // Error handled by interceptor
+    } finally {
+        isLoading.value = false;
+    }
+};
+
 const viewProfile = (childId) => {
   router.push(`/parent/enfants/${childId}`)
 }
 
 const sendMessage = (child) => {
-  console.log('Envoyer un message à:', child.name)
+  router.push('/parent/notifications');
 }
 
-const addChild = () => {
-  console.log('Ajouter un nouvel enfant')
-}
+onMounted(fetchChildren);
 </script>

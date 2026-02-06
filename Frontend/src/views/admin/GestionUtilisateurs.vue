@@ -1,179 +1,135 @@
 <template>
-  <div class="min-h-screen bg-background-light dark:bg-background-dark font-display text-slate-900 dark:text-slate-100">
-    <!-- Main Content Area -->
-    <main class="flex-1 flex flex-col overflow-y-auto p-8">
-      <div class="max-w-6xl mx-auto space-y-6">
-        <!-- Page Heading & CTA -->
-        <div class="flex flex-wrap items-end justify-between gap-4">
-          <div class="flex flex-col gap-1">
-            <h3 class="text-3xl font-black text-slate-900 dark:text-white">Annuaire des comptes</h3>
-            <p class="text-slate-500 dark:text-slate-400 text-base">Gérez les comptes des professeurs, élèves et parents de l'établissement.</p>
-          </div>
-          <router-link to="/admin/ajouter-utilisateur" class="flex items-center justify-center gap-2 px-6 h-12 bg-primary text-white rounded-xl font-bold shadow-lg shadow-primary/20 hover:bg-primary/90 transition-all">
-            <span class="material-symbols-outlined">person_add</span>
-            <span>Ajouter un utilisateur</span>
-          </router-link>
-        </div>
-          
-        <!-- Search and Filters Card -->
-        <div class="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-4 shadow-sm space-y-4">
-          <div class="flex flex-col md:flex-row gap-4">
-            <div class="flex-1">
-              <label class="relative block">
-                <span class="absolute inset-y-0 left-0 flex items-center pl-4 text-slate-400">
-                  <span class="material-symbols-outlined">search</span>
-                </span>
-                <input v-model="searchQuery" class="block w-full bg-slate-50 dark:bg-slate-800 border-none rounded-xl py-3 pl-12 pr-4 text-slate-900 dark:text-white placeholder:text-slate-400 focus:ring-2 focus:ring-primary/20" placeholder="Rechercher par nom, email ou matricule..." type="text"/>
-              </label>
-            </div>
-            <div class="flex items-center gap-2 px-1">
-              <div class="flex bg-slate-50 dark:bg-slate-800 p-1 rounded-lg">
-                <button 
-                  @click="selectedRole = 'Tous'"
-                  :class="[
-                    'px-4 py-2 text-sm font-semibold rounded-md transition-all',
-                    selectedRole === 'Tous' ? 'bg-white dark:bg-slate-700 shadow-sm text-primary' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'
-                  ]"
-                >Tous</button>
-                <button 
-                  @click="selectedRole = 'Professeur'"
-                  :class="[
-                    'px-4 py-2 text-sm font-semibold rounded-md transition-all',
-                    selectedRole === 'Professeur' ? 'bg-white dark:bg-slate-700 shadow-sm text-primary' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'
-                  ]"
-                >Professeurs</button>
-                <button 
-                  @click="selectedRole = 'Eleve'"
-                  :class="[
-                    'px-4 py-2 text-sm font-semibold rounded-md transition-all',
-                    selectedRole === 'Eleve' ? 'bg-white dark:bg-slate-700 shadow-sm text-primary' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'
-                  ]"
-                >Élèves</button>
-                <button 
-                  @click="selectedRole = 'Parent'"
-                  :class="[
-                    'px-4 py-2 text-sm font-semibold rounded-md transition-all',
-                    selectedRole === 'Parent' ? 'bg-white dark:bg-slate-700 shadow-sm text-primary' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'
-                  ]"
-                >Parents</button>
+  <div class="h-screen flex flex-col bg-background-light dark:bg-background-dark font-display text-slate-900 dark:text-slate-100 overflow-hidden">
+    <!-- Header Area -->
+    <header class="shrink-0 px-8 py-5 border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 z-10">
+       <div class="max-w-[1600px] mx-auto flex flex-col gap-4">
+          <div class="flex items-center justify-between">
+              <div>
+                <h3 class="text-2xl font-black text-slate-900 dark:text-white tracking-tight">{{ pageTitle }}</h3>
+                <p class="text-slate-500 dark:text-slate-400 text-sm font-medium">
+                    {{ displayedUsers.length }} utilisateur{{ displayedUsers.length > 1 ? 's' : '' }} trouvé{{ displayedUsers.length > 1 ? 's' : '' }}
+                </p>
               </div>
-            </div>
-          </div>
-        </div>
-        
-        <!-- Table Container -->
-        <div class="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 overflow-hidden shadow-sm">
-          <div class="overflow-x-auto">
-            <table class="w-full text-left border-collapse">
-              <thead>
-                <tr class="border-b border-slate-100 dark:border-slate-800">
-                  <th class="px-6 py-4 text-xs font-bold uppercase tracking-wider text-slate-400">Utilisateur</th>
-                  <th class="px-6 py-4 text-xs font-bold uppercase tracking-wider text-slate-400">Rôle</th>
-                  <th class="px-6 py-4 text-xs font-bold uppercase tracking-wider text-slate-400">Classe / Attribution</th>
-                  <th class="px-6 py-4 text-xs font-bold uppercase tracking-wider text-slate-400">Date d'inscription</th>
-                  <th class="px-6 py-4 text-xs font-bold uppercase tracking-wider text-slate-400">Statut</th>
-                  <th class="px-6 py-4 text-xs font-bold uppercase tracking-wider text-slate-400 text-right">Actions</th>
-                </tr>
-              </thead>
-              <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
-                <tr v-if="isLoading" class="hover:bg-slate-50/50 dark:hover:bg-slate-800/50 transition-colors">
-                  <td colspan="5" class="px-6 py-8 text-center text-slate-500">Chargement...</td>
-                </tr>
-                <tr v-else-if="paginatedUsers.length === 0" class="hover:bg-slate-50/50 dark:hover:bg-slate-800/50 transition-colors">
-                  <td colspan="5" class="px-6 py-8 text-center text-slate-500">Aucun utilisateur trouvé</td>
-                </tr>
-                <tr v-else v-for="user in paginatedUsers" :key="user._id" class="hover:bg-slate-50/50 dark:hover:bg-slate-800/50 transition-colors">
-                  <td class="px-6 py-4">
-                    <div class="flex items-center gap-3">
-                      <div class="size-10 rounded-full bg-blue-100 flex items-center justify-center text-primary font-bold">{{ getInitials(user.nom, user.prenom) }}</div>
-                      <div class="flex flex-col">
-                        <span class="text-sm font-bold text-slate-900 dark:text-white">{{ user.prenom }} {{ user.nom }}</span>
-                        <span class="text-xs text-slate-500">{{ user.email }}</span>
-                      </div>
-                    </div>
-                  </td>
-                  <td class="px-6 py-4">
-                    <span :class="['inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold', getRoleBadgeClass(user.role)]">
-                      {{ user.role }}
-                    </span>
-                  </td>
-                  <td class="px-6 py-4 text-sm text-slate-600 dark:text-slate-400">
-                    <span v-if="user.role === 'ELEVE' && user.classe" class="font-medium">
-                      {{ user.classe.niveau }} {{ user.classe.section }}
-                    </span>
-                    <span v-else-if="user.role === 'ELEVE'" class="text-slate-400 italic text-xs">
-                      Non assigné
-                    </span>
-                    <span v-else-if="user.role === 'PROFESSEUR'" class="text-xs">
-                      Voir détails
-                    </span>
-                  </td>
-                  <td class="px-6 py-4 text-sm text-slate-600 dark:text-slate-400">{{ formatDate(user.createdAt) }}</td>
-                  <td class="px-6 py-4">
-                    <div class="flex items-center gap-1.5">
-                      <span :class="['size-2 rounded-full', getStatusColor(user.status)]"></span>
-                      <span class="text-sm font-medium text-slate-600 dark:text-slate-400">{{ user.status }}</span>
-                    </div>
-                  </td>
-                  <td class="px-6 py-4 text-right">
-                    <div class="flex justify-end gap-2">
-                      <button @click="openEditModal(user)" class="p-2 text-slate-400 hover:text-primary transition-colors" title="Modifier">
-                        <span class="material-symbols-outlined text-xl">edit</span>
-                      </button>
-                      <button @click="toggleUserStatus(user)" class="p-2 text-slate-400 hover:text-amber-600 transition-colors" :title="user.status === 'ACTIF' ? 'Désactiver' : 'Activer'">
-                        <span class="material-symbols-outlined text-xl">{{ user.status === 'ACTIF' ? 'block' : 'check_circle' }}</span>
-                      </button>
-                      <button @click="deleteUser(user._id)" class="p-2 text-slate-400 hover:text-red-600 transition-colors" title="Supprimer">
-                        <span class="material-symbols-outlined text-xl">delete</span>
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
-        
-        <!-- Pagination -->
-        <div class="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-4 shadow-sm">
-          <div class="flex flex-col sm:flex-row justify-between items-center gap-4">
-            <div class="text-sm text-slate-600 dark:text-slate-400">
-              Affichage de {{ startItem }} à {{ endItem }} sur {{ filteredUsers.length }} utilisateurs
-            </div>
-            <div class="flex items-center gap-1" v-if="totalPages > 1">
-              <button 
-                @click="currentPage--"
-                :disabled="currentPage === 1"
-                class="p-2 text-slate-400 hover:text-slate-900 dark:hover:text-white disabled:opacity-30 disabled:cursor-not-allowed"
-              >
-                <span class="material-symbols-outlined">chevron_left</span>
-              </button>
               
-              <template v-for="page in totalPages" :key="page">
-                <button 
-                  v-if="shouldShowPage(page)"
-                  @click="currentPage = page"
-                  :class="[
-                    'size-8 rounded-lg text-sm font-medium transition-all',
-                    currentPage === page ? 'bg-primary text-white shadow-md' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700'
-                  ]"
-                >{{ page }}</button>
-                <span v-else-if="shouldShowEllipsis(page)" class="px-1 text-slate-400 text-sm">...</span>
-              </template>
+              <div class="flex items-center gap-4">
+                 <!-- Role Filter (Only for Administration) -->
+                 <div v-if="currentType === 'administration'" class="w-48">
+                    <select v-model="selectedRoleFilter" class="block w-full bg-slate-50 dark:bg-slate-800 border-none rounded-lg py-2 pl-3 pr-8 text-sm text-slate-900 dark:text-white focus:ring-2 focus:ring-primary/20">
+                        <option value="">Tous les rôles</option>
+                        <option value="ADMIN">Administrateur</option>
+                        <option value="PROVISEUR">Proviseur</option>
+                        <option value="CENSEUR">Censeur</option>
+                        <option value="CPE">CPE</option>
+                        <option value="SECRETAIRE">Secrétaire</option>
+                        <option value="PROFESSEUR">Professeur</option>
+                    </select>
+                 </div>
+                 <!-- Class Filter (Only for Students) -->
+                 <div v-if="currentType === 'eleves'" class="w-48">
+                    <select v-model="selectedClassFilter" class="block w-full bg-slate-50 dark:bg-slate-800 border-none rounded-lg py-2 pl-3 pr-8 text-sm text-slate-900 dark:text-white focus:ring-2 focus:ring-primary/20">
+                        <option value="">Toutes les classes</option>
+                        <option v-for="cls in availableClasses" :key="cls._id" :value="cls._id">
+                            {{ cls.niveau }} {{ cls.section }}
+                        </option>
+                    </select>
+                 </div>
 
-              <button 
-                @click="currentPage++"
-                :disabled="currentPage === totalPages"
-                class="p-2 text-slate-400 hover:text-slate-900 dark:hover:text-white disabled:opacity-30 disabled:cursor-not-allowed"
-              >
-                <span class="material-symbols-outlined">chevron_right</span>
-              </button>
-            </div>
+                 <!-- Search -->
+                 <div class="relative w-64">
+                    <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-slate-400">
+                      <span class="material-symbols-outlined text-[18px]">search</span>
+                    </span>
+                    <input v-model="searchQuery" class="block w-full bg-slate-50 dark:bg-slate-800 border-none rounded-lg py-2 pl-9 pr-4 text-sm text-slate-900 dark:text-white placeholder:text-slate-400 focus:ring-2 focus:ring-primary/20" placeholder="Rechercher..." type="text"/>
+                </div>
+
+                <router-link :to="getAddUserLink" class="flex items-center justify-center gap-2 px-5 h-10 bg-primary text-white rounded-lg font-bold shadow-md shadow-primary/20 hover:bg-primary/90 transition-all text-sm">
+                  <span class="material-symbols-outlined text-[18px]">person_add</span>
+                  <span>Ajouter</span>
+                </router-link>
+              </div>
           </div>
-        </div>
+       </div>
+    </header>
+
+    <!-- Main Content List -->
+    <main class="flex-1 overflow-hidden p-6">
+      <div class="max-w-[1600px] mx-auto h-full flex flex-col bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden">
+            
+            <!-- Table Header -->
+            <div class="grid grid-cols-12 gap-4 px-6 py-3 border-b border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/20 text-xs font-bold text-slate-400 uppercase tracking-wider">
+                <div class="col-span-4">Utilisateur</div>
+                <div class="col-span-3">Rôle</div>
+                <div class="col-span-3">Contact</div>
+                <div class="col-span-2 text-right">Actions</div>
+            </div>
+
+            <!-- Scrollable List -->
+            <div class="flex-1 overflow-y-auto custom-scrollbar">
+                <div v-if="isLoading" class="p-8 text-center text-slate-500">Chargement...</div>
+                
+                <div v-else-if="paginatedUsers.length === 0" class="flex flex-col items-center justify-center h-full p-8 text-slate-500">
+                    <span class="material-symbols-outlined text-4xl mb-2 text-slate-300">search_off</span>
+                    <p>Aucun utilisateur trouvé</p>
+                </div>
+
+                <div v-else class="divide-y divide-slate-100 dark:divide-slate-800">
+                    <div v-for="user in paginatedUsers" :key="user._id" class="grid grid-cols-12 gap-4 px-6 py-4 items-center hover:bg-slate-50/50 dark:hover:bg-slate-800/50 transition-colors group">
+                        
+                        <!-- User Info -->
+                        <div class="col-span-4 flex items-center gap-3">
+                            <div :class="['size-10 rounded-full flex items-center justify-center font-bold text-sm shrink-0', getAvatarColor(user.role)]">
+                                {{ getInitials(user.nom, user.prenom) }}
+                            </div>
+                            <div class="min-w-0">
+                                <p class="text-sm font-bold text-slate-900 dark:text-white truncate">{{ user.prenom }} {{ user.nom }}</p>
+                                <p class="text-xs text-slate-500 truncate">{{ user.email }}</p>
+                            </div>
+                        </div>
+
+                        <!-- Role & Context -->
+                        <div class="col-span-3">
+                             <div class="flex flex-col items-start gap-1">
+                                <span :class="['inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wide', getRoleBadgeClass(user.role)]">
+                                    {{ user.role }}
+                                </span>
+                                <span v-if="user.role === 'ELEVE' && user.classe" class="text-xs font-medium text-slate-600 dark:text-slate-400 flex items-center gap-1">
+                                    <span class="material-symbols-outlined text-[14px]">school</span>
+                                    {{ user.classe.niveau }} {{ user.classe.section }}
+                                </span>
+                             </div>
+                        </div>
+
+                        <!-- Contact -->
+                        <div class="col-span-3 text-sm text-slate-600 dark:text-slate-400 flex flex-col">
+                            <span v-if="user.telephone" class="flex items-center gap-1.5">
+                                <span class="material-symbols-outlined text-[14px] text-slate-400">call</span>
+                                {{ user.telephone }}
+                            </span>
+                            <span v-else class="text-slate-400 italic text-xs">Non renseigné</span>
+                        </div>
+
+                        <!-- Actions -->
+                        <div class="col-span-2 flex justify-end gap-2 opacity-100 sm:opacity-0 group-hover:opacity-100 transition-opacity">
+                            <button @click="openEditModal(user)" class="p-2 text-slate-400 hover:text-primary transition-colors bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded shadow-sm hover:shadow" title="Modifier">
+                                <span class="material-symbols-outlined text-[18px]">edit</span>
+                            </button>
+                            <button @click="toggleUserStatus(user)" class="p-2 text-slate-400 hover:text-amber-600 transition-colors bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded shadow-sm hover:shadow" :title="user.status === 'ACTIF' ? 'Désactiver' : 'Activer'">
+                                <span class="material-symbols-outlined text-[18px]">{{ user.status === 'ACTIF' ? 'block' : 'check_circle' }}</span>
+                            </button>
+                            <button @click="deleteUser(user._id)" class="p-2 text-slate-400 hover:text-red-500 transition-colors bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded shadow-sm hover:shadow" title="Supprimer">
+                                <span class="material-symbols-outlined text-[18px]">delete</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Simple Pagination Footer if needed -->
+            <div class="p-4 border-t border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/20 flex items-center justify-between text-xs text-slate-500">
+                <span>Affichage de {{ displayedUsers.length }} résultats</span>
+            </div>
       </div>
     </main>
-  </div>
 
   <!-- Edit User Modal -->
   <div v-if="showEditModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
@@ -260,22 +216,91 @@
       </div>
     </div>
   </div>
+  </div>
 </template>
 
 <script setup>
 import { ref, onMounted, computed, watch } from 'vue'
+import { useRouter } from 'vue-router' // Ensure router is available if needed
 import api from '@/services/api'
+
+// Define Props
+const props = defineProps(['type'])
 
 const users = ref([])
 const isLoading = ref(false)
 const searchQuery = ref('')
-const selectedRole = ref('Tous')
+const selectedClassFilter = ref('')
+const selectedRoleFilter = ref('')
 
-// Pagination state
-const currentPage = ref(1)
-const itemsPerPage = ref(10)
+// Computed: Determine Current Type from Prop
+const currentType = computed(() => {
+    return props.type || 'administration' // Default
+})
 
-// Edit modal state
+// Computed: Page Title
+const pageTitle = computed(() => {
+    switch(currentType.value) {
+        case 'parents': return 'Gestion des Parents'
+        case 'eleves': return 'Gestion des Élèves'
+        default: return 'Membres de l\'Administration'
+    }
+})
+
+// Computed: Add User Link
+const getAddUserLink = computed(() => {
+    switch(currentType.value) {
+        case 'parents': return '/admin/ajouter-utilisateur?role=PARENT'
+        case 'eleves': return '/admin/ajouter-utilisateur?role=ELEVE'
+        default: return '/admin/ajouter-utilisateur?role=ADMIN'
+    }
+})
+
+// Computed: Filtered Users
+const filteredUsers = computed(() => {
+  let filtered = Array.isArray(users.value) ? users.value : []
+  
+  // 1. Filter by Type
+  if (currentType.value === 'parents') {
+      filtered = filtered.filter(u => u.role === 'PARENT')
+  } else if (currentType.value === 'eleves') {
+      filtered = filtered.filter(u => u.role === 'ELEVE')
+  } else {
+      // Administration (All except parents/students)
+      filtered = filtered.filter(u => u.role !== 'PARENT' && u.role !== 'ELEVE')
+      
+      // Role Filter (Only for Administration)
+      if (selectedRoleFilter.value) {
+          filtered = filtered.filter(u => u.role === selectedRoleFilter.value)
+      }
+  }
+
+  // 2. Filter by Search
+  if (searchQuery.value) {
+    const query = searchQuery.value.toLowerCase()
+    filtered = filtered.filter(u => 
+      u?.nom?.toLowerCase().includes(query) ||
+      u?.prenom?.toLowerCase().includes(query) ||
+      u?.email?.toLowerCase().includes(query)
+    )
+  }
+
+  // 3. Filter by Class (Students only)
+  if (currentType.value === 'eleves' && selectedClassFilter.value) {
+      filtered = filtered.filter(u => u.classe?._id === selectedClassFilter.value || u.classe === selectedClassFilter.value)
+  }
+  
+  return filtered
+})
+
+// Use filteredUsers directly for display (virtually scrollable list handles large data better than pages)
+const displayedUsers = computed(() => filteredUsers.value)
+
+// For compatibility with template loop (can be renamed in template)
+const paginatedUsers = computed(() => displayedUsers.value)
+
+
+// --- Logic for Edit Modal ---
 const showEditModal = ref(false)
 const editForm = ref({
   _id: '',
@@ -312,55 +337,6 @@ const fetchClasses = async () => {
   }
 }
 
-const filteredUsers = computed(() => {
-  let filtered = Array.isArray(users.value) ? users.value : []
-  
-  if (selectedRole.value !== 'Tous') {
-    filtered = filtered.filter(u => u?.role === selectedRole.value.toUpperCase())
-  }
-  
-  if (searchQuery.value) {
-    const query = searchQuery.value.toLowerCase()
-    filtered = filtered.filter(u => 
-      u?.nom?.toLowerCase().includes(query) ||
-      u?.prenom?.toLowerCase().includes(query) ||
-      u?.email?.toLowerCase().includes(query)
-    )
-  }
-  
-  return filtered
-})
-const paginatedUsers = computed(() => {
-  const start = (currentPage.value - 1) * itemsPerPage.value
-  const end = start + itemsPerPage.value
-  return filteredUsers.value.slice(start, end)
-})
-
-const totalPages = computed(() => {
-  return Math.ceil(filteredUsers.value.length / itemsPerPage.value)
-})
-
-const startItem = computed(() => {
-  if (filteredUsers.value.length === 0) return 0
-  return (currentPage.value - 1) * itemsPerPage.value + 1
-})
-
-const endItem = computed(() => {
-  return Math.min(currentPage.value * itemsPerPage.value, filteredUsers.value.length)
-})
-
-const shouldShowPage = (page) => {
-  return page === 1 || page === totalPages.value || (page >= currentPage.value - 1 && page <= currentPage.value + 1)
-}
-
-const shouldShowEllipsis = (page) => {
-  return (page === 2 && currentPage.value > 3) || (page === totalPages.value - 1 && currentPage.value < totalPages.value - 2)
-}
-
-watch([searchQuery, selectedRole], () => {
-  currentPage.value = 1
-})
-
 const getRoleBadgeClass = (role) => {
   const classes = {
     'PROFESSEUR': 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300',
@@ -372,27 +348,19 @@ const getRoleBadgeClass = (role) => {
     'PROVISEUR': 'bg-indigo-100 text-indigo-800 dark:bg-indigo-900/30 dark:text-indigo-300',
     'SECRETAIRE': 'bg-pink-100 text-pink-800 dark:bg-pink-900/30 dark:text-pink-300'
   }
-  return classes[role] || 'bg-gray-100 text-gray-800'
+  return classes[role] || 'bg-slate-100 text-slate-800'
 }
 
-const getStatusColor = (status) => {
-  const colors = {
-    'ACTIF': 'bg-green-500',
-    'INACTIF': 'bg-gray-500',
-    'EN_ATTENTE': 'bg-yellow-500',
-    'BLOQUE': 'bg-red-500'
-  }
-  return colors[status] || 'bg-gray-500'
+const getAvatarColor = (role) => {
+     switch(role) {
+         case 'ELEVE': return 'bg-purple-100 text-purple-700'
+         case 'PARENT': return 'bg-green-100 text-green-700'
+         default: return 'bg-blue-100 text-blue-700'
+     }
 }
 
 const getInitials = (nom, prenom) => {
   return `${prenom?.charAt(0) || ''}${nom?.charAt(0) || ''}`.toUpperCase()
-}
-
-const formatDate = (dateString) => {
-  if (!dateString) return 'N/A'
-  const date = new Date(dateString)
-  return date.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' })
 }
 
 const openEditModal = (user) => {
@@ -401,7 +369,7 @@ const openEditModal = (user) => {
     prenom: user.prenom,
     nom: user.nom,
     email: user.email,
-     telephone: user.telephone || '',
+    telephone: user.telephone || '',
     role: user.role,
     status: user.status,
     classe: user.classe?._id || user.classe || ''
@@ -419,8 +387,10 @@ const closeEditModal = () => {
     email: '',
     telephone: '',
     role: '',
-    status: ''
+    status: '',
+    classe: ''
   }
+  
   editErrorMessage.value = ''
 }
 
@@ -482,3 +452,19 @@ onMounted(() => {
   fetchClasses()
 })
 </script>
+
+<style scoped>
+.custom-scrollbar::-webkit-scrollbar {
+  width: 6px;
+}
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background-color: #cbd5e1;
+  border-radius: 6px;
+}
+.dark .custom-scrollbar::-webkit-scrollbar-thumb {
+  background-color: #334155;
+}
+</style>

@@ -90,6 +90,14 @@ export default {
         });
     },
 
+    // Parents
+    addChild(matricule) {
+        return api.post('/parents/children', { matricule });
+    },
+    getChildren() {
+        return api.get('/parents/children');
+    },
+
     // Classes
     getClasses() {
         return api.get('/classes');

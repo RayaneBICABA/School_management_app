@@ -14,7 +14,6 @@ import AdminExamens from '@/views/admin/GestionExamens.vue'
 import AdminAffectations from '@/views/admin/Affectations.vue'
 import AdminAffecterProfesseur from '@/views/admin/AffecterProfesseur.vue'
 import AdminGestionVacances from '@/views/admin/GestionVacances.vue'
-import AdminReglesCalcul from '@/views/admin/ReglesCalcul.vue'
 import AdminClotureAdministrative from '@/views/admin/ClotureAdministrative.vue'
 import AdminNotes from '@/views/admin/GestionNotes.vue'
 import AdminConfig from '@/views/admin/ConfigurationAnnee.vue'
@@ -105,7 +104,7 @@ const routes = [
     component: () => import('@/layouts/AdminLayout.vue'),
     children: [
       { path: '', name: 'AdminDashboard', component: AdminDashboard },
-      { path: 'utilisateurs', name: 'AdminUsers', component: AdminUsers },
+      { path: 'utilisateurs/:type?', name: 'AdminUsers', component: AdminUsers, props: true },
       { path: 'ajouter-utilisateur', name: 'AdminAjouterUtilisateur', component: AdminAjouterUtilisateur },
       { path: 'classes', name: 'AdminClasses', component: AdminClasses },
       { path: 'cours', name: 'AdminCours', component: AdminCours },
@@ -113,11 +112,11 @@ const routes = [
       { path: 'affectations', name: 'AdminAffectations', component: AdminAffectations },
       { path: 'affecter-professeur', name: 'AdminAffecterProfesseur', component: AdminAffecterProfesseur },
       { path: 'gestion-vacances', name: 'AdminGestionVacances', component: AdminGestionVacances },
-      { path: 'regles-calcul', name: 'AdminReglesCalcul', component: AdminReglesCalcul },
       { path: 'cloture-administrative', name: 'AdminClotureAdministrative', component: AdminClotureAdministrative },
       { path: 'notes', name: 'AdminNotes', component: AdminNotes },
       { path: 'configuration', name: 'AdminConfig', component: AdminConfig },
       { path: 'droits', name: 'AdminDroits', component: AdminDroits },
+      { path: 'notifications', name: 'AdminNotifications', component: () => import('@/views/common/GlobalNotifications.vue') },
       { path: 'profil', name: 'AdminProfil', component: AdminProfil }
     ]
   },
@@ -132,7 +131,7 @@ const routes = [
       { path: 'bulletins', name: 'EleveBulletins', component: EleveBulletins },
       { path: 'discipline', name: 'EleveDiscipline', component: EleveDiscipline },
       { path: 'calendrier', name: 'EleveCalendrier', component: EleveCalendrier },
-      { path: 'notifications', name: 'EleveNotifications', component: EleveNotifications },
+      { path: 'notifications', name: 'EleveNotifications', component: () => import('@/views/common/GlobalNotifications.vue') },
       { path: 'profil', name: 'EleveProfil', component: EleveProfil }
     ]
   },
@@ -150,6 +149,7 @@ const routes = [
       { path: 'nouvelle-evaluation', name: 'ProfesseurNouvelleEvaluation', component: () => import('@/views/professeur/NouvelleEvaluation.vue') },
       { path: 'faire-appel', name: 'ProfesseurFaireAppel', component: () => import('@/views/professeur/FaireAppel.vue') },
       { path: 'annuaire', name: 'ProfesseurAnnuaire', component: ProfesseurAnnuaire },
+      { path: 'notifications', name: 'ProfesseurNotifications', component: () => import('@/views/common/GlobalNotifications.vue') },
       { path: 'profil', name: 'ProfesseurProfil', component: ProfesseurProfil }
     ]
   },
@@ -165,7 +165,7 @@ const routes = [
       { path: 'notes', name: 'ParentNotes', component: ParentNotes },
       { path: 'discipline', name: 'ParentDiscipline', component: ParentDiscipline },
       { path: 'calendrier', name: 'ParentCalendrier', component: ParentCalendrier },
-      { path: 'notifications', name: 'ParentNotifications', component: ParentNotifications },
+      { path: 'notifications', name: 'ParentNotifications', component: () => import('@/views/common/GlobalNotifications.vue') },
       { path: 'justifier-absence', name: 'ParentJustifierAbsence', component: ParentJustifierAbsence },
       { path: 'profil', name: 'ParentProfil', component: ParentProfil }
     ]
@@ -184,6 +184,7 @@ const routes = [
       { path: 'validation-evaluations', name: 'CenseurValidationEvaluations', component: () => import('@/views/censeur/ValidationEvaluations.vue') },
       { path: 'classes', name: 'CenseurClasses', component: () => import('@/views/censeur/GestionClasses.vue') },
       { path: 'professeurs', name: 'CenseurProfesseurs', component: () => import('@/views/censeur/GestionProfesseurs.vue') },
+      { path: 'notifications', name: 'CenseurNotifications', component: () => import('@/views/common/GlobalNotifications.vue') },
       { path: 'profil', name: 'CenseurProfil', component: CenseurProfil }
     ]
   },
@@ -198,7 +199,7 @@ const routes = [
       { path: 'rapports', name: 'CPERapports', component: CPERapports },
       { path: 'absences', name: 'CPEAbsences', component: CPEAbsences },
       { path: 'calendrier', name: 'CPECalendrier', component: CPECalendrier },
-      { path: 'notifications', name: 'CPENotifications', component: CPENotifications },
+      { path: 'notifications', name: 'CPENotifications', component: () => import('@/views/common/GlobalNotifications.vue') },
       { path: 'statistiques', name: 'CPERapportsStats', component: CPERapportsStats },
       { path: 'vue-ensemble', name: 'CPEVueEnsemble', component: CPEVueEnsemble },
       { path: 'profil', name: 'CPEProfil', component: CPEProfil }
@@ -217,6 +218,8 @@ const routes = [
       { path: 'affectation-eleves', name: 'ProviseurAffectationEleves', component: () => import('@/views/proviseur/AffectationEleves.vue') },
       { path: 'utilisateurs', name: 'ProviseurUtilisateurs', component: () => import('@/views/proviseur/GestionUtilisateurs.vue') },
       { path: 'classes', name: 'ProviseurClasses', component: () => import('@/views/proviseur/GestionClasses.vue') },
+      { path: 'emploi-temps', name: 'ProviseurEmploiTemps', component: () => import('@/views/proviseur/GestionEmploiTemps.vue') },
+      { path: 'notifications', name: 'ProviseurNotifications', component: () => import('@/views/common/GlobalNotifications.vue') },
       { path: 'profil', name: 'ProviseurProfil', component: ProviseurProfil }
     ]
   },
@@ -231,6 +234,7 @@ const routes = [
       { path: 'bulletins', name: 'SecretaireBulletins', component: SecretaireBulletins },
       { path: 'registre', name: 'SecretaireRegistre', component: SecretaireRegistre },
       { path: 'archives', name: 'SecretaireArchives', component: SecretaireArchives },
+      { path: 'notifications', name: 'SecretaireNotifications', component: () => import('@/views/common/GlobalNotifications.vue') },
       { path: 'profil', name: 'SecretaireProfil', component: () => import('@/views/secretaire/Profil.vue') }
     ]
   }

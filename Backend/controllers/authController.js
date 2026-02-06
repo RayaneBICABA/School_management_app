@@ -32,18 +32,26 @@ exports.register = async (req, res, next) => {
 exports.login = async (req, res, next) => {
     try {
         const { email, password } = req.body;
+        console.log('Login attempt for:', email);
 
         // Validate email & password
         if (!email || !password) {
-            return res.status(400).json({ success: false, error: 'Veuillez fournir un email et un mot de passe' });
+            return res.status(400).json({ success: false, error: 'Veuillez fournir un email/matricule et un mot de passe' });
         }
 
-        // Check for user
-        const user = await User.findOne({ email }).select('+password');
+        // Check for user by email OR matricule (case insensitive for matricule)
+        const user = await User.findOne({
+            $or: [
+                { email: email },
+                { matricule: { $regex: new RegExp(`^${email}$`, 'i') } }
+            ]
+        }).select('+password');
 
         if (!user) {
+            console.log('User not found for identifier:', email);
             return res.status(401).json({ success: false, error: 'Identifiants invalides' });
         }
+        console.log('User found:', user.email);
 
         // Check if password matches
         const isMatch = await user.matchPassword(password);

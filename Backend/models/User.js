@@ -59,6 +59,12 @@ const UserSchema = new mongoose.Schema({
             userAgent: String
         }
     ],
+    children: [
+        {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'User'
+        }
+    ],
     createdAt: {
         type: Date,
         default: Date.now

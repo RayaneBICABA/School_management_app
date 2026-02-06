@@ -75,7 +75,7 @@
         <form @submit.prevent="handleLogin" class="space-y-6">
           <div class="flex flex-col gap-2">
             <label class="text-[#0e141b] dark:text-slate-50 text-base font-medium leading-normal">Email ou Matricule</label>
-            <input v-model="form.email" class="form-input flex w-full min-w-0 flex-1 resize-none overflow-hidden rounded-lg border border-[#d0dbe7] bg-white dark:bg-background-dark dark:border-slate-700 text-[#0e141b] dark:text-slate-50 focus:border-primary focus:ring-1 focus:ring-primary h-14 placeholder:text-[#4e7397] dark:placeholder:text-slate-500 p-[15px] text-base font-normal leading-normal" placeholder="exemple@ecole.com ou 12345" type="text" required/>
+            <input v-model="form.email" class="form-input flex w-full min-w-0 flex-1 resize-none overflow-hidden rounded-lg border border-[#d0dbe7] bg-white dark:bg-background-dark dark:border-slate-700 text-[#0e141b] dark:text-slate-50 focus:border-primary focus:ring-1 focus:ring-primary h-14 placeholder:text-[#4e7397] dark:placeholder:text-slate-500 p-[15px] text-base font-normal leading-normal" placeholder="exemple@ecole.com ou MATRICULE123" type="text" required/>
           </div>
           <div class="flex flex-col gap-2">
             <label class="text-[#0e141b] dark:text-slate-50 text-base font-medium leading-normal">Mot de passe</label>

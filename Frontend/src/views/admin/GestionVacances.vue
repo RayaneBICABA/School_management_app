@@ -34,10 +34,6 @@
               <span class="material-symbols-outlined text-[20px] active-icon">beach_access</span>
               <p class="text-sm font-bold tracking-wide">Vacances</p>
             </router-link>
-            <router-link to="/admin/regles-calcul" class="flex items-center gap-2 border-b-4 border-transparent text-slate-500 dark:text-slate-400 pb-4 pt-6 hover:text-slate-700 dark:hover:text-slate-200 transition-all">
-              <span class="material-symbols-outlined text-[20px]">functions</span>
-              <p class="text-sm font-bold tracking-wide">Règles de Calcul</p>
-            </router-link>
             <router-link to="/admin/cloture-administrative" class="flex items-center gap-2 border-b-4 border-transparent text-slate-500 dark:text-slate-400 pb-4 pt-6 hover:text-slate-700 dark:hover:text-slate-200 transition-all">
               <span class="material-symbols-outlined text-[20px]">verified_user</span>
               <p class="text-sm font-bold tracking-wide">Clôture Administrative</p>

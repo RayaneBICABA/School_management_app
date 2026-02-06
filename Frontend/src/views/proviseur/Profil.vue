@@ -172,9 +172,14 @@
   </div>
 </template>
 
+
+
 <script setup>
 import { ref, onMounted } from 'vue'
 import api from '@/services/api'
+import { useToast } from '@/composables/useToast'
+
+const { success, error } = useToast()
 
 // Données réactives
 const user = ref(null);
@@ -188,7 +193,7 @@ const handlePhotoUpload = async (event) => {
     if (!file) return;
 
     if (file.size > 2 * 1024 * 1024) {
-        alert('L\'image est trop volumineuse (max 2Mo)');
+        error('L\'image est trop volumineuse (max 2Mo)');
         return;
     }
 
@@ -199,11 +204,11 @@ const handlePhotoUpload = async (event) => {
         const res = await api.uploadPhoto(formData);
         if (res.data.success) {
             user.value.photo = res.data.data;
-            alert('Photo de profil mise à jour !');
+            success('Photo de profil mise à jour !');
         }
-    } catch (error) {
-        console.error('Erreur upload photo:', error);
-        alert('Erreur lors de l\'envoi de la photo');
+    } catch (err) {
+        console.error('Erreur upload photo:', err);
+        error('Erreur lors de l\'envoi de la photo');
     }
 };
 
@@ -231,8 +236,8 @@ const fetchStats = async () => {
     if (teachersRes.data.success) {
       stats.value[1].value = teachersRes.data.count || teachersRes.data.data.length
     }
-  } catch (error) {
-    console.error('Erreur chargement stats:', error)
+  } catch (err) {
+    console.error('Erreur chargement stats:', err)
   }
 }
 
@@ -242,8 +247,8 @@ const fetchData = async () => {
         if (res.data.success) {
             user.value = res.data.data;
         }
-    } catch (error) {
-        console.error('Erreur chargement profil proviseur:', error);
+    } catch (err) {
+        console.error('Erreur chargement profil proviseur:', err);
     }
 };
 
@@ -256,11 +261,11 @@ const handleUpdateDetails = async () => {
             telephone: user.value.telephone
         });
         if (res.data.success) {
-            alert('Profil mis à jour !');
+            success('Profil mis à jour !');
         }
-    } catch (error) {
-        console.error('Erreur:', error);
-        alert('Erreur lors de la mise à jour');
+    } catch (err) {
+        console.error('Erreur:', err);
+        error('Erreur lors de la mise à jour');
     } finally {
         isUpdating.value = false;
     }
@@ -284,11 +289,11 @@ const handleUpdatePassword = async () => {
             newPassword: securityData.value.newPassword
         });
         if (res.data.success) {
-            alert('Mot de passe mis à jour !');
+            success('Mot de passe mis à jour !');
             securityData.value = { currentPassword: '', newPassword: '', confirmPassword: '' };
         }
-    } catch (error) {
-        passwordError.value = error.response?.data?.error || 'Erreur technique';
+    } catch (err) {
+        passwordError.value = err.response?.data?.error || 'Erreur technique';
     } finally {
         isUpdatingPassword.value = false;
     }

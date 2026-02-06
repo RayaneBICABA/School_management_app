@@ -29,28 +29,7 @@
           >
             Vue par Classe
           </button>
-          <button 
-            @click="switchTab('professeur')"
-            :class="[
-              'pb-3 text-sm font-medium transition-colors',
-              activeTab === 'professeur' 
-                ? 'border-b-2 border-primary text-primary font-bold' 
-                : 'text-[#4e7397] hover:text-primary'
-            ]"
-          >
-            Vue par Professeur
-          </button>
-          <button 
-            @click="switchTab('global')"
-            :class="[
-              'pb-3 text-sm font-medium transition-colors',
-              activeTab === 'global' 
-                ? 'border-b-2 border-primary text-primary font-bold' 
-                : 'text-[#4e7397] hover:text-primary'
-            ]"
-          >
-            Emploi du temps Global
-          </button>
+          
           <button 
             @click="switchTab('conflits')"
             :class="[
@@ -75,19 +54,6 @@
               <option disabled value="">Choisir une classe...</option>
               <option v-for="cls in classes" :key="cls._id" :value="cls._id">
                 {{ cls.niveau }} {{ cls.section }}
-              </option>
-            </select>
-          </label>
-          <label v-if="activeTab === 'professeur'" class="flex items-center gap-2">
-            <span class="text-xs font-semibold text-[#4e7397] dark:text-slate-400">Professeur:</span>
-            <select 
-              v-model="selectedProf"
-              @change="onProfChange"
-              class="text-sm font-bold bg-white dark:bg-slate-800 border-[#d0dbe7] dark:border-slate-700 rounded-lg px-3 py-1 focus:ring-primary focus:border-primary"
-            >
-              <option disabled value="">Choisir un professeur...</option>
-              <option v-for="prof in professors" :key="prof._id" :value="prof._id">
-                {{ prof.prenom }} {{ prof.nom }}
               </option>
             </select>
           </label>
@@ -207,12 +173,16 @@
                   >
                     <div>
                         <div class="flex justify-between items-start">
-                          <p class="font-black leading-tight">{{ getCoursAt(dayIndex, slotIndex).matiere }}</p>
-                          <button v-if="activeTab === 'classe'" @click.stop="deleteSlot(getCoursAt(dayIndex, slotIndex).id)" class="opacity-0 group-hover:opacity-100 transition-opacity">
-                             <span class="material-symbols-outlined text-[10px]">delete</span>
+                          <p class="font-black leading-tight truncate pr-1">{{ getCoursAt(dayIndex, slotIndex).matiere }}</p>
+                          <button 
+                            @click.stop="deleteSlot(getCoursAt(dayIndex, slotIndex).id)" 
+                            class="transition-opacity z-20 p-0.5 rounded hover:bg-red-500/20 text-white cursor-pointer"
+                            title="Supprimer"
+                          >
+                             <span class="material-symbols-outlined text-[14px]">delete</span>
                           </button>
                         </div>
-                        <p class="opacity-90 font-medium mt-0.5">{{ getCoursAt(dayIndex, slotIndex).professeur }}</p>
+                        <p class="opacity-90 font-medium mt-0.5 text-[9px] truncate">{{ getCoursAt(dayIndex, slotIndex).professeur }}</p>
                     </div>
                     <div class="flex justify-between items-end">
                        <p class="bg-white/20 px-1 rounded text-[8px] font-bold">{{ getCoursAt(dayIndex, slotIndex).salle }}</p>
@@ -256,7 +226,7 @@
       </div>
     </footer>
 
-    <!-- Modal pour ajouter une matière -->
+     <!-- Modal pour ajouter une matière -->
     <div v-if="showAddMatiereModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4" @click.self="showAddMatiereModal = false">
       <div class="bg-white dark:bg-slate-900 rounded-xl shadow-2xl w-full max-w-md p-6">
         <div class="flex justify-between items-center mb-4">
@@ -295,12 +265,27 @@
         </div>
       </div>
     </div>
+
+    <!-- Confirmation Modal -->
+    <ConfirmationModal
+      :isOpen="showConfirmModal"
+      :title="confirmTitle"
+      :message="confirmMessage"
+      @confirm="onConfirmDelete"
+      @cancel="closeConfirmModal"
+      type="danger"
+      actionLabel="Supprimer"
+    />
   </div>
 </template>
 
 <script setup>
 import { ref, reactive, computed, onMounted } from 'vue'
 import api from '@/services/api'
+import ConfirmationModal from '@/components/modals/ConfirmationModal.vue'
+import { useToast } from '@/composables/useToast'
+
+const { success, error } = useToast()
 
 // State
 const activeTab = ref('classe')
@@ -310,6 +295,12 @@ const classes = ref([])
 const professors = ref([])
 const showAddMatiereModal = ref(false)
 const draggedMatiere = ref(null)
+
+// Confirmation Modal State
+const showConfirmModal = ref(false)
+const confirmTitle = ref('')
+const confirmMessage = ref('')
+const itemToDelete = ref(null)
 
 // Nouvelle matière pour le modal
 const newMatiere = reactive({
@@ -336,8 +327,8 @@ const fetchData = async () => {
       selectedClass.value = classes.value[0]._id
       await onClassChange()
     }
-  } catch (error) {
-    console.error('Erreur chargement données initiales:', error)
+  } catch (err) {
+    console.error('Erreur chargement données initiales:', err)
   }
 }
 
@@ -386,8 +377,8 @@ const onClassChange = async () => {
     // For now, let's keep it simple or implement a backend endpoint for this
     await fetchConflicts()
 
-  } catch (error) {
-    console.error('Erreur chargement détails classe:', error)
+  } catch (err) {
+    console.error('Erreur chargement détails classe:', err)
   }
 }
 
@@ -404,6 +395,7 @@ const getCouleurByMatiere = (nom) => {
     if (lower.includes('fran') || lower.includes('phil')) return 'purple'
     if (lower.includes('svt') || lower.includes('chim')) return 'emerald'
     if (lower.includes('hist') || lower.includes('géo')) return 'orange'
+    if (lower.includes('angl') || lower.includes('esp')) return 'slate'
     return 'slate'
 }
 
@@ -417,18 +409,17 @@ const days = reactive([
   { name: 'Mardi', date: 'Mar', isToday: new Date().getDay() === 2 },
   { name: 'Mercredi', date: 'Mer', isToday: new Date().getDay() === 3 },
   { name: 'Jeudi', date: 'Jeu', isToday: new Date().getDay() === 4 },
-  { name: 'Vendredi', date: 'Ven', isToday: new Date().getDay() === 5 }
+  { name: 'Vendredi', date: 'Ven', isToday: new Date().getDay() === 5 },
+  { name: 'Samedi', date: 'Sam', isToday: new Date().getDay() === 6 }
 ])
 
-// Créneaux horaires
-const timeSlots = reactive([
-  { time: '08:00', isBreak: false },
-  { time: '09:00', isBreak: false },
-  { time: '10:00', isBreak: true, label: 'Récréation', type: 'recess' },
-  { time: '10:30', isBreak: false },
-  { time: '12:30', isBreak: true, label: 'Pause Déjeuner', type: 'lunch' },
-  { time: '14:00', isBreak: false }
-])
+// Créneaux horaires 07h-18h
+const timeSlots = reactive(
+    Array.from({ length: 12 }, (_, i) => ({
+        time: `${(7 + i).toString().padStart(2, '0')}:00`,
+        isBreak: false
+    }))
+)
 
 const totalHeures = computed(() => {
   return Object.keys(emploiDuTemps).length
@@ -620,18 +611,44 @@ const fetchGlobalData = async () => {
   }
 }
 
-const deleteSlot = async (id) => {
-  if (confirm('Supprimer ce créneau ?')) {
+const deleteSlot = (id) => {
+    itemToDelete.value = id;
+    confirmTitle.value = 'Supprimer ce créneau ?';
+    confirmMessage.value = 'Voulez-vous vraiment retirer ce cours de l\'emploi du temps ?';
+    showConfirmModal.value = true;
+}
+
+const onConfirmDelete = async () => {
+    const idToDelete = itemToDelete.value;
     try {
-      await api.deleteSchedule(id)
-      await api.deleteSchedule(id)
-      if (activeTab.value === 'classe') await onClassChange()
-      else if (activeTab.value === 'professeur') await onProfChange()
-      else await fetchGlobalData()
-    } catch (error) {
-      console.error('Erreur suppression:', error)
+        await api.deleteSchedule(idToDelete);
+        
+        // Optimistic UI Update: Remove from local state immediately
+        for (const key in emploiDuTemps) {
+            if (emploiDuTemps[key].id === idToDelete) {
+                delete emploiDuTemps[key];
+            }
+        }
+        for (const key in globalEmploiDuTemps) {
+            if (globalEmploiDuTemps[key].id === idToDelete) {
+                delete globalEmploiDuTemps[key];
+            }
+        }
+
+        if (activeTab.value === 'classe') await onClassChange();
+        else if (activeTab.value === 'professeur') await onProfChange();
+        else await fetchGlobalData();
+        
+        success('Cours supprimé');
+        closeConfirmModal();
+    } catch (err) {
+        error('Erreur suppression');
     }
-  }
+}
+
+const closeConfirmModal = () => {
+    showConfirmModal.value = false;
+    itemToDelete.value = null;
 }
 
 const getCoursAt = (dayIndex, slotIndex) => {
@@ -679,9 +696,9 @@ const onDrop = async (event, dayIndex, slotIndex) => {
     }
     
     draggedMatiere.value = null
-  } catch (error) {
-    console.error('Erreur creation créneau:', error)
-    alert(error.response?.data?.error || 'Erreur lors de la création du créneau')
+  } catch (err) {
+    console.error('Erreur creation créneau:', err)
+    error(err.response?.data?.error || 'Erreur lors de la création du créneau')
   }
 }
 
@@ -718,12 +735,12 @@ const addMatiere = async () => {
       newMatiere.coefficient = 1
       newMatiere.couleur = 'blue'
       showAddMatiereModal.value = false
-    } catch (error) {
-       console.error('Erreur création matière:', error)
-       alert('Erreur lors de la création de la matière et de son association')
+    } catch (err) {
+       console.error('Erreur création matière:', err)
+       error('Erreur lors de la création de la matière et de son association')
     }
   } else if (!selectedClass.value) {
-    alert('Veuillez d\'abord sélectionner une classe')
+    error('Veuillez d\'abord sélectionner une classe')
   }
 }
 </script>
@@ -795,6 +812,6 @@ const addMatiere = async () => {
 <style scoped>
 .calendar-grid {
   display: grid;
-  grid-template-columns: 80px repeat(5, 1fr);
+  grid-template-columns: 80px repeat(6, minmax(0, 1fr));
 }
 </style>

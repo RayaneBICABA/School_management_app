@@ -13,10 +13,6 @@
           <span class="material-symbols-outlined">dashboard</span>
           <span class="text-sm">Tableau de bord</span>
         </router-link>
-        <router-link to="/eleve/progression" class="flex items-center gap-3 px-3 py-2.5 rounded-lg font-medium transition-colors" :class="isActive('EleveProgression') ? 'bg-primary text-white' : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800'">
-          <span class="material-symbols-outlined">trending_up</span>
-          <span class="text-sm font-medium">Progression</span>
-        </router-link>
         <router-link to="/eleve/notes" class="flex items-center gap-3 px-3 py-2.5 rounded-lg font-medium transition-colors" :class="isActive('EleveNotes') ? 'bg-primary text-white' : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800'">
           <span class="material-symbols-outlined">history_edu</span>
           <span class="text-sm font-medium">Historique des notes</span>

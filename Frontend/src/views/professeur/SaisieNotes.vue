@@ -270,6 +270,18 @@
         </div>
       </div>
     </div>
+
+    <!-- Confirmation Modal -->
+    <ConfirmationModal
+      :is-open="showConfirmModal"
+      :title="confirmModalTitle"
+      :message="confirmModalMessage"
+      :confirm-text="confirmModalActionText"
+      :cancel-text="confirmModalCancelText"
+      :type="confirmModalType"
+      @confirm="executeConfirmAction"
+      @cancel="closeConfirmModal"
+    />
   </div>
 </template>
 
@@ -277,6 +289,10 @@
 import { ref, computed, onMounted } from 'vue';
 import api from '@/services/api';
 import AjouterEvaluationModal from '@/components/modals/AjouterEvaluationModal.vue';
+import { useToast } from '@/composables/useToast';
+import ConfirmationModal from '@/components/modals/ConfirmationModal.vue';
+
+const { success, error, warning } = useToast();
 
 const classes = ref([]);
 const matieres = ref([]);
@@ -304,6 +320,15 @@ const isSubmittingUnlockRequest = ref(false);
 const isLocked = ref(false);
 const lockReason = ref('');
 
+// Modal state
+const showConfirmModal = ref(false);
+const confirmModalTitle = ref('');
+const confirmModalMessage = ref('');
+const confirmModalActionText = ref('Confirmer');
+const confirmModalCancelText = ref('Annuler');
+const confirmModalType = ref('info');
+const pendingAction = ref(null);
+
 const loadClasses = async () => {
   try {
     // Charger les affectations du professeur (classe-matière)
@@ -321,8 +346,8 @@ const loadClasses = async () => {
       classes.value = Array.from(classesMap.values());
       console.log('Classes du professeur:', classes.value);
     }
-  } catch (error) {
-    console.error('Erreur chargement classes du professeur:', error);
+  } catch (err) {
+    console.error('Erreur chargement classes du professeur:', err);
   }
 };
 
@@ -389,9 +414,9 @@ const onClasseChange = async () => {
       } else {
         console.warn('Format de réponse inattendu:', res.data);
       }
-    } catch (error) {
-      console.error('Erreur chargement matières du professeur:', error);
-      console.error('Détails erreur:', error.response?.data);
+    } catch (err) {
+      console.error('Erreur chargement matières du professeur:', err);
+      console.error('Détails erreur:', err.response?.data);
     }
   }
 };
@@ -465,8 +490,8 @@ const loadData = async () => {
 
     notesData.value = tempNotesData;
 
-  } catch (error) {
-    console.error('Erreur chargement données:', error);
+  } catch (err) {
+    console.error('Erreur chargement données:', err);
   } finally {
     isLoading.value = false;
   }
@@ -548,74 +573,102 @@ const saveAllNotes = async () => {
       }
     }
 
-    alert('Notes enregistrées avec succès !');
-  } catch (error) {
-    console.error('Erreur sauvegarde notes:', error);
+    success('Notes enregistrées avec succès !');
+  } catch (err) {
+    console.error('Erreur sauvegarde notes:', err);
     
     // Extraire le message d'erreur du backend
     let errorMessage = 'Erreur lors de l\'enregistrement des notes';
     
-    if (error.response?.data?.error) {
+    if (err.response?.data?.error) {
       // Format JSON
-      errorMessage = error.response.data.error;
+      errorMessage = err.response.data.error;
       
       // Si c'est une erreur 403 (verrouillage), afficher l'alerte de déblocage
-      if (error.response.status === 403) {
+      if (err.response.status === 403) {
         isLocked.value = true;
         lockReason.value = errorMessage;
         return; // Ne pas afficher d'alert, l'alerte orange s'affichera
       }
-    } else if (error.response?.status === 403) {
+    } else if (err.response?.status === 403) {
       // Le backend renvoie parfois du HTML, essayer d'extraire le message
-      errorMessage = error.message || 'La saisie des notes est verrouillée pour cette période. Vous pouvez demander un déblocage au censeur.';
+      errorMessage = err.message || 'La saisie des notes est verrouillée pour cette période. Vous pouvez demander un déblocage au censeur.';
       isLocked.value = true;
       lockReason.value = errorMessage;
       return; // Ne pas afficher d'alert, l'alerte orange s'affichera
     }
     
-    alert(errorMessage);
+    error(errorMessage);
   } finally {
     isSaving.value = false;
   }
 };
 
-const deleteEvaluation = async (evalId) => {
-  if (!confirm('Supprimer cette évaluation ? Toutes les notes associées seront supprimées.')) {
-    return;
-  }
+const openConfirmModal = (title, message, actionText, action, type = 'info', cancelText = 'Annuler') => {
+  confirmModalTitle.value = title;
+  confirmModalMessage.value = message;
+  confirmModalActionText.value = actionText;
+  confirmModalCancelText.value = cancelText;
+  confirmModalType.value = type;
+  pendingAction.value = action;
+  showConfirmModal.value = true;
+};
 
-  try {
-    await api.deleteNoteColumn(evalId);
-    alert('Évaluation supprimée avec succès !');
-    loadData();
-  } catch (error) {
-    console.error('Erreur suppression évaluation:', error);
-    alert('Erreur lors de la suppression de l\'évaluation');
+const closeConfirmModal = () => {
+  showConfirmModal.value = false;
+  pendingAction.value = null;
+};
+
+const executeConfirmAction = async () => {
+  if (pendingAction.value) {
+    await pendingAction.value();
   }
+  closeConfirmModal();
+};
+
+const deleteEvaluation = (evalId) => {
+  openConfirmModal(
+    'Supprimer évaluation',
+    'Supprimer cette évaluation ? Toutes les notes associées seront supprimées.',
+    'Supprimer',
+    async () => {
+      try {
+        await api.deleteNoteColumn(evalId);
+        success('Évaluation supprimée avec succès !');
+        loadData();
+      } catch (err) {
+        console.error('Erreur suppression évaluation:', err);
+        error('Erreur lors de la suppression de l\'évaluation');
+      }
+    }
+  );
 };
 
 const submitForValidation = async () => {
   if (!currentNoteId.value) {
-    alert('Veuillez d\'abord enregistrer les notes avant de les soumettre');
+    warning('Veuillez d\'abord enregistrer les notes avant de les soumettre');
     return;
   }
 
-  if (!confirm('Soumettre ces notes pour validation par le censeur ?')) {
-    return;
-  }
+  openConfirmModal(
+    'Soumettre les notes',
+    'Soumettre ces notes pour validation par le censeur ?',
+    'Soumettre',
+    async () => {
+      isSubmitting.value = true;
 
-  isSubmitting.value = true;
-
-  try {
-    await api.submitNote(currentNoteId.value);
-    notesStatus.value = 'EN_ATTENTE';
-    alert('Notes soumises avec succès ! Le censeur sera notifié.');
-  } catch (error) {
-    console.error('Erreur soumission notes:', error);
-    alert('Erreur lors de la soumission des notes');
-  } finally {
-    isSubmitting.value = false;
-  }
+      try {
+        await api.submitNote(currentNoteId.value);
+        notesStatus.value = 'EN_ATTENTE';
+        success('Notes soumises avec succès ! Le censeur sera notifié.');
+      } catch (err) {
+        console.error('Erreur soumission notes:', err);
+        error('Erreur lors de la soumission des notes');
+      } finally {
+        isSubmitting.value = false;
+      }
+    }
+  );
 };
 
 const getStatusClass = (status) => {
@@ -676,15 +729,15 @@ const loadUnlockRequests = async () => {
     if (res.data.success) {
       unlockRequests.value = res.data.data;
     }
-  } catch (error) {
-    console.error('Erreur chargement demandes de déblocage:', error);
+  } catch (err) {
+    console.error('Erreur chargement demandes de déblocage:', err);
   }
 };
 
 // Submit unlock request
 const submitUnlockRequest = async () => {
   if (!unlockRequestMotif.value.trim()) {
-    alert('Veuillez saisir un motif pour votre demande');
+    warning('Veuillez saisir un motif pour votre demande');
     return;
   }
 
@@ -699,14 +752,14 @@ const submitUnlockRequest = async () => {
 
     const res = await api.createUnlockRequest(data);
     if (res.data.success) {
-      alert('Demande de déblocage envoyée avec succès');
+      success('Demande de déblocage envoyée avec succès');
       unlockRequestMotif.value = '';
       showUnlockRequestModal.value = false;
       await loadUnlockRequests();
     }
-  } catch (error) {
-    console.error('Erreur création demande:', error);
-    alert(error.response?.data?.error || 'Erreur lors de la création de la demande');
+  } catch (err) {
+    console.error('Erreur création demande:', err);
+    error(err.response?.data?.error || 'Erreur lors de la création de la demande');
   } finally {
     isSubmittingUnlockRequest.value = false;
   }

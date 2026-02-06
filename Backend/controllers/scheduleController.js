@@ -1,4 +1,5 @@
 const Schedule = require('../models/Schedule');
+const ClasseMatiere = require('../models/ClasseMatiere');
 
 // @desc    Get all schedules (with optional filters)
 // @route   GET /api/v1/schedules
@@ -40,7 +41,19 @@ exports.getSchedules = async (req, res) => {
 // @access  Private/Admin
 exports.createSchedule = async (req, res) => {
     try {
-        const { classe, matiere, professeur, jour, creneau, salle } = req.body;
+        let { classe, matiere, professeur, jour, creneau, salle } = req.body;
+
+        // Auto-assign professor if not provided
+        if (!professeur) {
+            const classeMatiere = await ClasseMatiere.findOne({
+                classe: classe,
+                matiere: matiere
+            });
+
+            if (classeMatiere && classeMatiere.professeur) {
+                professeur = classeMatiere.professeur;
+            }
+        }
 
         // 1. Check for Professor conflict (same prof, same day, same time)
         if (professeur) {
@@ -75,11 +88,24 @@ exports.createSchedule = async (req, res) => {
         }
 
         // 3. Create schedule
-        const schedule = await Schedule.create(req.body);
+        const schedule = await Schedule.create({
+            classe,
+            matiere,
+            professeur, // Used resolved professor
+            jour,
+            creneau,
+            salle
+        });
+
+        // 4. Populate for response
+        const populatedSchedule = await Schedule.findById(schedule._id)
+            .populate('classe', 'niveau section')
+            .populate('matiere', 'nom')
+            .populate('professeur', 'nom prenom');
 
         res.status(201).json({
             success: true,
-            data: schedule
+            data: populatedSchedule
         });
     } catch (err) {
         // Handle unique constraint (class/day/time)

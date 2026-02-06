@@ -6,9 +6,14 @@
           <h2 class="text-[#0e141b] dark:text-white text-4xl font-black leading-tight tracking-tight">Bonjour, Marc ! 👋</h2>
           <p class="text-[#4e7397] dark:text-slate-400 text-lg">Voici un aperçu de vos résultats et de votre emploi du temps.</p>
         </div>
-        <div class="flex items-center gap-3 bg-white dark:bg-[#1a242f] px-4 py-2 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700">
-          <span class="material-symbols-outlined text-slate-400">calendar_month</span>
-          <span class="text-sm font-semibold text-slate-600 dark:text-slate-300">Lundi, 22 Octobre 2023</span>
+        <div class="flex items-center gap-4">
+            <router-link to="/eleve/notifications" class="size-10 rounded-xl bg-white dark:bg-[#1a242f] flex items-center justify-center border border-slate-200 dark:border-slate-700 shadow-sm text-slate-500 hover:text-primary transition-colors">
+                <span class="material-symbols-outlined">notifications</span>
+            </router-link>
+            <div class="flex items-center gap-3 bg-white dark:bg-[#1a242f] px-4 py-2 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700">
+              <span class="material-symbols-outlined text-slate-400">calendar_month</span>
+              <span class="text-sm font-semibold text-slate-600 dark:text-slate-300">Lundi, 22 Octobre 2023</span>
+            </div>
         </div>
       </header>
       

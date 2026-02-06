@@ -384,11 +384,27 @@
       </form>
     </div>
   </div>
+
+  <!-- Confirmation Modal -->
+  <ConfirmationModal
+    :is-open="showConfirmModal"
+    :title="confirmModalTitle"
+    :message="confirmModalMessage"
+    :confirm-text="confirmModalActionText"
+    cancel-text="Annuler"
+    type="danger"
+    @confirm="executeConfirmAction"
+    @cancel="closeConfirmModal"
+  />
 </template>
 
 <script setup>
 import { ref, reactive, onMounted, computed } from 'vue'
 import api from '@/services/api'
+import { useToast } from '@/composables/useToast'
+import ConfirmationModal from '@/components/modals/ConfirmationModal.vue'
+
+const { success, error, warning } = useToast()
 
 // Données des filières et classes
 const filieres = reactive({
@@ -420,6 +436,13 @@ const courseForm = reactive({
   isNew: false,
   newNom: ''
 })
+
+// Confirmation Modal State
+const showConfirmModal = ref(false)
+const confirmModalTitle = ref('')
+const confirmModalMessage = ref('')
+const confirmModalActionText = ref('Confirmer')
+const pendingAction = ref(null)
 
 const matieresDisponibles = computed(() => {
   if (!availableMatieres.value) return []
@@ -458,14 +481,12 @@ const fetchClasses = async () => {
       }
     })
 
-  } catch (error) {
-    console.error('Erreur chargement classes:', error)
+  } catch (err) {
+    console.error('Erreur chargement classes:', err)
   } finally {
     isLoading.value = false
   }
 }
-
-// Redundant onMounted removed (merged with the one at the bottom)
 
 // Fonctions
 const getEffectifColor = (effectif, capaciteMax) => {
@@ -498,23 +519,49 @@ const editClass = async (classe) => {
   await fetchClasseCourses(classe.id)
 }
 
-const deleteClass = async (id, filiere) => {
-  if (confirm('Êtes-vous sûr de vouloir supprimer cette classe ?')) {
-    try {
-      await api.deleteClasse(id)
-      
-      // Map filiere name to object key (handle accent)
-      const filiereKey = filiere === 'Générale' ? 'Generale' : filiere
-      
-      const index = filieres[filiereKey].findIndex(c => c.id === id)
-      if (index > -1) {
-        filieres[filiereKey].splice(index, 1)
-      }
-    } catch (error) {
-       console.error('Erreur suppression:', error)
-       alert('Erreur lors de la suppression de la classe')
-    }
+const openConfirmModal = (title, message, actionText, action) => {
+  confirmModalTitle.value = title
+  confirmModalMessage.value = message
+  confirmModalActionText.value = actionText
+  pendingAction.value = action
+  showConfirmModal.value = true
+}
+
+const closeConfirmModal = () => {
+  showConfirmModal.value = false
+  pendingAction.value = null
+}
+
+const executeConfirmAction = async () => {
+  if (pendingAction.value) {
+    await pendingAction.value()
   }
+  closeConfirmModal()
+}
+
+const deleteClass = (id, filiere) => {
+  openConfirmModal(
+    'Supprimer la classe',
+    'Êtes-vous sûr de vouloir supprimer cette classe ? Cette action est irréversible.',
+    'Supprimer',
+    async () => {
+      try {
+        await api.deleteClasse(id)
+        
+        // Map filiere name to object key (handle accent)
+        const filiereKey = filiere === 'Générale' ? 'Generale' : filiere
+        
+        const index = filieres[filiereKey].findIndex(c => c.id === id)
+        if (index > -1) {
+          filieres[filiereKey].splice(index, 1)
+        }
+        success('Classe supprimée avec succès')
+      } catch (err) {
+         console.error('Erreur suppression:', err)
+         error('Erreur lors de la suppression de la classe')
+      }
+    }
+  )
 }
 
 const resetForm = () => {
@@ -547,15 +594,17 @@ const handleSubmit = async () => {
 
     if (editingClass.value) {
       await api.updateClasse(editingClass.value.id, payload)
+      success('Classe modifiée avec succès')
     } else {
       await api.createClasse(payload)
+      success('Classe créée avec succès')
     }
     
     await fetchClasses()
     resetForm()
-  } catch (error) {
-    console.error('Erreur sauvegarde:', error)
-    alert('Erreur lors de la sauvegarde de la classe')
+  } catch (err) {
+    console.error('Erreur sauvegarde:', err)
+    // Error handled by global interceptor
   }
 }
 
@@ -564,8 +613,8 @@ const fetchClasseCourses = async (classeId) => {
   try {
     const response = await api.getClasseMatieres(classeId)
     classCourses.value = Array.isArray(response.data.data) ? response.data.data : []
-  } catch (error) {
-    console.error('Erreur chargement cours:', error)
+  } catch (err) {
+    console.error('Erreur chargement cours:', err)
   }
 }
 
@@ -573,8 +622,8 @@ const fetchMatieres = async () => {
   try {
     const response = await api.getMatieres()
     availableMatieres.value = Array.isArray(response.data.data) ? response.data.data : []
-  } catch (error) {
-    console.error('Erreur chargement matières:', error)
+  } catch (err) {
+    console.error('Erreur chargement matières:', err)
   }
 }
 
@@ -589,11 +638,11 @@ const closeAddCourseModal = () => {
 const addCourseToClass = async () => {
   if (!editingClass.value) return
   if (!courseForm.isNew && !courseForm.matiereId) {
-    alert('Veuillez sélectionner une matière')
+    warning('Veuillez sélectionner une matière')
     return
   }
   if (courseForm.isNew && !courseForm.newNom) {
-    alert('Veuillez saisir le nom de la matière')
+    warning('Veuillez saisir le nom de la matière')
     return
   }
   
@@ -619,25 +668,32 @@ const addCourseToClass = async () => {
     })
     
     await fetchClasseCourses(editingClass.value.id)
+    success('Matière ajoutée à la classe')
     closeAddCourseModal()
-  } catch (error) {
-    console.error('Erreur ajout matière:', error)
-    alert(error.response?.data?.error || 'Erreur lors de l\'ajout de la matière')
+  } catch (err) {
+    console.error('Erreur ajout matière:', err)
+    // Error handled by global interceptor
   }
 }
 
-const removeCourse = async (courseId) => {
+const removeCourse = (courseId) => {
   if (!editingClass.value) return
   
-  if (confirm('Êtes-vous sûr de vouloir retirer cette matière de la classe ?')) {
-    try {
-      await api.removeMatiereFromClasse(editingClass.value.id, courseId)
-      await fetchClasseCourses(editingClass.value.id)
-    } catch (error) {
-      console.error('Erreur suppression matière:', error)
-      alert('Erreur lors de la suppression de la matière')
+  openConfirmModal(
+    'Retirer la matière',
+    'Êtes-vous sûr de vouloir retirer cette matière de la classe ?',
+    'Retirer',
+    async () => {
+      try {
+        await api.removeMatiereFromClasse(editingClass.value.id, courseId)
+        await fetchClasseCourses(editingClass.value.id)
+        success('Matière retirée de la classe')
+      } catch (err) {
+        console.error('Erreur suppression matière:', err)
+        error('Erreur lors de la suppression de la matière')
+      }
     }
-  }
+  )
 }
 
 onMounted(() => {

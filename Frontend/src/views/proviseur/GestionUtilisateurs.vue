@@ -105,7 +105,7 @@
                       <span class="material-symbols-outlined text-lg">edit</span>
                     </button>
                     <button 
-                      @click="deleteUser(user._id)"
+                      @click="deleteUser(user)"
                       class="p-1 hover:text-red-500 transition-colors ml-2"
                       title="Supprimer"
                     >
@@ -225,12 +225,27 @@
         </div>
       </div>
     </div>
+    <!-- Confirmation Modal -->
+    <ConfirmationModal
+      :is-open="showDeleteModal"
+      title="Supprimer l'utilisateur"
+      :message="`Êtes-vous sûr de vouloir supprimer ${userToDelete?.prenom} ${userToDelete?.nom} ? Cette action est irréversible.`"
+      confirm-text="Supprimer"
+      cancel-text="Annuler"
+      type="danger"
+      @confirm="confirmDelete"
+      @cancel="closeDeleteModal"
+    />
   </div>
 </template>
 
 <script setup>
 import { ref, reactive, onMounted, computed } from 'vue'
 import api from '@/services/api'
+import { useToast } from '@/composables/useToast'
+import ConfirmationModal from '@/components/modals/ConfirmationModal.vue'
+
+const { success, error } = useToast()
 
 const professeurs = ref([])
 const censeurs = ref([])
@@ -239,6 +254,10 @@ const isLoading = ref(false)
 const isSaving = ref(false)
 const editingUser = ref(null)
 const activeRole = ref('PROFESSEUR')
+
+// Delete Modal State
+const showDeleteModal = ref(false)
+const userToDelete = ref(null)
 
 const form = reactive({
   role: 'PROFESSEUR',
@@ -272,7 +291,7 @@ const fetchUsers = async () => {
           ...prof,
           classePrincipale: mainClass ? `${mainClass.niveau} ${mainClass.section}` : null
         }
-      } catch (error) {
+      } catch (err) {
         return { ...prof, classePrincipale: null }
       }
     }))
@@ -280,8 +299,9 @@ const fetchUsers = async () => {
     // Fetch censeurs
     const censeurRes = await api.getUsers({ role: 'CENSEUR' })
     censeurs.value = Array.isArray(censeurRes.data.data) ? censeurRes.data.data : []
-  } catch (error) {
-    console.error('Erreur chargement utilisateurs:', error)
+  } catch (err) {
+    console.error('Erreur chargement utilisateurs:', err)
+    error('Erreur lors du chargement des utilisateurs')
     professeurs.value = []
     censeurs.value = []
   } finally {
@@ -293,9 +313,8 @@ const fetchClasses = async () => {
   try {
     const res = await api.getClasses()
     classes.value = Array.isArray(res.data.data) ? res.data.data : []
-  } catch (error) {
-    console.error('Erreur chargement classes:', error)
-    classes.value = []
+  } catch (err) {
+    console.error('Erreur chargement classes:', err)
   }
 }
 
@@ -320,16 +339,28 @@ const editUser = (user) => {
   }
 }
 
-const deleteUser = async (id) => {
-  if (!confirm('Êtes-vous sûr de vouloir supprimer cet utilisateur ?')) return
+const deleteUser = (user) => {
+  // Instead of confirm(), open the modal
+  userToDelete.value = user
+  showDeleteModal.value = true
+}
+
+const closeDeleteModal = () => {
+  showDeleteModal.value = false
+  userToDelete.value = null
+}
+
+const confirmDelete = async () => {
+  if (!userToDelete.value) return
   
   try {
-    await api.deleteUser(id)
+    await api.deleteUser(userToDelete.value._id) // Changed from _id to user object passed in deleteUser
     await fetchUsers()
-    alert('Utilisateur supprimé avec succès')
-  } catch (error) {
-    console.error('Erreur suppression:', error)
-    alert('Erreur lors de la suppression de l\'utilisateur')
+    success('Utilisateur supprimé avec succès')
+    closeDeleteModal()
+  } catch (err) {
+    console.error('Erreur suppression:', err)
+    error('Erreur lors de la suppression de l\'utilisateur')
   }
 }
 
@@ -390,10 +421,10 @@ const handleSubmit = async () => {
     await fetchUsers()
     await fetchClasses()
     resetForm()
-    alert(editingUser.value ? 'Utilisateur modifié avec succès' : 'Utilisateur créé avec succès')
-  } catch (error) {
-    console.error('Erreur sauvegarde:', error)
-    alert(error.response?.data?.error || 'Erreur lors de la sauvegarde de l\'utilisateur')
+    success(editingUser.value ? 'Utilisateur modifié avec succès' : 'Utilisateur créé avec succès')
+  } catch (err) {
+    console.error('Erreur sauvegarde:', err)
+    // Error is handled by global interceptor now, but we keep this as fallback or additional log
   } finally {
     isSaving.value = false
   }

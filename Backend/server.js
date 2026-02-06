@@ -52,6 +52,7 @@ const notes = require('./routes/notes');
 const bulletins = require('./routes/bulletins');
 const noteColumns = require('./routes/noteColumns');
 const unlockRequests = require('./routes/unlockRequests');
+const parentRoutes = require('./routes/parentRoutes');
 
 // Mount routers
 app.use('/api/v1/auth', authRoutes);
@@ -73,6 +74,7 @@ app.use('/api/v1/notes', notes);
 app.use('/api/v1/bulletins', bulletins);
 app.use('/api/v1/note-columns', noteColumns);
 app.use('/api/v1/unlock-requests', unlockRequests);
+app.use('/api/v1/parents', parentRoutes);
 
 // Error Handler Middleware
 const errorHandler = require('./middleware/error');

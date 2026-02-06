@@ -171,10 +171,11 @@
 
 <script setup>
 import { ref, onMounted, computed } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRouter, useRoute } from 'vue-router'
 import api from '@/services/api'
 
 const router = useRouter()
+const route = useRoute()
 
 const form = ref({
   prenom: '',
@@ -271,8 +272,8 @@ const handleSubmit = async () => {
       alert('✅ Utilisateur créé avec succès !')
     }
     
-    // Redirect back to users list
-    router.push('/admin/utilisateurs')
+    // Redirect back to users list based on role
+    router.back()
   } catch (error) {
     console.error('Erreur création utilisateur:', error)
     errorMessage.value = error.response?.data?.error || 'Erreur lors de la création de l\'utilisateur'
@@ -283,5 +284,13 @@ const handleSubmit = async () => {
 
 onMounted(() => {
   fetchData()
+  
+  // Check for role in query params
+  if (route.query.role) {
+      const allowedRoles = ['ADMIN', 'PROFESSEUR', 'ELEVE', 'PARENT', 'CENSEUR', 'CPE', 'PROVISEUR', 'SECRETAIRE']
+      if (allowedRoles.includes(route.query.role)) {
+          form.value.role = route.query.role
+      }
+  }
 })
 </script>

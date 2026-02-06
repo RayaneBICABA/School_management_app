@@ -29,6 +29,11 @@
           <p class="text-sm" :class="isActive('ProviseurClasses') ? 'font-semibold' : 'font-medium'">Classes & Filières</p>
         </router-link>
 
+        <router-link to="/proviseur/emploi-temps" class="flex items-center gap-3 px-4 py-3 rounded-xl transition-colors" :class="isActive('ProviseurEmploiTemps') ? 'active-nav' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800'">
+          <span class="material-symbols-outlined" :class="isActive('ProviseurEmploiTemps') ? 'text-primary' : ''">calendar_month</span>
+          <p class="text-sm" :class="isActive('ProviseurEmploiTemps') ? 'font-semibold' : 'font-medium'">Emploi du Temps</p>
+        </router-link>
+
         <router-link to="/proviseur/affectation-eleves" class="flex items-center gap-3 px-4 py-3 rounded-xl transition-colors" :class="isActive('ProviseurAffectationEleves') ? 'active-nav' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800'">
           <span class="material-symbols-outlined" :class="isActive('ProviseurAffectationEleves') ? 'text-primary' : ''">assignment_ind</span>
           <p class="text-sm" :class="isActive('ProviseurAffectationEleves') ? 'font-semibold' : 'font-medium'">Affectation des élèves</p>

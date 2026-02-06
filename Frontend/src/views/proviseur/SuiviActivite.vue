@@ -167,12 +167,29 @@
         </div>
       </div>
     </div>
+
+
+    <!-- Confirmation Modal -->
+    <ConfirmationModal
+      :is-open="showConfirmModal"
+      :title="confirmModalTitle"
+      :message="confirmModalMessage"
+      :confirm-text="confirmModalActionText"
+      :cancel-text="confirmModalCancelText"
+      :type="confirmModalType"
+      @confirm="executeConfirmAction"
+      @cancel="closeConfirmModal"
+    />
   </div>
 </template>
 
 <script setup>
 import { ref, onMounted } from 'vue'
 import api from '@/services/api'
+import { useToast } from '@/composables/useToast'
+import ConfirmationModal from '@/components/modals/ConfirmationModal.vue'
+
+const { success, error, info } = useToast()
 
 const searchQuery = ref('')
 const isLoading = ref(true)
@@ -183,8 +200,16 @@ const kpis = ref({
 })
 
 const enseignants = ref([])
-
 const alertes = ref([])
+
+// Modal state
+const showConfirmModal = ref(false)
+const confirmModalTitle = ref('')
+const confirmModalMessage = ref('')
+const confirmModalActionText = ref('Confirmer')
+const confirmModalCancelText = ref('Annuler')
+const confirmModalType = ref('info')
+const pendingAction = ref(null)
 
 const fetchData = async () => {
   try {
@@ -208,26 +233,23 @@ const fetchData = async () => {
     
     // Map professors with their data
     enseignants.value = professors.map((prof) => {
-      console.log('Processing professor:', prof.prenom, prof.nom)
+      // ... mapping logic (summarized for brevity if unmodified) ...
+      // Assuming mapping logic is unchanged, I will just copy it or keep it as is.
+      // Since replace_file_content replaces the whole block, I must include the logic.
       
-      // Get professor's assignments
+      // ... (Re-implementing mapping logic to be safe) ...
       const profAssignments = assignments.filter(a => {
         const profId = a.professeur?._id || a.professeur
         const match = profId === prof._id || profId?.toString() === prof._id?.toString()
         return match
       })
-      console.log(`  - Assignments: ${profAssignments.length}`)
       
-      // Get unique subjects and classes
       const subjects = [...new Set(profAssignments.map(a => a.matiere?.nom || 'N/A'))]
       const classes = [...new Set(profAssignments.map(a => {
         const classe = a.classe
         return classe ? `${classe.niveau} ${classe.section}` : 'N/A'
       }))]
-      console.log(`  - Subjects: ${subjects.join(', ')}`)
-      console.log(`  - Classes: ${classes.join(', ')}`)
       
-      // Get Censeur-validated evaluations for this professor
       const validatedEvals = allEvaluations.filter(e => {
         const evalProfId = e.professeur?._id || e.professeur
         const match = (evalProfId === prof._id || evalProfId?.toString() === prof._id?.toString()) && 
@@ -235,7 +257,6 @@ const fetchData = async () => {
         return match
       })
       
-      // Calculate completude (percentage of validated grades)
       const totalEvals = allEvaluations.filter(e => {
         const evalProfId = e.professeur?._id || e.professeur
         return evalProfId === prof._id || evalProfId?.toString() === prof._id?.toString()
@@ -243,11 +264,8 @@ const fetchData = async () => {
       const completude = totalEvals.length > 0 
         ? Math.round((validatedEvals.length / totalEvals.length) * 100) 
         : 0
-      console.log(`  - Completude: ${completude}% (${validatedEvals.length}/${totalEvals.length})`)
       
-      // Count scheduled evaluations (validated and in calendar)
       const scheduledEvals = validatedEvals.filter(e => e.date).length
-      console.log(`  - Scheduled: ${scheduledEvals}`)
       
       return {
         id: prof._id,
@@ -259,8 +277,6 @@ const fetchData = async () => {
         evaluations: scheduledEvals
       }
     })
-    
-    console.log('Final enseignants:', enseignants.value)
     
     // Calculate KPIs
     const totalCompletude = enseignants.value.reduce((sum, e) => sum + e.completude, 0)
@@ -275,9 +291,7 @@ const fetchData = async () => {
       evaluationsPrevues: totalScheduled
     }
     
-    console.log('KPIs:', kpis.value)
-    
-    // Fetch notifications for alerts
+    // Fetch notifications
     const notifRes = await api.getNotifications()
     alertes.value = notifRes.data.data.slice(0, 5).map(n => ({
       id: n._id,
@@ -287,9 +301,8 @@ const fetchData = async () => {
       icon: n.type === 'urgent' ? 'error' : 'info'
     }))
     
-  } catch (error) {
-    console.error('Erreur chargement suivi activité:', error)
-    console.error('Error details:', error.response?.data || error.message)
+  } catch (err) {
+    console.error('Erreur chargement suivi activité:', err)
   } finally {
     isLoading.value = false
   }
@@ -309,10 +322,43 @@ const exportCSV = () => {
   link.download = `activite_enseignante_${new Date().toISOString().split('T')[0]}.csv`
   link.click()
   URL.revokeObjectURL(url)
+  success('Export CSV réussi')
+}
+
+const openConfirmModal = (title, message, actionText, action, type = 'info', cancelText = 'Annuler') => {
+  confirmModalTitle.value = title
+  confirmModalMessage.value = message
+  confirmModalActionText.value = actionText
+  confirmModalCancelText.value = cancelText
+  confirmModalType.value = type
+  pendingAction.value = action
+  showConfirmModal.value = true
+}
+
+const closeConfirmModal = () => {
+  showConfirmModal.value = false
+  pendingAction.value = null
+}
+
+const executeConfirmAction = async () => {
+  if (pendingAction.value) {
+    await pendingAction.value()
+  }
+  closeConfirmModal()
 }
 
 const viewDetails = (enseignant) => {
-  alert(`Détails de ${enseignant.nom}:\n\nMatière(s): ${enseignant.matiere}\nClasse(s): ${enseignant.classes}\nComplétude: ${enseignant.completude}%\nÉvaluations planifiées: ${enseignant.evaluations}`)
+  openConfirmModal(
+    `Détails de ${enseignant.nom}`,
+    `Matière(s): ${enseignant.matiere}\nClasse(s): ${enseignant.classes}\nComplétude: ${enseignant.completude}%\nÉvaluations planifiées: ${enseignant.evaluations}`,
+    'Fermer',
+    () => {},
+    'info',
+    'Fermer'
+  )
+  // Hack to ensure logic works as "OK" closing it.
+  confirmModalActionText.value = 'OK'
+  confirmModalCancelText.value = 'Fermer'
 }
 
 onMounted(() => {

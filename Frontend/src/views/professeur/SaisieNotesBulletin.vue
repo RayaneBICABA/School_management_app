@@ -168,10 +168,86 @@
   </div>
 </template>
 
+    <!-- Modal Demande de Déblocage -->
+    <div v-if="showUnlockRequestModal" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+      <div class="bg-white dark:bg-slate-900 rounded-xl max-w-lg w-full shadow-2xl">
+        <div class="p-6 border-b border-slate-200 dark:border-slate-800">
+          <div class="flex justify-between items-center">
+            <h2 class="text-2xl font-bold text-[#0e141b] dark:text-white">Demande de Déblocage</h2>
+            <button @click="showUnlockRequestModal = false" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200">
+              <span class="material-symbols-outlined">close</span>
+            </button>
+          </div>
+        </div>
+        
+        <div class="p-6 space-y-4">
+          <div class="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
+            <div class="flex items-start gap-3">
+              <span class="material-symbols-outlined text-blue-600 dark:text-blue-400">info</span>
+              <div class="text-sm text-blue-900 dark:text-blue-100">
+                <p class="font-bold mb-1">Informations de la demande</p>
+                <p><strong>Classe:</strong> {{ classes.find(c => c._id === selectedClasse)?.niveau }} {{ classes.find(c => c._id === selectedClasse)?.section }}</p>
+                <p><strong>Matière:</strong> {{ matieres.find(m => m._id === selectedMatiere)?.nom }}</p>
+                <p><strong>Période:</strong> {{ selectedPeriode }}</p>
+              </div>
+            </div>
+          </div>
+
+          <div>
+            <label class="block text-sm font-bold text-[#0e141b] dark:text-white mb-2">
+              Motif de la demande <span class="text-red-500">*</span>
+            </label>
+            <textarea 
+              v-model="unlockRequestMotif"
+              rows="4"
+              class="w-full px-4 py-3 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-[#0e141b] dark:text-white focus:ring-2 focus:ring-primary focus:border-transparent resize-none"
+              placeholder="Expliquez pourquoi vous avez besoin d'un déblocage (ex: erreur de saisie, note manquante, etc.)"
+            ></textarea>
+            <p class="text-xs text-slate-500 mt-1">Maximum 500 caractères</p>
+          </div>
+        </div>
+
+        <div class="p-6 border-t border-slate-200 dark:border-slate-800 flex justify-end gap-3">
+          <button 
+            @click="showUnlockRequestModal = false"
+            class="px-6 py-2 rounded-lg font-bold text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+          >
+            Annuler
+          </button>
+          <button 
+            @click="submitUnlockRequest"
+            :disabled="isSubmittingUnlockRequest || !unlockRequestMotif.trim()"
+            class="px-6 py-2 bg-primary text-white rounded-lg font-bold hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+          >
+            <span class="material-symbols-outlined">send</span>
+            {{ isSubmittingUnlockRequest ? 'Envoi...' : 'Envoyer la demande' }}
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Confirmation Modal -->
+    <ConfirmationModal
+      :is-open="showConfirmModal"
+      :title="confirmModalTitle"
+      :message="confirmModalMessage"
+      :confirm-text="confirmModalActionText"
+      :cancel-text="confirmModalCancelText"
+      :type="confirmModalType"
+      @confirm="executeConfirmAction"
+      @cancel="closeConfirmModal"
+    />
+  </div>
+</template>
+
 <script setup>
 import { ref, onMounted, computed } from 'vue';
 import api from '@/services/api';
 import AjouterEvaluationModal from '@/components/modals/AjouterEvaluationModal.vue';
+import { useToast } from '@/composables/useToast';
+import ConfirmationModal from '@/components/modals/ConfirmationModal.vue';
+
+const { success, error, warning } = useToast();
 
 const classes = ref([]);
 const matieres = ref([]);
@@ -188,14 +264,23 @@ const isLoading = ref(false);
 const isSaving = ref(false);
 const showAddEvalModal = ref(false);
 
+// Modal state
+const showConfirmModal = ref(false);
+const confirmModalTitle = ref('');
+const confirmModalMessage = ref('');
+const confirmModalActionText = ref('Confirmer');
+const confirmModalCancelText = ref('Annuler');
+const confirmModalType = ref('info');
+const pendingAction = ref(null);
+
 const loadClasses = async () => {
   try {
     const res = await api.getClasses();
     if (res.data.success) {
       classes.value = res.data.data;
     }
-  } catch (error) {
-    console.error('Erreur chargement classes:', error);
+  } catch (err) {
+    console.error('Erreur chargement classes:', err);
   }
 };
 
@@ -205,8 +290,8 @@ const loadMatieres = async () => {
     if (res.data.success) {
       matieres.value = res.data.data;
     }
-  } catch (error) {
-    console.error('Erreur chargement matières:', error);
+  } catch (err) {
+    console.error('Erreur chargement matières:', err);
   }
 };
 
@@ -286,8 +371,8 @@ const loadData = async () => {
 
     notesData.value = tempNotesData;
 
-  } catch (error) {
-    console.error('Erreur chargement données:', error);
+  } catch (err) {
+    console.error('Erreur chargement données:', err);
   } finally {
     isLoading.value = false;
   }
@@ -349,28 +434,53 @@ const saveAllNotes = async () => {
       }
     }
 
-    alert('Notes enregistrées avec succès !');
-  } catch (error) {
-    console.error('Erreur sauvegarde notes:', error);
-    alert('Erreur lors de l\'enregistrement des notes');
+    success('Notes enregistrées avec succès !');
+  } catch (err) {
+    console.error('Erreur sauvegarde notes:', err);
+    error('Erreur lors de l\'enregistrement des notes');
   } finally {
     isSaving.value = false;
   }
 };
 
-const deleteEvaluation = async (evalId) => {
-  if (!confirm('Supprimer cette évaluation ? Toutes les notes associées seront supprimées.')) {
-    return;
-  }
+const openConfirmModal = (title, message, actionText, action, type = 'info', cancelText = 'Annuler') => {
+  confirmModalTitle.value = title;
+  confirmModalMessage.value = message;
+  confirmModalActionText.value = actionText;
+  confirmModalCancelText.value = cancelText;
+  confirmModalType.value = type;
+  pendingAction.value = action;
+  showConfirmModal.value = true;
+};
 
-  try {
-    await api.deleteNoteColumn(evalId);
-    alert('Évaluation supprimée avec succès !');
-    loadData();
-  } catch (error) {
-    console.error('Erreur suppression évaluation:', error);
-    alert('Erreur lors de la suppression de l\'évaluation');
+const closeConfirmModal = () => {
+  showConfirmModal.value = false;
+  pendingAction.value = null;
+};
+
+const executeConfirmAction = async () => {
+  if (pendingAction.value) {
+    await pendingAction.value();
   }
+  closeConfirmModal();
+};
+
+const deleteEvaluation = (evalId) => {
+  openConfirmModal(
+    'Supprimer évaluation',
+    'Supprimer cette évaluation ? Toutes les notes associées seront supprimées.',
+    'Supprimer',
+    async () => {
+      try {
+        await api.deleteNoteColumn(evalId);
+        success('Évaluation supprimée avec succès !');
+        loadData();
+      } catch (err) {
+        console.error('Erreur suppression évaluation:', err);
+        error('Erreur lors de la suppression de l\'évaluation');
+      }
+    }
+  );
 };
 
 const onEvaluationCreated = () => {

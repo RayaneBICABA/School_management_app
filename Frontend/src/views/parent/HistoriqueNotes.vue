@@ -7,14 +7,22 @@
         <p class="text-sm text-slate-500 dark:text-slate-400">Suivez l'évolution académique en temps réel.</p>
       </div>
       <div class="flex items-center gap-4">
+      <div class="flex items-center gap-4">
+        <!-- Child Selector -->
+        <div v-if="children.length > 0" class="relative">
+             <select v-model="selectedChildId" class="appearance-none bg-slate-100 dark:bg-slate-800 border-none rounded-xl px-4 py-2 pr-10 font-bold text-sm focus:ring-2 focus:ring-primary/20 cursor-pointer text-[#0e141b] dark:text-white">
+                 <option v-for="child in children" :key="child._id" :value="child._id">
+                     {{ child.prenom }} {{ child.nom }}
+                 </option>
+             </select>
+             <span class="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-slate-500 text-lg">expand_more</span>
+        </div>
         <div class="flex items-center gap-2">
           <button class="size-10 flex items-center justify-center rounded-lg bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-50 border border-slate-200 dark:border-slate-700">
             <span class="material-symbols-outlined">notifications</span>
           </button>
-          <button class="size-10 flex items-center justify-center rounded-lg bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-50 border border-slate-200 dark:border-slate-700">
-            <span class="material-symbols-outlined">settings</span>
-          </button>
         </div>
+      </div>
       </div>
     </header>
 
@@ -25,16 +33,15 @@
           <p class="text-slate-500 dark:text-slate-400 text-sm font-medium">Moyenne Générale</p>
           <div class="flex items-baseline gap-2">
             <p class="text-3xl font-black text-primary">{{ stats.average }}<span class="text-sm text-slate-400">/20</span></p>
-            <span class="text-xs font-bold text-green-600 bg-green-50 px-1.5 py-0.5 rounded">{{ stats.averageTrend }}</span>
           </div>
         </div>
         <div class="flex flex-col gap-2 rounded-xl p-6 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-sm">
-          <p class="text-slate-500 dark:text-slate-400 text-sm font-medium">Rang de la classe</p>
-          <p class="text-3xl font-black">{{ stats.rank }}<span class="text-sm text-slate-400 font-normal ml-2">sur {{ stats.totalStudents }} élèves</span></p>
+          <p class="text-slate-500 dark:text-slate-400 text-sm font-medium">Note la plus basse</p>
+           <p class="text-3xl font-black text-red-500">{{ stats.lowest }}<span class="text-sm text-slate-400 font-normal ml-2">/ 20</span></p>
         </div>
         <div class="flex flex-col gap-2 rounded-xl p-6 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-sm">
           <p class="text-slate-500 dark:text-slate-400 text-sm font-medium">Évaluations totales</p>
-          <p class="text-3xl font-black">{{ stats.totalEvaluations }}<span class="text-sm text-slate-400 font-normal ml-2">ce trimestre</span></p>
+          <p class="text-3xl font-black">{{ stats.totalEvaluations }}<span class="text-sm text-slate-400 font-normal ml-2">notes</span></p>
         </div>
       </div>
     </div>
@@ -42,27 +49,24 @@
     <!-- Filters -->
     <div class="px-8 py-6">
       <div class="flex items-center gap-3 overflow-x-auto pb-2 scrollbar-hide">
-        <button @click="selectedSubject = 'all'" class="flex h-10 shrink-0 items-center justify-center gap-2 rounded-lg bg-primary text-white px-4 text-sm font-semibold">
-          <span class="material-symbols-outlined text-sm">apps</span>
-          Toutes les matières
+        <button @click="selectedPeriod = 'all'" class="flex h-10 shrink-0 items-center justify-center gap-2 rounded-lg px-4 text-sm font-bold transition-all" :class="selectedPeriod === 'all' ? 'bg-primary text-white shadow-md shadow-primary/20' : 'bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:border-primary'">
+          Toutes les périodes
         </button>
-        <button v-for="subject in subjects" :key="subject.id" @click="selectedSubject = subject.id" class="flex h-10 shrink-0 items-center justify-center gap-2 rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 px-4 text-sm font-medium hover:bg-slate-50 transition-colors" :class="{ 'bg-primary text-white': selectedSubject === subject.id }">
-          <span class="material-symbols-outlined text-[18px]" :class="getSubjectIcon(subject.id)"></span>
-          {{ subject.name }}
-          <span class="material-symbols-outlined text-[18px]" :class="selectedSubject === subject.id ? 'expand_less' : 'expand_more'"></span>
-        </button>
-        <div class="h-6 w-px bg-slate-200 dark:bg-slate-700 mx-2"></div>
-        <button @click="selectedTrimester = '1'" class="flex h-10 shrink-0 items-center justify-center gap-2 rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 px-4 text-sm font-medium hover:bg-slate-50 transition-colors">
-          <span class="material-symbols-outlined text-sm">calendar_month</span>
-          {{ getTrimesterLabel(selectedTrimester) }}
-          <span class="material-symbols-outlined text-[18px] expand_more"></span>
+        <button v-for="p in periods" :key="p" @click="selectedPeriod = p" class="flex h-10 shrink-0 items-center justify-center gap-2 rounded-lg px-4 text-sm font-medium transition-all" :class="selectedPeriod === p ? 'bg-primary text-white shadow-md shadow-primary/20' : 'bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:border-primary'">
+          {{ p }}
         </button>
       </div>
     </div>
 
     <!-- Grades List -->
     <div class="px-8 pb-12">
-      <div class="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 overflow-hidden shadow-sm">
+      <div v-if="isLoading" class="py-12 text-center">
+          <span class="material-symbols-outlined animate-spin text-4xl text-primary">sync</span>
+      </div>
+      <div v-else-if="filteredNotes.length === 0" class="py-12 text-center bg-white dark:bg-slate-800 rounded-xl border border-dashed border-slate-200">
+          <p class="text-slate-500">Aucune note trouvée pour cette sélection.</p>
+      </div>
+      <div v-else class="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 overflow-hidden shadow-sm">
         <table class="w-full text-left border-collapse">
           <thead class="bg-slate-50 dark:bg-slate-900/50 border-b border-slate-200 dark:border-slate-700">
             <tr>
@@ -71,174 +75,128 @@
               <th class="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Évaluation</th>
               <th class="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Note /20</th>
               <th class="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Coeff.</th>
-              <th class="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Moy. Classe</th>
-              <th class="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider text-right">Détails</th>
+              <th class="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Période</th>
             </tr>
           </thead>
           <tbody class="divide-y divide-slate-100 dark:divide-slate-700">
-            <tr v-for="grade in filteredGrades" :key="grade.id" class="hover:bg-slate-50 dark:hover:bg-slate-900/40 transition-colors">
+            <tr v-for="grade in filteredNotes" :key="grade._id" class="hover:bg-slate-50 dark:hover:bg-slate-900/40 transition-colors">
               <td class="px-6 py-4 text-sm font-medium">{{ grade.date }}</td>
               <td class="px-6 py-4">
-                <div class="flex items-center gap-2">
-                  <div class="size-7 rounded flex items-center justify-center" :class="getSubjectColor(grade.subject)">
-                    <span class="material-symbols-outlined text-sm">{{ getSubjectIcon(grade.subject) }}</span>
-                  </div>
-                  <span class="text-sm font-semibold">{{ grade.subject }}</span>
-                </div>
+                  <span class="text-sm font-bold">{{ grade.subjectName }}</span>
               </td>
-              <td class="px-6 py-4 text-sm text-slate-500 dark:text-slate-400">{{ grade.evaluation }}</td>
+              <td class="px-6 py-4 text-sm text-slate-500 dark:text-slate-400">{{ grade.evalTitle }}</td>
               <td class="px-6 py-4">
                 <span class="text-base font-bold" :class="getGradeColor(grade.note)">{{ grade.note }}</span>
               </td>
-              <td class="px-6 py-4 text-sm">{{ grade.coefficient }}</td>
-              <td class="px-6 py-4 text-sm text-slate-500 dark:text-slate-400">{{ grade.classAverage }}</td>
-              <td class="px-6 py-4 text-right">
-                <button @click="viewDetails(grade)" class="text-slate-500 hover:text-primary transition-colors">
-                  <span class="material-symbols-outlined">visibility</span>
-                </button>
-              </td>
+              <td class="px-6 py-4 text-sm font-medium">{{ grade.coefficient }}</td>
+              <td class="px-6 py-4 text-sm text-slate-500 dark:text-slate-400">{{ grade.periode }}</td>
             </tr>
           </tbody>
         </table>
-        
-        <!-- Pagination-like footer -->
-        <div class="px-6 py-4 bg-slate-50 dark:bg-slate-900/50 border-t border-slate-200 dark:border-slate-700 flex items-center justify-between">
-          <p class="text-xs text-slate-400 font-medium">Affichage de {{ currentPage }} sur {{ totalPages }} évaluations</p>
-          <div class="flex gap-2">
-            <button @click="previousPage" :disabled="currentPage === 1" class="px-3 py-1.5 text-xs font-bold rounded border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 disabled:opacity-50">Précédent</button>
-            <button v-for="page in visiblePages" :key="page" @click="currentPage = page" class="px-3 py-1.5 text-xs font-bold rounded border" :class="page === currentPage ? 'border-primary bg-primary text-white' : 'border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800'">
-              {{ page }}
-            </button>
-            <button @click="nextPage" :disabled="currentPage === totalPages" class="px-3 py-1.5 text-xs font-bold rounded border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 disabled:opacity-50">Suivant</button>
-          </div>
-        </div>
       </div>
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
+import api from '@/services/api'
 
-// Données réactives
-const selectedSubject = ref('all')
-const selectedTrimester = ref('1')
-const currentPage = ref(1)
+// State
+const children = ref([])
+const selectedChildId = ref(null)
+const notes = ref([])
+const isLoading = ref(false)
 
-// Statistiques
-const stats = ref({
-  average: '14.5',
-  averageTrend: '+0.5',
-  rank: '5ème',
-  totalStudents: 28,
-  totalEvaluations: 24
-})
+const selectedPeriod = ref('all')
+const periods = ref([])
 
-// Matières disponibles
-const subjects = ref([
-  { id: 'math', name: 'Mathématiques', icon: 'functions' },
-  { id: 'french', name: 'Français', icon: 'history_edu' },
-  { id: 'history', name: 'Histoire-Géo', icon: 'public' },
-  { id: 'english', name: 'Anglais', icon: 'translate' }
-])
+// Stats
+const stats = computed(() => {
+    if (!notes.value.length) return { average: '-', totalEvaluations: 0, highest: '-', lowest: '-' };
+    
+    // Calculate global average respecting coefficients
+    const totalPoints = notes.value.reduce((acc, n) => acc + (n.note * n.coefficient), 0);
+    const totalCoefs = notes.value.reduce((acc, n) => acc + n.coefficient, 0);
+    const avg = totalCoefs ? (totalPoints / totalCoefs).toFixed(2) : '-';
+    
+    const grades = notes.value.map(n => n.note);
+    
+    return {
+        average: avg,
+        totalEvaluations: notes.value.length,
+        highest: Math.max(...grades),
+        lowest: Math.min(...grades)
+    };
+});
 
-// Notes des élèves
-const grades = ref([
-  {
-    id: 1,
-    date: '12 Oct 2023',
-    subject: 'math',
-    evaluation: 'Contrôle N°2: Géométrie',
-    note: 16.5,
-    coefficient: 4.0,
-    classAverage: 12.2,
-    details: 'Excellent travail sur les démonstrations géométriques'
-  },
-  {
-    id: 2,
-    date: '10 Oct 2023',
-    subject: 'french',
-    evaluation: 'Dissertation: Victor Hugo',
-    note: 14.0,
-    coefficient: 3.0,
-    classAverage: 13.5,
-    details: 'Analyse pertinente des personnages'
-  },
-  {
-    id: 3,
-    date: '05 Oct 2023',
-    subject: 'history',
-    evaluation: 'Interrogation: La Guerre Froide',
-    note: 9.5,
-    coefficient: 2.0,
-    classAverage: 10.8,
-    details: 'Révision nécessaire sur la chronologie'
-  },
-  {
-    id: 4,
-    date: '28 Sep 2023',
-    subject: 'english',
-    evaluation: 'Compréhension Orale',
-    note: 18.0,
-    coefficient: 2.0,
-    classAverage: 14.1,
-    details: 'Très bonne expression orale'
-  },
-  {
-    id: 5,
-    date: '25 Sep 2023',
-    subject: 'math',
-    evaluation: 'Contrôle N°1: Algèbre',
-    note: 15.0,
-    coefficient: 4.0,
-    classAverage: 11.9,
-    details: 'Bon niveau général, peut encore progresser'
-  }
-])
+// Computed
+const filteredNotes = computed(() => {
+    let res = notes.value;
+    if (selectedPeriod.value !== 'all') {
+        res = res.filter(n => n.periode === selectedPeriod.value);
+    }
+    return res;
+});
 
-// Computed properties
-const filteredGrades = computed(() => {
-  if (selectedSubject.value === 'all') {
-    return grades.value
-  }
-  return grades.value.filter(grade => grade.subject === selectedSubject.value)
-})
+// Fetch Data
+const fetchChildren = async () => {
+    try {
+        const res = await api.getChildren();
+        children.value = res.data.data;
+        if (children.value.length > 0) {
+            selectedChildId.value = children.value[0]._id;
+            fetchNotes(); // Initial fetch
+        }
+    } catch (e) {
+        console.error(e);
+    }
+};
 
-const totalPages = computed(() => {
-  return Math.ceil(filteredGrades.value.length / 5)
-})
+const fetchNotes = async () => {
+    if (!selectedChildId.value) return;
+    
+    isLoading.value = true;
+    try {
+        const res = await api.getNotes({ 
+            eleve: selectedChildId.value, 
+            statut: 'VALIDEE' 
+        });
+        
+        // Enrich notes
+        notes.value = res.data.data.map(n => ({
+            ...n,
+            subjectName: n.matiere?.nom || 'Matière inconnue',
+            evalTitle: n.periode || 'Évaluation',
+            coefficient: n.matiere?.coefficient || 1,
+            note: n.moyenne !== undefined ? parseFloat(n.moyenne.toFixed(2)) : 0,
+            date: new Date(n.updatedAt).toLocaleDateString()
+        }));
+        
+        // Derive periods
+        const distinctPeriods = [...new Set(notes.value.map(n => n.periode))].filter(Boolean).sort();
+        periods.value = distinctPeriods;
+        // Default to filtering all or most recent? Let's stay on 'all' or last one
+        if (distinctPeriods.length && selectedPeriod.value === 'all') {
+            selectedPeriod.value = 'all'; 
+        }
 
-const visiblePages = computed(() => {
-  const start = Math.max(1, currentPage.value - 2)
-  const end = Math.min(totalPages.value, currentPage.value + 2)
-  const pages = []
-  for (let i = start; i <= end; i++) {
-    pages.push(i)
-  }
-  return pages
-})
+    } catch (e) {
+        console.error(e);
+    } finally {
+        isLoading.value = false;
+    }
+};
 
-// Fonctions utilitaires
-const getSubjectColor = (subject) => {
-  switch (subject) {
-    case 'math': return 'bg-blue-100 dark:bg-blue-900/30 text-blue-600'
-    case 'french': return 'bg-orange-100 dark:bg-orange-900/30 text-orange-600'
-    case 'history': return 'bg-green-100 dark:bg-green-900/30 text-green-600'
-    case 'english': return 'bg-purple-100 dark:bg-purple-900/30 text-purple-600'
-    default: return 'bg-slate-100 dark:bg-slate-800 text-slate-600'
-  }
-}
+// Watchers
+watch(selectedChildId, () => {
+    // Reset and fetch when child changes
+    notes.value = [];
+    selectedPeriod.value = 'all';
+    fetchNotes();
+});
 
-const getSubjectIcon = (subject) => {
-  switch (subject) {
-    case 'math': return 'functions'
-    case 'french': return 'history_edu'
-    case 'history': return 'public'
-    case 'english': return 'translate'
-    default: return 'help_outline'
-  }
-}
-
+// Helpers
 const getGradeColor = (note) => {
   if (note >= 16) return 'text-primary'
   if (note >= 14) return 'text-slate-900 dark:text-slate-100'
@@ -246,29 +204,5 @@ const getGradeColor = (note) => {
   return 'text-red-500'
 }
 
-const getTrimesterLabel = (trimester) => {
-  switch (trimester) {
-    case '1': return '1er Trimestre'
-    case '2': return '2ème Trimestre'
-    case '3': return '3ème Trimestre'
-    default: return `${trimester}ème Trimestre`
-  }
-}
-
-// Fonctions d'action
-const viewDetails = (grade) => {
-  console.log('Voir détails de la note:', grade)
-}
-
-const previousPage = () => {
-  if (currentPage.value > 1) {
-    currentPage.value--
-  }
-}
-
-const nextPage = () => {
-  if (currentPage.value < totalPages.value) {
-    currentPage.value++
-  }
-}
+onMounted(fetchChildren);
 </script>

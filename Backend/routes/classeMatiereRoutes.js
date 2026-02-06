@@ -4,7 +4,8 @@ const {
     getClasseMatieres,
     addMatiereToClasse,
     updateClasseMatiere,
-    removeMatiereFromClasse
+    removeMatiereFromClasse,
+    getMyClasses
 } = require('../controllers/classeMatiereController');
 
 const router = express.Router({ mergeParams: true });
@@ -14,7 +15,7 @@ const { protect, authorize } = require('../middleware/auth');
 router.route('/all')
     .get(protect, authorize('ADMIN', 'PROVISEUR', 'CENSEUR', 'SECRETAIRE'), getAllClasseMatieres);
 
-router.get('/my-classes', protect, authorize('PROFESSEUR'), require('../controllers/classeMatiereController').getMyClasses);
+router.get('/my-classes', protect, authorize('PROFESSEUR'), getMyClasses);
 
 router.route('/')
     .get(protect, getClasseMatieres)

@@ -11,20 +11,24 @@
       <slot name="actions"></slot>
 
       <!-- Notifications -->
-      <router-link :to="notificationPath" class="p-2 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors relative">
-        <span class="material-symbols-outlined">notifications</span>
-        <span v-if="unreadCount > 0" class="absolute top-2 right-2 w-2.5 h-2.5 bg-red-500 border-2 border-white dark:border-slate-900 rounded-full"></span>
+      <router-link :to="notificationPath" 
+        class="p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700 hover:text-primary transition-all duration-300 ease-out-expo relative group click-press"
+      >
+        <span class="material-symbols-outlined transition-transform group-hover:scale-110">notifications</span>
+        <span v-if="unreadCount > 0" class="absolute top-2.5 right-2.5 w-2 h-2 bg-red-500 border-2 border-white dark:border-slate-900 rounded-full shadow-[0_0_8px_rgba(239,68,68,0.4)]"></span>
       </router-link>
 
-      <div class="h-8 w-[1px] bg-slate-200 dark:bg-slate-800 mx-2"></div>
+      <div class="h-8 w-[1px] bg-slate-200 dark:bg-slate-800 mx-1"></div>
 
       <!-- Profile Section -->
-      <router-link :to="profilePath" class="flex items-center gap-3 hover:bg-slate-50 dark:hover:bg-slate-800/50 p-1 pr-3 rounded-lg transition-colors group">
+      <router-link :to="profilePath" 
+        class="flex items-center gap-3 hover:bg-slate-50 dark:hover:bg-slate-800/50 p-1.5 pr-4 rounded-xl transition-all duration-300 ease-out-expo group click-press"
+      >
         <div class="text-right flex flex-col justify-center">
           <p class="text-sm font-bold leading-none group-hover:text-primary transition-colors">{{ userName }}</p>
-          <p class="text-[10px] text-slate-500 mt-1 uppercase tracking-wider">{{ userRoleLabel }}</p>
+          <p class="text-[10px] text-slate-500 mt-1 uppercase tracking-wider font-medium">{{ userRoleLabel }}</p>
         </div>
-        <div class="h-10 w-10 rounded-full bg-slate-200 dark:bg-slate-700 bg-cover bg-center border-2 border-primary/20 group-hover:border-primary transition-all shadow-sm"
+        <div class="h-10 w-10 rounded-xl bg-slate-200 dark:bg-slate-700 bg-cover bg-center border-2 border-primary/20 group-hover:border-primary group-hover:scale-105 transition-all shadow-sm overflow-hidden"
              :style="`background-image: url('${userAvatar}')`">
         </div>
       </router-link>
@@ -96,19 +100,22 @@ const fetchUserData = async () => {
 
 const fetchNotifications = async () => {
   try {
-    const res = await api.getNotifications()
-    const allNotifs = res.data.data
-    unreadCount.value = allNotifs.filter(n => {
-      const recipient = n.recipients.find(r => r.user === user.value._id || r.user?._id === user.value._id)
-      return recipient && !recipient.read
-    }).length
+    // Fetch notifications for students and parents
+    if ((user.value?.role === 'ELEVE' || user.value?.role === 'PARENT') && user.value?._id) {
+      const res = await api.getNotifications(user.value.role === 'ELEVE' ? user.value._id : undefined)
+      const allNotifs = res.data.data || []
+      unreadCount.value = allNotifs.filter(n => !n.read).length
+    } else {
+      unreadCount.value = 0
+    }
   } catch (error) {
     console.error('Erreur chargement notifications:', error)
+    unreadCount.value = 0
   }
 }
 
-onMounted(() => {
-  fetchUserData()
+onMounted(async () => {
+  await fetchUserData()
   fetchNotifications()
 })
 </script>

@@ -1,11 +1,20 @@
 <template>
-  <div class="min-h-screen bg-background-light dark:bg-background-dark p-8">
-    <div class="max-w-[1400px] mx-auto">
-      <!-- Header -->
-      <div class="mb-8">
-        <h1 class="text-3xl font-black text-[#0e141b] dark:text-white mb-2">Génération des Bulletins</h1>
-        <p class="text-[#4e7397] dark:text-slate-400">Générez les bulletins pour vos classes après validation des notes</p>
+  <div class="generation-bulletins-view">
+    <div class="p-8 max-w-7xl mx-auto w-full space-y-8">
+      <!-- Breadcrumbs -->
+      <nav class="flex items-center gap-2 text-sm">
+        <router-link to="/censeur" class="text-[#4e7397] hover:text-primary font-medium">Censeur</router-link>
+        <span class="text-[#4e7397] material-symbols-outlined text-sm">chevron_right</span>
+        <span class="font-medium">Bulletins Scolaires</span>
+      </nav>
+
+    <!-- Page Heading -->
+    <div class="flex flex-wrap justify-between items-end gap-4">
+      <div class="flex flex-col gap-1">
+        <h1 class="text-4xl font-black tracking-tight text-[#0e141b] dark:text-white">Génération des Bulletins</h1>
+        <p class="text-[#4e7397] dark:text-slate-400 text-base">Produisez les bulletins de performance après validation complète des notes.</p>
       </div>
+    </div>
 
       <!-- Sélection -->
       <div class="bg-white dark:bg-slate-900 rounded-xl p-6 mb-6 shadow-sm border border-slate-200 dark:border-slate-800">

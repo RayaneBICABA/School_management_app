@@ -3,9 +3,13 @@
     <ParentSidebar @logout="handleLogout" />
     <div class="flex-1 flex flex-col overflow-hidden">
       <Header :title="pageTitle" />
-      <main class="flex-1 overflow-y-auto p-8">
-        <router-view />
-      </main>
+      <div class="flex-grow pb-8 overflow-y-auto">
+        <router-view v-slot="{ Component }">
+          <transition name="page" mode="out-in">
+            <component :is="Component" />
+          </transition>
+        </router-view>
+      </div>
     </div>
   </div>
 </template>
@@ -23,9 +27,14 @@ const pageTitle = ref('Espace Parent')
 
 const pageTitles = {
   'ParentDashboard': 'Tableau de bord',
-  'ParentEleves': 'Mes Enfants',
+  'ParentEnfants': 'Mes Enfants',
+  'ParentProfilEnfant': 'Profil de l\'Enfant',
+  'ParentBulletins': 'Bulletins Scolaires',
   'ParentNotes': 'Résultats Scolaires',
+  'ParentDiscipline': 'Discipline',
+  'ParentCalendrier': 'Calendrier Scolaire',
   'ParentNotifications': 'Mes Notifications',
+  'ParentJustifierAbsence': 'Justifier une Absence',
   'ParentProfil': 'Mon Profil'
 }
 

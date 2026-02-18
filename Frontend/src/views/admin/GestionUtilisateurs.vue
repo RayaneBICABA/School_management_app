@@ -83,6 +83,7 @@
                             <div class="min-w-0">
                                 <p class="text-sm font-bold text-slate-900 dark:text-white truncate">{{ user.prenom }} {{ user.nom }}</p>
                                 <p class="text-xs text-slate-500 truncate">{{ user.email }}</p>
+                                <p v-if="user.matricule" class="text-xs text-primary font-medium">Matricule: {{ user.matricule }}</p>
                             </div>
                         </div>
 
@@ -110,6 +111,9 @@
 
                         <!-- Actions -->
                         <div class="col-span-2 flex justify-end gap-2 opacity-100 sm:opacity-0 group-hover:opacity-100 transition-opacity">
+                            <router-link v-if="user.role === 'ELEVE'" :to="`/admin/eleves/${user._id}`" class="p-2 text-slate-400 hover:text-primary transition-colors bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded shadow-sm hover:shadow" title="Voir la fiche">
+                                <span class="material-symbols-outlined text-[18px]">visibility</span>
+                            </router-link>
                             <button @click="openEditModal(user)" class="p-2 text-slate-400 hover:text-primary transition-colors bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded shadow-sm hover:shadow" title="Modifier">
                                 <span class="material-symbols-outlined text-[18px]">edit</span>
                             </button>

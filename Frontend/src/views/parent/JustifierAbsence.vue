@@ -11,9 +11,24 @@
         <span class="text-slate-900 dark:text-white text-sm font-semibold">Justifier une absence</span>
       </div>
       <!-- Page Heading -->
-      <div class="flex flex-col gap-2">
-        <h2 class="text-slate-900 dark:text-white text-3xl font-black tracking-tight">Justifier une absence</h2>
-        <p class="text-slate-500 dark:text-slate-400 text-base">Sélectionnez une absence récente pour régulariser la situation scolaire de votre enfant.</p>
+      <div class="flex flex-col md:flex-row md:items-end justify-between gap-4">
+        <div class="flex flex-col gap-2">
+          <h2 class="text-slate-900 dark:text-white text-3xl font-black tracking-tight">Justifier une absence</h2>
+          <p class="text-slate-500 dark:text-slate-400 text-base">Sélectionnez une absence récente pour régulariser la situation scolaire de votre enfant.</p>
+        </div>
+        
+        <!-- Child Selector -->
+        <div v-if="children.length > 0" class="flex items-center gap-4 bg-white dark:bg-slate-900 p-2 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800">
+           <div class="size-10 rounded-full bg-cover bg-center ring-2 ring-primary/20" :style="`background-image: url('${currentChild.avatar}')`"></div>
+           <div class="relative min-w-[200px]">
+            <select v-model="selectedChildId" @change="updateCurrentChild" class="w-full appearance-none bg-slate-100 dark:bg-slate-800 border-none rounded-xl px-4 py-2.5 pr-10 font-bold text-sm focus:ring-2 focus:ring-primary/20 cursor-pointer">
+              <option v-for="child in children" :key="child._id" :value="child._id">
+                {{ child.prenom }} {{ child.nom }}
+              </option>
+            </select>
+            <span class="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-slate-500">expand_more</span>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -128,10 +143,18 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, onMounted, computed } from 'vue'
+import { useRouter } from 'vue-router'
+import api from '@/services/api'
+
+const router = useRouter()
 
 // Données réactives
 const selectedAbsence = ref('')
+const isLoading = ref(true)
+const children = ref([])
+const selectedChildId = ref('')
+const currentChild = ref({})
 
 // Formulaire de justification
 const justificationForm = ref({
@@ -141,36 +164,105 @@ const justificationForm = ref({
 })
 
 // Absences en attente de justification
-const pendingAbsences = ref([
-  {
-    id: 1,
-    subject: 'Mathématiques',
-    date: '12 Oct 2023',
-    time: '08:00 - 10:00 (2h)',
-    teacher: 'M. Lefebvre'
-  },
-  {
-    id: 2,
-    subject: 'Histoire-Géographie',
-    date: '14 Oct 2023',
-    time: '14:00 - 15:00 (1h)',
-    teacher: 'Mme. Durand'
+const pendingAbsences = ref([])
+
+// Fetch children
+const fetchChildren = async () => {
+  try {
+    const res = await api.getChildren()
+    if (res.data.success) {
+      children.value = res.data.data
+      if (children.value.length > 0) {
+        selectedChildId.value = children.value[0]._id
+        updateCurrentChild()
+      }
+    }
+  } catch (error) {
+    console.error('Error fetching children:', error)
   }
-])
+}
+
+// Update current child when selection changes
+const updateCurrentChild = () => {
+  const child = children.value.find(c => c._id === selectedChildId.value)
+  if (child) {
+    currentChild.value = {
+      name: `${child.prenom} ${child.nom}`,
+      avatar: child.photo === 'no-photo.jpg' 
+        ? `https://ui-avatars.com/api/?name=${child.prenom}+${child.nom}&background=random`
+        : `/uploads/${child.photo}`
+    }
+    fetchPendingAbsences()
+  }
+}
+
+// Fetch pending absences for selected child
+const fetchPendingAbsences = async () => {
+  try {
+    if (!selectedChildId.value) return
+    
+    isLoading.value = true
+    const res = await api.getChildPendingAbsences(selectedChildId.value)
+    if (res.data.success) {
+      pendingAbsences.value = res.data.data.map(absence => ({
+        id: absence._id,
+        subject: absence.matiere?.nom || 'Non spécifiée',
+        date: new Date(absence.date).toLocaleDateString('fr-FR', { 
+          day: 'numeric', 
+          month: 'short', 
+          year: 'numeric' 
+        }),
+        time: `${absence.heureDebut || ''} - ${absence.heureFin || ''} (${absence.duree || 0}h)`,
+        teacher: absence.professeur ? `${absence.professeur.prenom} ${absence.professeur.nom}` : 'Non spécifié'
+      }))
+    }
+  } catch (error) {
+    console.error('Error fetching pending absences:', error)
+  } finally {
+    isLoading.value = false
+  }
+}
 
 // Fonctions d'action
-const submitJustification = () => {
-  console.log('Soumettre la justification:', {
-    selectedAbsence: selectedAbsence.value,
-    form: justificationForm.value
-  })
-  // Réinitialiser le formulaire
-  justificationForm.value = {
-    reason: 'maladie',
-    details: '',
-    file: null
+const submitJustification = async () => {
+  try {
+    if (!selectedAbsence.value) {
+      alert('Veuillez sélectionner une absence à justifier')
+      return
+    }
+    
+    const formData = new FormData()
+    formData.append('absenceId', selectedAbsence.value)
+    formData.append('reason', justificationForm.value.reason)
+    formData.append('details', justificationForm.value.details)
+    
+    if (justificationForm.value.file) {
+      formData.append('justificatif', justificationForm.value.file)
+    }
+    
+    const res = await api.submitAbsenceJustification(selectedChildId.value, formData)
+    
+    if (res.data.success) {
+        alert('Justification envoyée avec succès')
+        
+        // Close and reset
+        pendingAbsences.value = pendingAbsences.value.filter(abs => abs.id !== selectedAbsence.value)
+        
+        justificationForm.value = {
+          reason: 'maladie',
+          details: '',
+          file: null
+        }
+        selectedAbsence.value = ''
+        
+        // Optionally redirect
+        router.push('/parent/discipline')
+    }
+    
+  } catch (error) {
+    console.error('Error submitting justification:', error)
+    alert('Erreur lors de l\'envoi de la justification')
   }
-  selectedAbsence.value = ''
 }
 
 const handleFileUpload = (event) => {
@@ -180,4 +272,9 @@ const handleFileUpload = (event) => {
     console.log('Fichier uploadé:', file.name)
   }
 }
+
+// Initialize data
+onMounted(async () => {
+  await fetchChildren()
+})
 </script>

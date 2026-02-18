@@ -4,6 +4,9 @@ const Matiere = require('../models/Matiere');
 const Classe = require('../models/Classe');
 const ErrorResponse = require('../utils/errorResponse');
 const asyncHandler = require('../middleware/async');
+const mongoose = require('mongoose');
+const { generateMasterGradeSheetPDF } = require('../utils/pdfGenerator');
+const Setting = require('../models/Setting');
 
 // @desc    Créer des notes pour un élève
 // @route   POST /api/v1/notes
@@ -36,7 +39,7 @@ exports.createNotes = asyncHandler(async (req, res, next) => {
         eleve,
         matiere,
         periode,
-        anneeScolaire: req.body.anneeScolaire || '2023-2024'
+        anneeScolaire: req.body.anneeScolaire || '2025-2026'
     });
 
     if (existingNote) {
@@ -52,7 +55,7 @@ exports.createNotes = asyncHandler(async (req, res, next) => {
         periode,
         notes,
         appreciation,
-        anneeScolaire: req.body.anneeScolaire || '2023-2024'
+        anneeScolaire: req.body.anneeScolaire || '2025-2026'
     });
 
     await note.populate(['eleve', 'matiere', 'classe', 'professeur']);
@@ -295,9 +298,9 @@ exports.submitNote = asyncHandler(async (req, res, next) => {
         return next(new ErrorResponse('Non autorisé', 403));
     }
 
-    // Vérifier qu'il y a 3 notes
-    if (note.notes.length !== 3) {
-        return next(new ErrorResponse('Vous devez saisir exactement 3 notes avant de soumettre', 400));
+    // Vérifier qu'il y a au moins une note
+    if (note.notes.length === 0) {
+        return next(new ErrorResponse('Vous devez saisir au moins une note avant de soumettre', 400));
     }
 
     // Le statut reste EN_ATTENTE mais on peut ajouter un flag
@@ -311,4 +314,279 @@ exports.submitNote = asyncHandler(async (req, res, next) => {
         message: 'Notes soumises pour validation',
         data: note
     });
+});
+
+// @desc    Débloquer des notes validées (Admin)
+// @route   POST /api/v1/notes/unblock
+// @access  Private (Admin)
+exports.unblockNotes = asyncHandler(async (req, res, next) => {
+    const { classe, matiere, periode } = req.body;
+
+    // Vérifier le rôle
+    if (req.user.role !== 'ADMIN') {
+        return next(new ErrorResponse('Seul l\'administrateur peut débloquer les notes', 403));
+    }
+
+    if (!classe || !matiere || !periode) {
+        return next(new ErrorResponse('Veuillez fournir la classe, la matière et la période', 400));
+    }
+
+    // Mettre à jour toutes les notes correspondantes de VALIDEE à EN_ATTENTE
+    const result = await Note.updateMany(
+        { classe, matiere, periode, statut: 'VALIDEE' },
+        {
+            $set: {
+                statut: 'EN_ATTENTE',
+                updatedAt: Date.now()
+            }
+        }
+    );
+
+    res.status(200).json({
+        success: true,
+        message: `${result.modifiedCount} notes ont été débloquées avec succès`,
+        count: result.modifiedCount
+    });
+});
+// @desc    Obtenir le relevé de notes récapitulatif d'une classe (Master Sheet)
+// @route   GET /api/v1/notes/master-sheet/:classeId
+// @access  Private (Administration)
+exports.getMasterSheetData = asyncHandler(async (req, res, next) => {
+    const { periode, anneeScolaire } = req.query;
+    const { classeId } = req.params;
+
+    if (!periode) {
+        return next(new ErrorResponse('La période est requise', 400));
+    }
+
+    const year = anneeScolaire || '2025-2026';
+
+    // 1. Récupérer la classe
+    const classe = await Classe.findById(classeId);
+    if (!classe) {
+        return next(new ErrorResponse('Classe non trouvée', 404));
+    }
+
+    // 2. Récupérer tous les élèves de la classe
+    const eleves = await User.find({ classe: classeId, role: 'ELEVE' }).sort('nom prenom').select('nom prenom matricule');
+
+    // 3. Récupérer toutes les matières de la classe via ClasseMatiere
+    const ClasseMatiere = mongoose.model('ClasseMatiere');
+    const matieresDocs = await ClasseMatiere.find({ classe: classeId }).populate('matiere');
+    const matieres = matieresDocs.map(cm => cm.matiere).sort((a, b) => a.nom.localeCompare(b.nom));
+
+    // 4. Récupérer toutes les notes VALIDÉES pour cette classe/période/année
+    const allNotes = await Note.find({
+        classe: classeId,
+        periode,
+        anneeScolaire: year,
+        statut: 'VALIDEE'
+    });
+
+    // 5. Construire la matrice de données
+    const matrix = eleves.map(eleve => {
+        const studentGrades = {};
+        let weightedSum = 0;
+        let totalCoeffs = 0;
+        let countMatieresWithGrades = 0;
+
+        matieres.forEach(matiere => {
+            const noteDoc = allNotes.find(n =>
+                n.eleve.toString() === eleve._id.toString() &&
+                n.matiere.toString() === matiere._id.toString()
+            );
+
+            const coeff = matiere.coefficient || 1;
+            if (noteDoc) {
+                studentGrades[matiere._id] = {
+                    notes: noteDoc.notes.map(n => n.valeur),
+                    moyenne: noteDoc.moyenne,
+                    appreciation: noteDoc.appreciation,
+                    coeff
+                };
+                weightedSum += noteDoc.moyenne * coeff;
+                totalCoeffs += coeff;
+                countMatieresWithGrades++;
+            } else {
+                studentGrades[matiere._id] = { notes: [], moyenne: null, coeff };
+            }
+        });
+
+        return {
+            eleveId: eleve._id,
+            nom: eleve.nom,
+            prenom: eleve.prenom,
+            matricule: eleve.matricule,
+            matieres: studentGrades,
+            moyenneGenerale: totalCoeffs > 0 ? weightedSum / totalCoeffs : 0
+        };
+    });
+
+    // 6. Calculer les statistiques globales de la classe
+    const studentAverages = matrix.map(row => row.moyenneGenerale).filter(m => m > 0);
+    const overallStats = {
+        classAverage: studentAverages.length > 0 ? studentAverages.reduce((a, b) => a + b, 0) / studentAverages.length : 0,
+        maxAverage: studentAverages.length > 0 ? Math.max(...studentAverages) : 0,
+        minAverage: studentAverages.length > 0 ? Math.min(...studentAverages) : 0
+    };
+
+    // 7. Calculer les statistiques par matière
+    const subjectStats = {};
+    matieres.forEach(matiere => {
+        const moyennes = matrix.map(row => row.matieres[matiere._id].moyenne).filter(m => m !== null);
+        if (moyennes.length > 0) {
+            subjectStats[matiere._id] = {
+                avg: moyennes.reduce((a, b) => a + b, 0) / moyennes.length,
+                min: Math.min(...moyennes),
+                max: Math.max(...moyennes),
+                successRate: (moyennes.filter(m => m >= 10).length / moyennes.length) * 100
+            };
+        } else {
+            subjectStats[matiere._id] = { avg: 0, min: 0, max: 0, successRate: 0 };
+        }
+    });
+
+    res.status(200).json({
+        success: true,
+        data: {
+            classe,
+            periode,
+            anneeScolaire: year,
+            matieres,
+            matrix,
+            subjectStats,
+            overallStats
+        }
+    });
+});
+
+// @desc    Générer le PDF du relevé de notes récapitulatif (Master Sheet)
+// @route   GET /api/v1/notes/master-sheet/:classeId/pdf
+// @access  Private (Administration)
+exports.getMasterSheetPDF = asyncHandler(async (req, res, next) => {
+    const { periode, anneeScolaire } = req.query;
+    const { classeId } = req.params;
+
+    if (!periode) {
+        return next(new ErrorResponse('La période est requise', 400));
+    }
+
+    const year = anneeScolaire || '2025-2026';
+    const schoolSetting = await Setting.findOne({ key: 'school_config' });
+    const schoolConfig = schoolSetting ? schoolSetting.value : {};
+
+    let classesToProcess = [];
+    if (classeId === 'all') {
+        classesToProcess = await Classe.find().sort('niveau section');
+    } else {
+        const classe = await Classe.findById(classeId);
+        if (!classe) return next(new ErrorResponse('Classe non trouvée', 404));
+        classesToProcess = [classe];
+    }
+
+    const allSheetsData = [];
+
+    const ClasseMatiere = mongoose.model('ClasseMatiere');
+
+    for (const classe of classesToProcess) {
+        // Reproduce aggregation logic for each class
+        const eleves = await User.find({ classe: classe._id, role: 'ELEVE' }).sort('nom prenom').select('nom prenom matricule');
+        if (eleves.length === 0) continue;
+
+        const matieresDocs = await ClasseMatiere.find({ classe: classe._id }).populate('matiere');
+        const matieres = matieresDocs.map(cm => cm.matiere).sort((a, b) => a.nom.localeCompare(b.nom));
+
+        const allNotes = await Note.find({
+            classe: classe._id,
+            periode,
+            anneeScolaire: year,
+            statut: 'VALIDEE'
+        });
+
+        const matrix = eleves.map(eleve => {
+            const studentGrades = {};
+            let weightedSum = 0;
+            let totalCoeffs = 0;
+            let countMatieresWithGrades = 0;
+
+            matieres.forEach(matiere => {
+                const noteDoc = allNotes.find(n =>
+                    n.eleve.toString() === eleve._id.toString() &&
+                    n.matiere.toString() === matiere._id.toString()
+                );
+
+                const coeff = matiere.coefficient || 1;
+                if (noteDoc) {
+                    studentGrades[matiere._id] = {
+                        notes: noteDoc.notes.map(n => n.valeur),
+                        moyenne: noteDoc.moyenne,
+                        appreciation: noteDoc.appreciation,
+                        coeff
+                    };
+                    weightedSum += noteDoc.moyenne * coeff;
+                    totalCoeffs += coeff;
+                    countMatieresWithGrades++;
+                } else {
+                    studentGrades[matiere._id] = { notes: [], moyenne: null, coeff };
+                }
+            });
+
+            return {
+                eleveId: eleve._id,
+                nom: eleve.nom,
+                prenom: eleve.prenom,
+                matricule: eleve.matricule,
+                matieres: studentGrades,
+                moyenneGenerale: totalCoeffs > 0 ? weightedSum / totalCoeffs : 0
+            };
+        });
+
+        const subjectStats = {};
+        matieres.forEach(matiere => {
+            const moyennes = matrix.map(row => row.matieres[matiere._id].moyenne).filter(m => m !== null);
+            if (moyennes.length > 0) {
+                subjectStats[matiere._id] = {
+                    avg: moyennes.reduce((a, b) => a + b, 0) / moyennes.length,
+                    min: Math.min(...moyennes),
+                    max: Math.max(...moyennes),
+                    successRate: (moyennes.filter(m => m >= 10).length / moyennes.length) * 100
+                };
+            } else {
+                subjectStats[matiere._id] = { avg: 0, min: 0, max: 0, successRate: 0 };
+            }
+        });
+
+        const studentAverages = matrix.map(row => row.moyenneGenerale).filter(m => m > 0);
+        const overallStats = {
+            classAverage: studentAverages.length > 0 ? studentAverages.reduce((a, b) => a + b, 0) / studentAverages.length : 0,
+            maxAverage: studentAverages.length > 0 ? Math.max(...studentAverages) : 0,
+            minAverage: studentAverages.length > 0 ? Math.min(...studentAverages) : 0
+        };
+
+        allSheetsData.push({
+            classe,
+            periode,
+            anneeScolaire: year,
+            matieres,
+            matrix,
+            subjectStats,
+            overallStats
+        });
+    }
+
+    if (allSheetsData.length === 0) {
+        return next(new ErrorResponse('Aucune donnée à exporter', 404));
+    }
+
+    // We need a loop in pdfGenerator to handle multiple sheets if possible,
+    // or just generate multiple and merge.
+    // For now, let's assume generateMasterGradeSheetPDF handles data as an ARRAY if we modify it,
+    // or we call it multiple times.
+    // Actually, it's easier to modify generateMasterGradeSheetPDF to accept an array of classes.
+
+    const { generateBulkMasterGradeSheetPDF } = require('../utils/pdfGenerator');
+    const pdfBuffer = await generateBulkMasterGradeSheetPDF(allSheetsData, schoolConfig);
+
+    res.contentType("application/pdf");
+    res.send(pdfBuffer);
 });

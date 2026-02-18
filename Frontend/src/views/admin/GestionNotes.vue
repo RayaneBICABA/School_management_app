@@ -116,7 +116,7 @@
                       </span>
                     </td>
                     <td class="px-6 py-4 text-right">
-                       <button class="p-2 text-slate-400 hover:text-primary transition-colors rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800">
+                       <button @click="voirDetails(subject)" class="p-2 text-slate-400 hover:text-primary transition-colors rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800">
                           <span class="material-symbols-outlined icon-sm">visibility</span>
                        </button>
                     </td>
@@ -164,9 +164,12 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue';
+import { ref, computed, onMounted, watch } from 'vue';
+import { useRouter, useRoute } from 'vue-router';
 import api from '@/services/api';
 
+const router = useRouter();
+const route = useRoute();
 const allClasses = ref([]);
 const grades = ref([]);
 const assignments = ref([]);
@@ -192,8 +195,19 @@ const fetchData = async () => {
   }
 };
 
-const selectedClassId = ref('');
-const selectedPeriod = ref('Trimestre 1');
+const selectedClassId = ref(route.query.classe || '');
+const selectedPeriod = ref(route.query.periode || 'Trimestre 1');
+
+// Watch for changes to update URL
+watch([selectedClassId, selectedPeriod], ([newClass, newPeriod]) => {
+  router.replace({
+    query: {
+      ...route.query,
+      classe: newClass || undefined,
+      periode: newPeriod
+    }
+  });
+});
 
 // Filter classes based on selected Period (Trimester -> General, Semester -> Technical)
 const filteredClasses = computed(() => {
@@ -205,10 +219,26 @@ const filteredClasses = computed(() => {
 });
 
 // Watcher to reset selected class when period type changes
-import { watch } from 'vue';
-watch(selectedPeriod, () => {
-    selectedClassId.value = '';
+watch(selectedPeriod, (newPeriod, oldPeriod) => {
+    // Only reset if we're switching between Trimester and Semester types
+    const isNewTrimester = newPeriod.toLowerCase().includes('trimestre');
+    const isOldTrimester = oldPeriod?.toLowerCase().includes('trimestre');
+    
+    if (isOldTrimester !== undefined && isNewTrimester !== isOldTrimester) {
+        selectedClassId.value = '';
+    }
 });
+
+const voirDetails = (subject) => {
+  router.push({
+    name: 'AdminDetailNotesMatiere',
+    query: {
+      classe: selectedClassId.value,
+      matiere: subject.matiere._id,
+      periode: selectedPeriod.value
+    }
+  });
+};
 
 const selectedClassSubjects = computed(() => {
     if (!selectedClassId.value) return [];

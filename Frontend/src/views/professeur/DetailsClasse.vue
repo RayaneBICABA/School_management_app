@@ -105,7 +105,7 @@
                     </div>
                     <div>
                       <p class="font-medium text-[#0e141b] dark:text-white">{{ student.name }}</p>
-                      <p class="text-sm text-[#4e7397] dark:text-slate-400">{{ student.id }}</p>
+                      <p class="text-sm text-[#4e7397] dark:text-slate-400">Matricule: {{ student.matricule }}</p>
                     </div>
                   </div>
                 </td>
@@ -134,15 +134,63 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
+import api from '@/services/api'
 
-const students = ref([
-  { id: '2023-001', name: 'Alice Martin', moyenne: 15.2, absences: 2, lastNote: 16 },
-  { id: '2023-002', name: 'Bob Dupont', moyenne: 12.8, absences: 0, lastNote: 14 },
-  { id: '2023-003', name: 'Claire Bernard', moyenne: 14.5, absences: 1, lastNote: 13 },
-  { id: '2023-004', name: 'David Durand', moyenne: 11.9, absences: 3, lastNote: 12 },
-  { id: '2023-005', name: 'Emma Petit', moyenne: 16.3, absences: 0, lastNote: 18 }
-])
+// Générer un matricule unique
+const generateMatricule = (student, index) => {
+  // Si l'étudiant a déjà un matricule, le conserver
+  if (student.matricule && student.matricule !== 'N/A' && student.matricule !== '-') {
+    return student.matricule
+  }
+  
+  // Sinon, générer un matricule dynamiquement
+  const currentYear = new Date().getFullYear()
+  const baseMatricule = `${currentYear}`
+  
+  // Utiliser le nom pour créer une partie unique
+  const nameParts = student.name.split(' ')
+  const firstName = nameParts[0] || 'ELEVE'
+  const lastName = nameParts[1] || 'INCONNU'
+  
+  const namePart = `${lastName.slice(0, 3).toUpperCase()}${firstName.slice(0, 3).toUpperCase()}`
+  
+  // Ajouter un index pour garantir l'unicité
+  const indexPart = String(index + 1).padStart(3, '0')
+  
+  return `${baseMatricule}-${namePart}${indexPart}`
+}
+
+const students = ref([])
+const isLoading = ref(true)
+const classeId = route.params.id
+
+const fetchStudents = async () => {
+  try {
+    isLoading.value = true
+    const response = await api.getStudentsByClass(classeId)
+    const rawData = Array.isArray(response.data.data) ? response.data.data : []
+    
+    students.value = rawData.map((student, index) => ({
+      id: student._id,
+      name: `${student.prenom} ${student.nom}`,
+      moyenne: student.moyenneGenerale || 0,
+      absences: student.totalAbsences || 0,
+      lastNote: student.derniereNote || 0,
+      matricule: generateMatricule(student, index)
+    }))
+  } catch (error) {
+    console.error('Erreur lors du chargement des élèves:', error)
+    students.value = []
+  } finally {
+    isLoading.value = false
+  }
+}
+
+onMounted(() => {
+  fetchStudents()
+})
 
 const getMoyenneColor = (moyenne) => {
   if (moyenne >= 15) return 'text-green-600'

@@ -8,6 +8,7 @@ exports.getUsers = async (req, res, next) => {
     try {
         let query = {};
         if (req.query.role) query.role = req.query.role;
+        if (req.query.classe) query.classe = req.query.classe;
 
         const users = await User.find(query).populate('classe');
 
@@ -59,6 +60,11 @@ exports.createUser = async (req, res, next) => {
         }
 
         const user = await User.create(req.body);
+
+        // Auto-create bulletins for students
+        if (user.role === 'ELEVE' && user.classe) {
+            await createBulletinsForStudent(user);
+        }
 
         // Retourner le mot de passe généré dans la réponse (seulement à la création)
         const response = {
@@ -171,6 +177,9 @@ exports.importStudents = async (req, res, next) => {
                 });
 
                 createdUsers.push(newUser);
+
+                // Auto-create bulletins for imported students
+                await createBulletinsForStudent(newUser);
             } catch (err) {
                 errors.push(`Erreur pour ${student.Email}: ${err.message}`);
             }
@@ -246,6 +255,7 @@ exports.bulkCreateStudents = async (req, res, next) => {
                         classe: classeId,
                         status: 'ACTIF'
                     });
+                    await createBulletinsForStudent(newStudent);
                     createdStudents.push(newStudent);
                 }
             } catch (error) {
@@ -266,5 +276,33 @@ exports.bulkCreateStudents = async (req, res, next) => {
         });
     } catch (err) {
         next(err);
+    }
+};
+
+// Helper function to create empty bulletins for a student
+const createBulletinsForStudent = async (student) => {
+    try {
+        const Bulletin = require('../models/Bulletin');
+        const Classe = require('../models/Classe');
+        const classe = await Classe.findById(student.classe);
+
+        if (!classe) return;
+
+        const periodes = classe.filiere === 'Technique'
+            ? ['Semestre 1', 'Semestre 2']
+            : ['Trimestre 1', 'Trimestre 2', 'Trimestre 3'];
+
+        const bulletins = periodes.map(periode => ({
+            eleve: student._id,
+            classe: student.classe,
+            periode: periode,
+            anneeScolaire: classe.anneeScolaire || '2025-2026',
+            notes: [],
+            statut: 'BROUILLON'
+        }));
+
+        await Bulletin.insertMany(bulletins);
+    } catch (error) {
+        console.error(`Erreur création bulletins auto pour ${student._id}:`, error);
     }
 };

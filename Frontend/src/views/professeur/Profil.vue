@@ -18,8 +18,8 @@
       <div class="flex flex-col md:flex-row gap-6 items-center">
         <div class="relative group">
           <div class="bg-center bg-no-repeat aspect-square bg-cover rounded-full size-32 ring-4 ring-slate-100 dark:ring-slate-800 flex items-center justify-center bg-slate-200 dark:bg-slate-700">
-            <span v-if="!user.photo || user.photo === 'no-photo.jpg'" class="material-symbols-outlined text-4xl text-slate-400">person</span>
-            <img v-else :src="user.photo" class="w-full h-full object-cover rounded-full"/>
+            <span v-if="!userPhotoUrl" class="material-symbols-outlined text-4xl text-slate-400">person</span>
+            <img v-else :src="userPhotoUrl" class="w-full h-full object-cover rounded-full"/>
           </div>
           <input type="file" ref="fileInput" class="hidden" @change="handlePhotoUpload" accept="image/*" />
           <button @click="$refs.fileInput.click()" class="absolute bottom-0 right-0 bg-white dark:bg-slate-700 shadow-lg border border-slate-200 dark:border-slate-600 p-1.5 rounded-full hover:bg-slate-50 transition-colors cursor-pointer">
@@ -138,7 +138,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, computed } from 'vue';
 import api from '@/services/api';
 
 const user = ref(null);
@@ -146,6 +146,24 @@ const isUpdating = ref(false);
 const isUpdatingPassword = ref(false);
 const passwordError = ref('');
 const fileInput = ref(null);
+
+const userPhotoUrl = computed(() => {
+    return getPhotoUrl(user.value?.photo);
+});
+
+const getPhotoUrl = (photoPath) => {
+    if (!photoPath || photoPath === 'no-photo.jpg' || photoPath.includes('undefined')) {
+        return null;
+    }
+    if (photoPath.startsWith('http') || photoPath.startsWith('data:')) {
+        return photoPath;
+    }
+    const baseUrl = import.meta.env.VITE_API_URL ? import.meta.env.VITE_API_URL.replace('/api/v1', '') : 'http://localhost:5000';
+    if (photoPath.startsWith('/uploads')) {
+        return `${baseUrl}${photoPath}`;
+    }
+    return `${baseUrl}/uploads/${photoPath}`;
+};
 
 const handlePhotoUpload = async (event) => {
     const file = event.target.files[0];
@@ -193,9 +211,8 @@ const fetchData = async () => {
             const userId = user.value._id || user.value.id;
             
             // Get professor's class assignments
-            const assignmentsRes = await api.getAllGlobalClasseMatieres();
-            const allAssignments = assignmentsRes.data.data || [];
-            const profAssignments = allAssignments.filter(a => (a.professeur?._id || a.professeur) === userId);
+            const assignmentsRes = await api.getMyClasses();
+            const profAssignments = assignmentsRes.data.data || [];
             
             // Count unique classes
             const uniqueClasses = new Set(profAssignments.map(a => a.classe?._id || a.classe));

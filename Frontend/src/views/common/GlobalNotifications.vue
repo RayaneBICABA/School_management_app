@@ -36,6 +36,13 @@
         <div class="flex gap-2 overflow-x-auto pb-2">
           <button class="px-5 py-2 rounded-full bg-primary text-white text-sm font-semibold shadow-md shadow-primary/20">Toutes</button>
           <button class="px-5 py-2 rounded-full bg-white dark:bg-slate-800 text-[#0e141b] dark:text-slate-300 text-sm font-medium border border-slate-200 dark:border-slate-700 hover:border-primary transition-colors">Non lues</button>
+          <button 
+            @click="clearAllNotifications"
+            class="px-5 py-2 rounded-full bg-red-500 hover:bg-red-600 text-white text-sm font-medium border border-red-200 dark:border-red-700 transition-colors flex items-center gap-2"
+          >
+            <span class="material-symbols-outlined">clear_all</span>
+            Effacer tout
+          </button>
           <!-- Add more filters if needed -->
         </div>
 
@@ -50,8 +57,8 @@
             <p class="text-slate-500">Vous n'avez aucune notification pour le moment.</p>
           </div>
 
-          <div v-else v-for="notif in notifications" :key="notif._id" 
-               @click="markAsRead(notif._id)"
+          <div v-else v-for="notif in notifications" :key="notif._id || notif.id" 
+               @click="markAsRead(notif._id || notif.id)"
                class="group bg-white dark:bg-slate-800 p-5 rounded-2xl shadow-sm border border-transparent hover:border-primary/30 transition-all flex gap-4 relative cursor-pointer"
                :class="!notif.read ? 'ring-1 ring-primary/20' : 'opacity-80'">
             
@@ -67,7 +74,16 @@
                 <h4 class="text-[#0e141b] dark:text-white font-bold text-lg" :class="!notif.read ? '' : 'font-medium'">
                   {{ notif.subject }}
                 </h4>
-                <span class="text-xs text-[#4e7397] dark:text-slate-500 whitespace-nowrap ml-4">{{ formatDate(notif.createdAt) }}</span>
+                <div class="flex items-center gap-2">
+                  <span class="text-xs text-[#4e7397] dark:text-slate-500 whitespace-nowrap">{{ formatDate(notif.createdAt) }}</span>
+                  <button 
+                    @click.stop="clearNotification(notif._id || notif.id)"
+                    class="p-1 hover:bg-red-100 dark:hover:bg-red-900/20 rounded text-red-500 hover:text-red-600 transition-colors"
+                    title="Effacer cette notification"
+                  >
+                    <span class="material-symbols-outlined text-sm">close</span>
+                  </button>
+                </div>
               </div>
               <div class="text-sm text-slate-600 dark:text-slate-400 mb-2 leading-relaxed prose dark:prose-invert max-w-none" v-html="notif.content"></div>
               <div class="flex items-center gap-2 mt-2">
@@ -249,9 +265,27 @@ const filteredClasses = computed(() => {
 const fetchData = async () => {
   isLoading.value = true;
   try {
-     // Always fetch received
-     const resReceived = await api.getNotifications();
-     notifications.value = resReceived.data.data;
+     let resReceived;
+     
+     // Use different API based on user role
+     if (user.value.role === 'ELEVE') {
+        // For students, use student-specific notifications
+        const studentId = user.value._id || user.value.id;
+        if (!studentId) {
+            console.error('Student ID not found in user data');
+            notifications.value = [];
+            return;
+        }
+        resReceived = await api.getNotifications(studentId);
+     } else {
+        // For staff, use general notifications
+        resReceived = await api.getNotifications();
+     }
+     
+     const allNotifications = resReceived.data.data;
+     
+     // Filter out cleared notifications
+     notifications.value = filterClearedNotifications(allNotifications);
      
      // If staff, fetch classes and sent items
      if (canSend.value) {
@@ -264,6 +298,7 @@ const fetchData = async () => {
      }
   } catch (error) {
      console.error('Error loading notifications:', error);
+     notifications.value = []; // Ensure notifications is always an array
   } finally {
      isLoading.value = false;
   }
@@ -272,10 +307,102 @@ const fetchData = async () => {
 // Actions
 const markAsRead = async (id) => {
     try {
+        if (!id) {
+            console.warn('Notification ID is undefined, cannot mark as read');
+            return;
+        }
+        
         await api.markNotificationAsRead(id);
-        const idx = notifications.value.findIndex(n => n._id === id);
-        if (idx !== -1) notifications.value[idx].read = true;
-    } catch (e) { console.error(e); }
+        const idx = notifications.value.findIndex(n => (n._id || n.id) === id);
+        if (idx !== -1) {
+            notifications.value[idx].read = true;
+            notifications.value[idx].readAt = new Date();
+        }
+    } catch (error) {
+        console.error('Failed to mark notification as read:', error);
+        // If notification not found, remove it from the list
+        if (error.response?.status === 404) {
+            console.warn('Notification not found in database, removing from UI');
+            const idx = notifications.value.findIndex(n => (n._id || n.id) === id);
+            if (idx !== -1) {
+                notifications.value.splice(idx, 1);
+                // Also remove from localStorage
+                saveClearedNotifications();
+            }
+        }
+    }
+};
+
+const clearNotification = async (id) => {
+    try {
+        if (!id) {
+            console.warn('Notification ID is undefined, cannot clear');
+            return;
+        }
+        
+        // Remove from UI immediately for better UX
+        const idx = notifications.value.findIndex(n => (n._id || n.id) === id);
+        if (idx !== -1) {
+            notifications.value.splice(idx, 1);
+        }
+        
+        // Save to cleared notifications list
+        saveClearedNotifications();
+        
+        // Try to mark as read on backend (optional, will fail if not found)
+        await api.markNotificationAsRead(id);
+    } catch (error) {
+        console.error('Failed to clear notification:', error);
+        // Already removed from UI, so still save to cleared list
+        saveClearedNotifications();
+    }
+};
+
+const clearAllNotifications = async () => {
+    try {
+        // Clear all from UI immediately
+        const allIds = notifications.value.map(n => n._id || n.id);
+        notifications.value = [];
+        
+        // Save all to cleared notifications list
+        saveClearedNotifications(allIds);
+        
+        // Optionally try to mark all as read on backend
+        for (const id of allIds) {
+            try {
+                await api.markNotificationAsRead(id);
+            } catch (error) {
+                console.warn(`Failed to mark notification ${id} as read:`, error);
+            }
+        }
+    } catch (error) {
+        console.error('Failed to clear all notifications:', error);
+    }
+};
+
+// Save cleared notifications to localStorage
+const saveClearedNotifications = (ids = []) => {
+    try {
+        const existing = JSON.parse(localStorage.getItem('clearedNotifications') || '[]');
+        const newCleared = [...existing, ...(Array.isArray(ids) ? ids : [ids])];
+        localStorage.setItem('clearedNotifications', JSON.stringify(newCleared));
+    } catch (error) {
+        console.error('Failed to save cleared notifications:', error);
+    }
+};
+
+// Filter out cleared notifications from the list
+const filterClearedNotifications = (notifications) => {
+    try {
+        const clearedIds = JSON.parse(localStorage.getItem('clearedNotifications') || '[]');
+        return notifications.filter(notif => {
+            const notifId = notif._id || notif.id;
+            return !clearedIds.includes(notifId);
+        });
+    } catch (error) {
+        console.error('Failed to filter cleared notifications:', error);
+        return notifications;
+    }
 };
 
 const sendMessage = async () => {

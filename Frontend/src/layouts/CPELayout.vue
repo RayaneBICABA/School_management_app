@@ -1,9 +1,13 @@
 <template>
   <div class="flex h-screen overflow-hidden bg-background-light dark:bg-background-dark">
     <CPESidebar @logout="handleLogout" />
-    <main class="flex-1 overflow-y-auto p-8">
-      <router-view />
-    </main>
+      <div class="flex-grow pb-8 overflow-y-auto">
+        <router-view v-slot="{ Component }">
+          <transition name="page" mode="out-in">
+            <component :is="Component" />
+          </transition>
+        </router-view>
+      </div>
 
   </div>
 </template>

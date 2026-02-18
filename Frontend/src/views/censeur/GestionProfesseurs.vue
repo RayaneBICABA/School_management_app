@@ -1,11 +1,12 @@
 <template>
-  <div class="space-y-8">
-    <!-- Breadcrumbs -->
-    <nav class="flex items-center gap-2 text-sm">
-      <router-link to="/censeur" class="text-[#4e7397] hover:text-primary font-medium">Censeur</router-link>
-      <span class="text-[#4e7397] material-symbols-outlined text-sm">chevron_right</span>
-      <span class="font-medium">Gestion des Professeurs</span>
-    </nav>
+  <div class="gestion-professeurs-view">
+    <div class="p-8 max-w-7xl mx-auto w-full space-y-8">
+      <!-- Breadcrumbs -->
+      <nav class="flex items-center gap-2 text-sm">
+        <router-link to="/censeur" class="text-[#4e7397] hover:text-primary font-medium">Censeur</router-link>
+        <span class="text-[#4e7397] material-symbols-outlined text-sm">chevron_right</span>
+        <span class="font-medium">Gestion des Professeurs</span>
+      </nav>
 
     <!-- Page Heading -->
     <div class="flex flex-wrap justify-between items-end gap-4">
@@ -191,6 +192,7 @@
       </div>
     </div>
   </div>
+</div>
 </template>
 
 <script setup>

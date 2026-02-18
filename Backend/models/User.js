@@ -28,6 +28,58 @@ const UserSchema = new mongoose.Schema({
     telephone: {
         type: String
     },
+    // Personal information
+    dateNaissance: {
+        type: Date
+    },
+    lieuNaissance: {
+        type: String
+    },
+    adresse: {
+        type: String
+    },
+    // Academic information
+    filiere: {
+        type: String
+    },
+    // Parental information
+    fatherName: {
+        type: String
+    },
+    fatherPhone: {
+        type: String
+    },
+    fatherEmail: {
+        type: String
+    },
+    motherName: {
+        type: String
+    },
+    motherPhone: {
+        type: String
+    },
+    motherEmail: {
+        type: String
+    },
+    legalGuardian: {
+        type: String
+    },
+    guardianPhone: {
+        type: String
+    },
+    // Medical information
+    bloodGroup: {
+        type: String
+    },
+    nativeLanguage: {
+        type: String
+    },
+    allergens: {
+        type: String
+    },
+    medicaments: {
+        type: String
+    },
     password: {
         type: String,
         required: [true, 'Le mot de passe est requis'],

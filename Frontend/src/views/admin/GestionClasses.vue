@@ -54,7 +54,8 @@
                 <tr 
                   v-for="classe in filieres.Generale" 
                   :key="classe.id"
-                  class="hover:bg-slate-50 dark:hover:bg-slate-800/30 transition-colors"
+                  @click="voirEleves(classe)"
+                  class="hover:bg-slate-50 dark:hover:bg-slate-800/30 transition-colors cursor-pointer"
                 >
                   <td class="px-6 py-4 font-semibold text-[#0e141b] dark:text-white">{{ classe.nom }}</td>
                   <td class="px-6 py-4 text-[#0e141b] dark:text-slate-300">{{ classe.niveau }}</td>
@@ -70,7 +71,7 @@
                     </div>
                   </td>
                   <td class="px-6 py-4 text-[#0e141b] dark:text-slate-300">{{ classe.salle }}</td>
-                  <td class="px-6 py-4 text-right">
+                  <td class="px-6 py-4 text-right" @click.stop>
                     <button 
                       @click="editClass(classe)"
                       class="p-1 hover:text-primary transition-colors"
@@ -112,6 +113,7 @@
               <thead class="bg-slate-50 dark:bg-slate-800/50 text-[#4e7397] font-medium uppercase text-xs">
                 <tr>
                   <th class="px-6 py-3">Classe</th>
+                  <th class="px-6 py-3">Niveau</th>
                   <th class="px-6 py-3">Spécialité</th>
                   <th class="px-6 py-3">Effectif</th>
                   <th class="px-6 py-3">Salle</th>
@@ -122,9 +124,11 @@
                 <tr 
                   v-for="classe in filieres.Technique" 
                   :key="classe.id"
-                  class="hover:bg-slate-50 dark:hover:bg-slate-800/30 transition-colors"
+                  @click="voirEleves(classe)"
+                  class="hover:bg-slate-50 dark:hover:bg-slate-800/30 transition-colors cursor-pointer"
                 >
                   <td class="px-6 py-4 font-semibold text-[#0e141b] dark:text-white">{{ classe.nom }}</td>
+                  <td class="px-6 py-4 text-[#0e141b] dark:text-slate-300">{{ classe.niveau }}</td>
                   <td class="px-6 py-4 text-[#0e141b] dark:text-slate-300">{{ classe.specialite }}</td>
                   <td class="px-6 py-4">
                     <div class="flex items-center gap-2">
@@ -138,7 +142,7 @@
                     </div>
                   </td>
                   <td class="px-6 py-4 text-[#0e141b] dark:text-slate-300">{{ classe.salle }}</td>
-                  <td class="px-6 py-4 text-right">
+                  <td class="px-6 py-4 text-right" @click.stop>
                     <button 
                       @click="editClass(classe)"
                       class="p-1 hover:text-primary transition-colors"
@@ -196,29 +200,37 @@
             </div>
             <div class="flex flex-col gap-1.5">
               <label class="text-sm font-semibold text-[#0e141b] dark:text-slate-200">
-                {{ form.filiere === 'Technique' ? 'Spécialité' : 'Niveau d\'étude' }}
+                Niveau d'étude
               </label>
               <select 
-                v-if="form.filiere === 'Technique'"
-                v-model="form.specialite"
-                class="w-full bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 rounded-lg text-sm focus:ring-primary focus:border-primary h-10 px-3 text-[#0e141b] dark:text-white"
-                required
-              >
-                <option value="">Sélectionner une spécialité</option>
-                <option value="Ingénierie">Ingénierie</option>
-                <option value="Gestion">Gestion</option>
-                <option value="Commerce">Commerce</option>
-              </select>
-              <select 
-                v-else
                 v-model="form.niveau"
                 class="w-full bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 rounded-lg text-sm focus:ring-primary focus:border-primary h-10 px-3 text-[#0e141b] dark:text-white"
                 required
               >
                 <option value="">Sélectionner un niveau</option>
+                <option v-if="form.filiere === 'Generale'" value="Sixième">Sixième</option>
+                <option v-if="form.filiere === 'Generale'" value="Cinquième">Cinquième</option>
+                <option v-if="form.filiere === 'Generale'" value="Quatrième">Quatrième</option>
+                <option v-if="form.filiere === 'Generale'" value="Troisième">Troisième</option>
                 <option value="Seconde">Seconde</option>
                 <option value="Première">Première</option>
                 <option value="Terminale">Terminale</option>
+              </select>
+            </div>
+            <div class="flex flex-col gap-1.5">
+              <label class="text-sm font-semibold text-[#0e141b] dark:text-slate-200">
+                {{ form.filiere === 'Technique' ? 'Spécialité' : 'Autre' }}
+              </label>
+              <select 
+                v-if="form.filiere === 'Technique'"
+                v-model="form.specialite"
+                class="w-full bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 rounded-lg text-sm focus:ring-primary focus:border-primary h-10 px-3 text-[#0e141b] dark:text-white"
+                :required="form.filiere === 'Technique'"
+              >
+                <option value="">Sélectionner une spécialité</option>
+                <option value="Ingénierie">Ingénierie</option>
+                <option value="Gestion">Gestion</option>
+                <option value="Commerce">Commerce</option>
               </select>
             </div>
             <div class="grid grid-cols-2 gap-4">
@@ -388,6 +400,7 @@
 
 <script setup>
 import { ref, reactive, onMounted, computed } from 'vue'
+import { useRouter } from 'vue-router'
 import api from '@/services/api'
 
 // Données des filières et classes
@@ -397,6 +410,7 @@ const filieres = reactive({
 })
 
 const isLoading = ref(false)
+const router = useRouter()
 
 // Formulaire
 const form = reactive({
@@ -439,33 +453,58 @@ const fetchClasses = async () => {
     filieres.Generale = []
     filieres.Technique = []
 
-    classes.forEach(cls => {
-      // Map API fields to UI fields if necessary
-      const uiClass = {
-        id: cls._id,
-        nom: cls.section, // Backend uses 'section' for name/nom (e.g. 6ème A)
-        niveau: cls.niveau,
-        salle: cls.salle || 'N/A',
-        capaciteMax: cls.capacite,
-        effectif: 0, // Mock for now or fetch students count if available
-        specialite: cls.serie // Mapping serie to specialite for Technical
+    // Process classes and fetch student counts
+    for (const cls of classes) {
+      try {
+        // Fetch students for this class to get real effectif
+        const studentsResponse = await api.getStudentsByClass(cls._id)
+        const studentsCount = studentsResponse.data?.data?.length || 0
+        
+        // Map API fields to UI fields correctly
+        const uiClass = {
+          id: cls._id,
+          nom: cls.section || cls.nom, // Use section as display name (e.g. "6ème A")
+          niveau: cls.niveau,
+          salle: cls.salle || 'N/A',
+          capaciteMax: cls.capacite || 35,
+          effectif: studentsCount, // Real student count from API
+          specialite: cls.serie || '' // Use serie for technical classes
+        }
+        
+        // Correctly classify by serie field
+        if (cls.serie === 'Général' || cls.serie === 'Générale') {
+           filieres.Generale.push(uiClass)
+        } else {
+           filieres.Technique.push(uiClass)
+        }
+      } catch (studentError) {
+        console.warn(`Erreur chargement effectifs pour la classe ${cls._id}:`, studentError)
+        // Fallback to 0 if student count fails
+        const uiClass = {
+          id: cls._id,
+          nom: cls.section || cls.nom,
+          niveau: cls.niveau,
+          salle: cls.salle || 'N/A',
+          capaciteMax: cls.capacite || 35,
+          effectif: 0,
+          specialite: cls.serie || ''
+        }
+        
+        if (cls.serie === 'Général' || cls.serie === 'Générale') {
+           filieres.Generale.push(uiClass)
+        } else {
+           filieres.Technique.push(uiClass)
+        }
       }
-      
-      if (cls.serie === 'Général') {
-         filieres.Generale.push(uiClass)
-      } else {
-         filieres.Technique.push(uiClass)
-      }
-    })
+    }
 
-  } catch (error) {
-    console.error('Erreur chargement classes:', error)
+  } catch (err) {
+    console.error('Erreur chargement classes:', err)
   } finally {
     isLoading.value = false
   }
 }
 
-// Redundant onMounted removed (merged with the one at the bottom)
 
 // Fonctions
 const getEffectifColor = (effectif, capaciteMax) => {
@@ -481,18 +520,21 @@ const openAddClassModal = (filiere) => {
 }
 
 const onFiliereChange = () => {
-  form.niveau = ''
   form.specialite = ''
+  // Réinitialiser le niveau si on passe à Générale pour éviter des niveaux non valides
+  if (form.filiere === 'Generale') {
+    form.niveau = ''
+  }
 }
 
 const editClass = async (classe) => {
   editingClass.value = classe
-  form.nom = classe.nom
+  form.nom = classe.nom || classe.section || ''
   form.filiere = filieres.Generale.find(c => c.id === classe.id) ? 'Generale' : 'Technique'
   form.niveau = classe.niveau || ''
-  form.specialite = classe.specialite || ''
-  form.capaciteMax = classe.capaciteMax
-  form.salle = classe.salle
+  form.specialite = classe.specialite || classe.serie || ''
+  form.capaciteMax = classe.capacite || 35
+  form.salle = classe.salle || ''
   
   // Load courses for this class
   await fetchClasseCourses(classe.id)
@@ -531,6 +573,10 @@ const handleSubmit = async () => {
   try {
     // Map frontend niveau to backend enum
     const niveauMap = {
+      'Sixième': '6ème',
+      'Cinquième': '5ème',
+      'Quatrième': '4ème',
+      'Troisième': '3ème',
       'Seconde': '2nde',
       'Première': '1ère',
       'Terminale': 'Terminale'
@@ -538,7 +584,7 @@ const handleSubmit = async () => {
     
     const payload = {
       section: form.nom,
-      niveau: form.filiere === 'Technique' ? 'Terminale' : niveauMap[form.niveau] || form.niveau,
+      niveau: niveauMap[form.niveau] || form.niveau,
       serie: form.filiere === 'Generale' ? 'Général' : form.specialite,
       capacite: form.capaciteMax,
       salle: form.salle,
@@ -557,6 +603,11 @@ const handleSubmit = async () => {
     console.error('Erreur sauvegarde:', error)
     alert('Erreur lors de la sauvegarde de la classe')
   }
+}
+
+// Voir les élèves d'une classe
+const voirEleves = (classe) => {
+  router.push(`/admin/classes/${classe.id}/eleves`)
 }
 
 // Course management functions

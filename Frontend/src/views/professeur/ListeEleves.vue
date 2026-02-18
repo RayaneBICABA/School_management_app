@@ -12,6 +12,12 @@
         <p class="text-[#4e7397] dark:text-slate-400 ml-14" v-if="classe">
           {{ classe.niveau }} {{ classe.section }} - {{ eleves.length }} élève(s)
         </p>
+        <div class="mt-4 flex gap-3" v-if="classe">
+           <button @click="goToAttendance" class="px-4 py-2 bg-primary text-white text-sm font-bold rounded-lg flex items-center gap-2 shadow-sm hover:bg-blue-600 transition-colors">
+              <span class="material-symbols-outlined text-lg">fact_check</span>
+              Faire l'appel
+           </button>
+        </div>
       </div>
 
       <!-- Loading State -->
@@ -98,8 +104,32 @@ const getInitials = (eleve) => {
   return firstInitial + lastInitial;
 };
 
+// Générer un matricule unique
+const generateMatricule = (student, index) => {
+  // Si l'étudiant a déjà un matricule, le conserver
+  if (student.matricule && student.matricule !== 'N/A' && student.matricule !== '-') {
+    return student.matricule
+  }
+  
+  // Sinon, générer un matricule dynamiquement
+  const currentYear = new Date().getFullYear()
+  const baseMatricule = `${currentYear}`
+  
+  // Utiliser le nom et prénom pour créer une partie unique
+  const namePart = `${student.nom?.slice(0, 3).toUpperCase() || 'ELV'}${student.prenom?.slice(0, 3).toUpperCase() || 'ELE'}`
+  
+  // Ajouter un index pour garantir l'unicité
+  const indexPart = String(index + 1).padStart(3, '0')
+  
+  return `${baseMatricule}-${namePart}${indexPart}`
+};
+
 const viewProfile = (eleveId) => {
   router.push(`/professeur/profil-eleve/${eleveId}`);
+};
+
+const goToAttendance = () => {
+    router.push({ path: '/professeur/faire-appel', query: { id: route.query.classe } });
 };
 
 const loadData = async () => {
@@ -126,7 +156,12 @@ const loadData = async () => {
     });
     
     if (elevesRes.data.success) {
-      eleves.value = elevesRes.data.data;
+      // Transformer les données avec génération de matricules
+      const rawData = elevesRes.data.data;
+      eleves.value = rawData.map((student, index) => ({
+        ...student,
+        matricule: generateMatricule(student, index)
+      }));
     }
   } catch (error) {
     console.error('Erreur chargement données:', error);

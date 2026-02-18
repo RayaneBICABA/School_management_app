@@ -17,13 +17,45 @@ exports.sendNotification = async (req, res, next) => {
                 role: 'ELEVE',
                 classe: { $in: targetClasses }
             }).select('_id');
-            recipientIds = students.map(s => s._id);
+            const studentIds = students.map(s => s._id);
+
+            // Find parents who have these students as children
+            const parents = await User.find({
+                role: 'PARENT',
+                children: { $in: studentIds }
+            }).select('_id');
+            const parentIds = parents.map(p => p._id);
+
+            // Combine students and parents
+            let allRecipientIds = [...studentIds, ...parentIds];
+
+            // Find professeur principal for each class
+            const classes = await Classe.find({ _id: { $in: targetClasses } }).select('professeurPrincipal');
+            const profPrincipalIds = classes
+                .map(c => c.professeurPrincipal)
+                .filter(id => id); // Remove null/undefined
+
+            allRecipientIds = [...allRecipientIds, ...profPrincipalIds];
+
+            // Ensure unique IDs
+            recipientIds = [...new Set(allRecipientIds.map(id => id.toString()))];
         } else if (type === 'role') {
             // Find all users with selected roles
             const users = await User.find({
                 role: { $in: targetRoles }
             }).select('_id');
-            recipientIds = users.map(u => u._id);
+            let allRecipientIds = users.map(u => u._id);
+
+            // If students are included, also include parents
+            if (targetRoles.includes('ELEVE')) {
+                const parents = await User.find({
+                    role: 'PARENT',
+                    children: { $exists: true, $not: { $size: 0 } }
+                }).select('_id');
+                allRecipientIds = [...allRecipientIds, ...parents.map(p => p._id)];
+            }
+
+            recipientIds = [...new Set(allRecipientIds.map(id => id.toString()))];
         }
 
         const recipients = recipientIds.map(id => ({ user: id }));
@@ -108,26 +140,32 @@ exports.getSentNotifications = async (req, res, next) => {
 // @access  Private
 exports.markAsRead = async (req, res, next) => {
     try {
-        const notification = await Notification.findOneAndUpdate(
-            {
-                _id: req.params.id,
-                'recipients.user': req.user._id
-            },
-            {
-                $set: {
-                    'recipients.$.read': true,
-                    'recipients.$.readAt': Date.now()
-                }
-            },
-            { new: true }
-        );
+        const notificationId = req.params.id;
+
+        // Handle both string IDs and ObjectIds
+        let notification;
+        try {
+            notification = await Notification.findById(notificationId);
+        } catch (error) {
+            // If ID format is invalid, return 404
+            return res.status(404).json({ success: false, error: 'Notification non trouvée' });
+        }
 
         if (!notification) {
             return res.status(404).json({ success: false, error: 'Notification non trouvée' });
         }
 
+        // Find the recipient entry for this user and mark as read
+        const recipient = notification.recipients.find(r => r.user.toString() === req.user._id.toString());
+        if (recipient) {
+            recipient.read = true;
+            recipient.readAt = new Date();
+            await notification.save();
+        }
+
         res.status(200).json({ success: true, data: notification });
     } catch (err) {
+        console.error('Error marking notification as read:', err);
         res.status(500).json({ success: false, error: err.message });
     }
 };

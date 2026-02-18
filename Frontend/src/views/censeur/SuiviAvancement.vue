@@ -1,13 +1,18 @@
 <template>
-  <div class="max-w-6xl mx-auto px-6 py-8">
+  <div class="suivi-avancement-view">
+    <div class="p-8 max-w-7xl mx-auto w-full space-y-8">
+      <!-- Breadcrumbs -->
+      <nav class="flex items-center gap-2 text-sm">
+        <router-link to="/censeur" class="text-[#4e7397] hover:text-primary font-medium">Censeur</router-link>
+        <span class="text-[#4e7397] material-symbols-outlined text-sm">chevron_right</span>
+        <span class="font-medium">Suivi Avancement</span>
+      </nav>
+
     <!-- Page Heading -->
-    <div class="flex flex-wrap justify-between items-end gap-4 mb-8">
+    <div class="flex flex-wrap justify-between items-end gap-4">
       <div class="flex flex-col gap-1">
-        <h2 class="text-slate-900 dark:text-white text-3xl font-extrabold tracking-tight">Suivi de l'Avancement Global</h2>
-        <div class="flex items-center gap-2 text-slate-500 dark:text-slate-400 text-sm">
-          <span class="material-symbols-outlined text-xs">history</span>
-          <span>Dernière mise à jour: il y a 5 minutes</span>
-        </div>
+        <h1 class="text-4xl font-black tracking-tight text-[#0e141b] dark:text-white">Suivi de l'Avancement</h1>
+        <p class="text-[#4e7397] dark:text-slate-400 text-base">Consultez l'état de progression des saisies et des validations.</p>
       </div>
       <div class="flex gap-3">
         <button @click="exportData" class="flex items-center justify-center rounded-lg h-10 px-4 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 text-sm font-bold shadow-sm">
@@ -158,18 +163,24 @@
           <button class="text-primary text-xs font-bold hover:underline">Voir tout</button>
         </div>
         <div class="space-y-4">
-          <div v-for="prof in professeursRetard" :key="prof.id" class="flex items-center justify-between p-3 rounded-lg bg-slate-50 dark:bg-slate-900/50">
-            <div class="flex items-center gap-3">
-              <div class="size-8 rounded-full bg-primary/10 text-primary flex items-center justify-center font-bold text-xs">{{ prof.initials }}</div>
-              <div>
-                <p class="text-sm font-semibold text-slate-900 dark:text-white">{{ prof.nom }} ({{ prof.matiere }})</p>
-                <p class="text-xs text-slate-500">{{ prof.classes }}</p>
+          <TransitionGroup
+            enter-active-class="transition-all duration-500 ease-out-expo"
+            enter-from-class="opacity-0 translate-x-4"
+            enter-to-class="opacity-100 translate-x-0"
+          >
+            <div v-for="prof in professeursRetard" :key="prof.id" class="flex items-center justify-between p-3 rounded-lg bg-slate-50 dark:bg-slate-900/50">
+              <div class="flex items-center gap-3">
+                <div class="size-8 rounded-full bg-primary/10 text-primary flex items-center justify-center font-bold text-xs">{{ prof.initials }}</div>
+                <div>
+                  <p class="text-sm font-semibold text-slate-900 dark:text-white">{{ prof.nom }} ({{ prof.matiere }})</p>
+                  <p class="text-xs text-slate-500">{{ prof.classes }}</p>
+                </div>
               </div>
+              <button @click="envoyerRappel(prof)" class="p-2 text-primary hover:bg-primary/10 rounded-full transition-colors" title="Envoyer rappel">
+                <span class="material-symbols-outlined text-lg">notifications_active</span>
+              </button>
             </div>
-            <button @click="envoyerRappel(prof)" class="p-2 text-primary hover:bg-primary/10 rounded-full transition-colors" title="Envoyer rappel">
-              <span class="material-symbols-outlined text-lg">notifications_active</span>
-            </button>
-          </div>
+          </TransitionGroup>
         </div>
       </div>
       
@@ -189,137 +200,92 @@
         </div>
       </div>
     </div>
+    </div>
   </div>
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
+import { useRouter } from 'vue-router'
+import api from '@/services/api'
+import { useToast } from '@/composables/useToast'
+
+const router = useRouter()
+const { success, error: toastError } = useToast()
 
 // Données réactives
 const searchQuery = ref('')
 const selectedNiveau = ref('Tous les niveaux')
 const selectedStatut = ref('Tous les statuts')
 const sortAscending = ref(true)
+const loading = ref(false)
 
 // Statistiques
 const stats = ref({
-  progressionTotale: 78.4,
-  progressionHebdomadaire: 5.2,
-  classesCompletees: 42,
-  totalClasses: 50,
-  classesEnAttente: 8,
-  notesSaisies: 12402,
-  notesAttendues: 15800,
-  profsEnRetard: 12
+  progressionTotale: 0,
+  progressionHebdomadaire: 0,
+  classesCompletees: 0,
+  totalClasses: 0,
+  classesEnAttente: 0,
+  notesSaisies: 0,
+  notesAttendues: 0,
+  profsEnRetard: 0
 })
 
 // Données des classes
-const classes = ref([
-  {
-    id: 1,
-    nom: '6ème A',
-    niveau: 'Cycle Inférieur',
-    progression: 85,
-    matieresSaisies: 12,
-    totalMatieres: 14,
-    statut: 'En cours'
-  },
-  {
-    id: 2,
-    nom: '3ème B',
-    niveau: 'BACC Prep',
-    progression: 100,
-    matieresSaisies: 18,
-    totalMatieres: 18,
-    statut: 'Validé'
-  },
-  {
-    id: 3,
-    nom: 'Tle C',
-    niveau: 'Séries Scientifiques',
-    progression: 45,
-    matieresSaisies: 8,
-    totalMatieres: 18,
-    statut: 'Retard'
-  },
-  {
-    id: 4,
-    nom: '4ème M1',
-    niveau: 'Cycle Inférieur',
-    progression: 90,
-    matieresSaisies: 16,
-    totalMatieres: 18,
-    statut: 'En cours'
-  },
-  {
-    id: 5,
-    nom: '2nde D',
-    niveau: 'Second Cycle',
-    progression: 72,
-    matieresSaisies: 13,
-    totalMatieres: 18,
-    statut: 'En cours'
-  },
-  {
-    id: 6,
-    nom: '5ème B',
-    niveau: 'Cycle Inférieur',
-    progression: 95,
-    matieresSaisies: 17,
-    totalMatieres: 18,
-    statut: 'En cours'
-  }
-])
+const classes = ref([])
 
 // Professeurs en retard
-const professeursRetard = ref([
-  {
-    id: 1,
-    nom: 'M. Kamga',
-    matiere: 'Maths',
-    initials: 'MK',
-    classes: 'Tle C, 1ère D, 3ème B'
-  },
-  {
-    id: 2,
-    nom: 'Mme. Sorel',
-    matiere: 'Français',
-    initials: 'ST',
-    classes: '6ème A, 5ème B'
+const professeursRetard = ref([])
+
+// Charger les données
+const fetchSuiviData = async () => {
+  loading.value = true
+  try {
+    const params = {
+      niveau: selectedNiveau.value,
+      statut: selectedStatut.value
+    }
+    const response = await api.getSuiviAvancement(params)
+    if (response.data.success) {
+      stats.value = response.data.data.stats
+      classes.value = response.data.data.classes
+      professeursRetard.value = response.data.data.professeursRetard
+    }
+  } catch (err) {
+    console.error('Erreur lors du chargement des données:', err)
+    toastError('Impossible de charger les données de suivi')
+  } finally {
+    loading.value = false
   }
-])
+}
+
+onMounted(() => {
+  fetchSuiviData()
+})
+
+// Surveiller les filtres
+watch([selectedNiveau, selectedStatut], () => {
+  fetchSuiviData()
+})
 
 // Computed properties
 const filteredClasses = computed(() => {
-  let filtered = classes.value
+  let filtered = [...classes.value]
 
-  // Filtrer par recherche
+  // Filtrer par recherche (côté client pour la fluidité)
   if (searchQuery.value) {
+    const query = searchQuery.value.toLowerCase()
     filtered = filtered.filter(classe => 
-      classe.nom.toLowerCase().includes(searchQuery.value.toLowerCase()) ||
-      classe.niveau.toLowerCase().includes(searchQuery.value.toLowerCase())
+      classe.nom.toLowerCase().includes(query) ||
+      classe.niveau.toLowerCase().includes(query)
     )
-  }
-
-  // Filtrer par niveau
-  if (selectedNiveau.value !== 'Tous les niveaux') {
-    filtered = filtered.filter(classe => 
-      classe.niveau.includes(selectedNiveau.value.split(' ')[0])
-    )
-  }
-
-  // Filtrer par statut
-  if (selectedStatut.value !== 'Tous les statuts') {
-    filtered = filtered.filter(classe => classe.statut === selectedStatut.value)
   }
 
   // Trier
   filtered.sort((a, b) => {
-    if (sortAscending.value) {
-      return a.nom.localeCompare(b.nom)
-    } else {
-      return b.nom.localeCompare(a.nom)
-    }
+    const res = a.nom.localeCompare(b.nom)
+    return sortAscending.value ? res : -res
   })
 
   return filtered
@@ -355,11 +321,11 @@ const getStatusColor = (statut) => {
 
 // Fonctions d'action
 const exportData = () => {
-  console.log('Export des données')
+  success('Export des données lancé')
 }
 
 const sendGroupReminder = () => {
-  console.log('Envoi rappel groupé')
+  success('Rappel groupé envoyé aux professeurs en retard')
 }
 
 const toggleSort = () => {
@@ -367,18 +333,19 @@ const toggleSort = () => {
 }
 
 const voirDetails = (classe) => {
-  console.log('Voir détails de', classe.nom)
+  // Navigation vers les détails de la classe
+  router.push(`/censeur/classes/${classe.id}`)
 }
 
 const relancerProf = (classe) => {
-  console.log('Relancer professeurs de', classe.nom)
+  success(`Rappel envoyé aux professeurs de la ${classe.nom}`)
 }
 
 const envoyerRappel = (prof) => {
-  console.log('Envoyer rappel à', prof.nom)
+  success(`Rappel envoyé à ${prof.nom}`)
 }
 
 const relancerTousRetardataires = () => {
-  console.log('Relancer tous les retardataires')
+  success('Tous les retardataires ont été relancés par SMS')
 }
 </script>

@@ -3,9 +3,13 @@
     <SecretaireSidebar @logout="handleLogout" />
     <div class="flex-1 flex flex-col overflow-hidden">
       <Header :title="pageTitle" />
-      <main class="flex-1 overflow-y-auto p-8">
-        <router-view />
-      </main>
+      <div class="flex-grow pb-8 overflow-y-auto">
+        <router-view v-slot="{ Component }">
+          <transition name="page" mode="out-in">
+            <component :is="Component" />
+          </transition>
+        </router-view>
+      </div>
     </div>
 
   </div>
@@ -27,7 +31,7 @@ const pageTitles = {
   'SecretaireInscription': 'Inscription d\'un Élève',
   'SecretaireAffectation': 'Affectation aux Classes',
   'SecretaireBulletins': 'Impression des Bulletins',
-  'SecretaireRegistre': 'Registre de Distribution',
+
   'SecretaireArchives': 'Archives Scolaires'
 }
 

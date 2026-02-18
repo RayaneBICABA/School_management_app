@@ -130,6 +130,7 @@ onMounted(async () => {
             id: item.classe._id,
             nom: `${item.classe.niveau} ${item.classe.section}`,
             matiere: item.matiere.nom,
+            matiereId: item.matiere._id,
             eleves: 0 // Need separate fetch for count if vital
         }));
 
@@ -203,8 +204,8 @@ const getFirstActionLink = (classeId) => {
   return `/professeur/details-classe?id=${classeId}`
 }
 
-const getSecondActionLink = (classeId) => {
-  return `/professeur/faire-appel?id=${classeId}`
+const getSecondActionLink = (classe) => {
+  return `/professeur/faire-appel?id=${classe.id}&matiereId=${classe.matiereId}`
 }
 
 const getSecondActionText = (progression) => {

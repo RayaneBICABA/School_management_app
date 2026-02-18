@@ -8,7 +8,10 @@ const {
     validateNote,
     rejectNote,
     getPendingNotes,
-    submitNote
+    unblockNotes,
+    submitNote,
+    getMasterSheetData,
+    getMasterSheetPDF
 } = require('../controllers/noteController');
 
 const router = express.Router();
@@ -24,6 +27,8 @@ router.route('/')
     .post(checkGradeDeadline, createNotes);
 
 router.get('/pending', getPendingNotes);
+router.get('/master-sheet/:classeId', getMasterSheetData);
+router.get('/master-sheet/:classeId/pdf', getMasterSheetPDF);
 
 router.route('/:id')
     .get(getNote)

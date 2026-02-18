@@ -4,355 +4,345 @@
       <!-- PageHeading -->
       <div class="flex flex-wrap justify-between items-end gap-3">
         <div class="flex flex-col gap-1">
-          <h1 class="text-[#0e141b] dark:text-slate-50 text-4xl font-black leading-tight tracking-[-0.033em]">Gestion des Archives</h1>
-          <p class="text-[#4e7397] dark:text-slate-400 text-base font-normal">Consultez les bulletins historiques et gérez les demandes de duplicatas.</p>
-        </div>
-        <div class="flex gap-3">
-          <button @click="exportCSV" class="flex items-center gap-2 cursor-pointer rounded-lg h-10 px-4 bg-[#e7edf3] dark:bg-slate-800 text-[#0e141b] dark:text-slate-50 text-sm font-bold hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors">
-            <span class="material-symbols-outlined text-sm">download</span>
-            Exporter CSV
-          </button>
-          <button @click="exportZIP" class="flex items-center gap-2 cursor-pointer rounded-lg h-10 px-4 bg-primary text-white text-sm font-bold hover:bg-primary/90 transition-colors">
-            <span class="material-symbols-outlined text-sm">picture_as_pdf</span>
-            Archive ZIP
-          </button>
+          <h1 class="text-[#0e141b] dark:text-slate-50 text-4xl font-black leading-tight tracking-[-0.033em]">Archives Bulletins</h1>
+          <p class="text-[#4e7397] dark:text-slate-400 text-base font-normal">Consultez et imprimez les bulletins des années antérieures.</p>
         </div>
       </div>
 
-      <div class="flex flex-col gap-6">
-        <!-- Main Content Area -->
-        <div class="flex-1 flex flex-col gap-4">
-          <!-- Search and Filters -->
-          <div class="bg-white dark:bg-slate-900 p-4 rounded-xl shadow-sm border border-slate-100 dark:border-slate-800 flex flex-col gap-4">
-            <div class="w-full">
-              <label class="flex flex-col h-12 w-full">
-                <div class="flex w-full flex-1 items-stretch rounded-lg h-full border border-slate-200 dark:border-slate-700 overflow-hidden">
-                  <div class="text-[#4e7397] flex bg-slate-50 dark:bg-slate-800 items-center justify-center px-4">
-                    <span class="material-symbols-outlined">search</span>
-                  </div>
-                  <input v-model="filters.search" @input="fetchStudents" class="flex-1 border-none bg-white dark:bg-slate-900 text-[#0e141b] dark:text-slate-50 focus:ring-0 px-4 text-base placeholder:text-[#4e7397]" placeholder="Rechercher un élève par nom, matricule ou classe..." />
-                </div>
-              </label>
-            </div>
-            <!-- Chips / Dropdown Filters -->
-            <div class="flex gap-3 flex-wrap">
-              <select v-model="filters.annee" @change="fetchStudents" class="flex h-10 items-center justify-center gap-x-2 rounded-lg bg-slate-50 dark:bg-slate-800 px-4 border border-slate-200 dark:border-slate-700 text-[#0e141b] dark:text-slate-50 text-sm font-medium">
-                <option value="">Toutes les années</option>
-                <option v-for="annee in annees" :key="annee" :value="annee">{{ annee }}</option>
-              </select>
-              <select v-model="filters.filiere" @change="fetchStudents" class="flex h-10 items-center justify-center gap-x-2 rounded-lg bg-slate-50 dark:bg-slate-800 px-4 border border-slate-200 dark:border-slate-700 text-[#0e141b] dark:text-slate-50 text-sm font-medium">
-                <option value="">Toutes les filières</option>
-                <option v-for="filiere in filieres" :key="filiere" :value="filiere">{{ filiere }}</option>
-              </select>
-              <select v-model="filters.classe" @change="fetchStudents" class="flex h-10 items-center justify-center gap-x-2 rounded-lg bg-slate-50 dark:bg-slate-800 px-4 border border-slate-200 dark:border-slate-700 text-[#0e141b] dark:text-slate-50 text-sm font-medium">
-                <option value="">Toutes les classes</option>
-                <option v-for="classe in classes" :key="classe._id" :value="classe._id">{{ classe.nom }}</option>
-              </select>
-              <button @click="resetFilters" class="ml-auto text-primary text-sm font-bold flex items-center gap-1">
-                <span class="material-symbols-outlined text-sm">filter_alt_off</span>
-                Réinitialiser
-              </button>
-            </div>
-          </div>
+      <!-- Filters Section -->
+      <div class="bg-white dark:bg-slate-900 p-4 rounded-xl shadow-sm border border-slate-100 dark:border-slate-800 flex flex-col md:flex-row gap-4 items-end md:items-center">
+        <!-- Year Selection -->
+        <div class="flex flex-col gap-1 w-full md:w-48">
+          <label class="text-xs font-bold text-slate-500 uppercase">Année Scolaire</label>
+          <select v-model="filters.annee" @change="fetchData" class="w-full h-11 bg-slate-50 dark:bg-slate-800 border-none rounded-lg px-4 text-sm font-medium focus:ring-2 ring-primary/50 text-slate-700 dark:text-slate-200">
+            <option v-for="annee in annees" :key="annee" :value="annee">{{ annee }}</option>
+          </select>
+        </div>
 
-          <!-- Table -->
-          <div class="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-slate-100 dark:border-slate-800 overflow-hidden">
-            <div v-if="isLoading" class="p-8 text-center">
-              <p class="text-slate-500">Chargement...</p>
+        <!-- Period Selection -->
+        <div class="flex flex-col gap-1 w-full md:w-48">
+          <label class="text-xs font-bold text-slate-500 uppercase">Période</label>
+          <select v-model="filters.periode" @change="fetchData" class="w-full h-11 bg-slate-50 dark:bg-slate-800 border-none rounded-lg px-4 text-sm font-medium focus:ring-2 ring-primary/50 text-slate-700 dark:text-slate-200">
+            <option value="Trimestre 1">Trimestre 1</option>
+            <option value="Trimestre 2">Trimestre 2</option>
+            <option value="Trimestre 3">Trimestre 3</option>
+            <option value="Semestre 1">Semestre 1</option>
+            <option value="Semestre 2">Semestre 2</option>
+          </select>
+        </div>
+
+        <!-- Search Box -->
+        <div class="flex-1 w-full">
+          <label class="text-xs font-bold text-slate-500 uppercase mb-1 block">Recherche Éléve</label>
+          <div class="flex w-full items-stretch rounded-lg h-11 bg-slate-50 dark:bg-slate-800 overflow-hidden border border-slate-200 dark:border-slate-700">
+            <div class="text-[#4e7397] flex items-center justify-center px-4">
+              <span class="material-symbols-outlined">search</span>
             </div>
-            <div v-else-if="students.length === 0" class="p-8 text-center">
-              <p class="text-slate-500">Aucun élève trouvé</p>
-            </div>
-            <div v-else class="overflow-x-auto">
-              <table class="w-full text-left border-collapse">
-                <thead>
-                  <tr class="bg-slate-50 dark:bg-slate-800/50 border-b border-slate-100 dark:border-slate-800">
-                    <th class="px-6 py-4 text-[#0e141b] dark:text-slate-50 text-sm font-bold">Matricule</th>
-                    <th class="px-6 py-4 text-[#0e141b] dark:text-slate-50 text-sm font-bold">Nom & Prénom</th>
-                    <th class="px-6 py-4 text-[#0e141b] dark:text-slate-50 text-sm font-bold">Classe</th>
-                    <th class="px-6 py-4 text-[#0e141b] dark:text-slate-50 text-sm font-bold">Année</th>
-                    <th class="px-6 py-4 text-primary text-sm font-bold text-right">Actions</th>
-                  </tr>
-                </thead>
-                <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
-                  <tr v-for="student in students" :key="student._id" class="hover:bg-slate-50 dark:hover:bg-slate-800/30 transition-colors">
-                    <td class="px-6 py-4 text-[#4e7397] dark:text-slate-400 text-sm">{{ student.matricule || 'N/A' }}</td>
-                    <td class="px-6 py-4 font-medium text-[#0e141b] dark:text-slate-50 text-sm">{{ student.prenom }} {{ student.nom }}</td>
-                    <td class="px-6 py-4 text-[#4e7397] dark:text-slate-400 text-sm">{{ student.classe?.nom || 'Non assigné' }}</td>
-                    <td class="px-6 py-4 text-[#4e7397] dark:text-slate-400 text-sm text-center">{{ student.annee || '2023-2024' }}</td>
-                    <td class="px-6 py-4 text-right">
-                      <div class="flex justify-end gap-2">
-                        <button @click="viewStudent(student)" class="p-2 text-[#4e7397] hover:text-primary transition-colors" title="Visualiser">
-                          <span class="material-symbols-outlined">visibility</span>
-                        </button>
-                        <button @click="printDuplicata(student)" class="p-2 text-primary hover:bg-primary/10 rounded transition-colors" title="Générer Duplicata">
-                          <span class="material-symbols-outlined">print</span>
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-            <!-- Pagination -->
-            <div class="px-6 py-4 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between">
-              <p class="text-[#4e7397] text-sm">Affichage de {{ (currentPage - 1) * perPage + 1 }}-{{ Math.min(currentPage * perPage, totalStudents) }} sur {{ totalStudents }} résultats</p>
-              <div class="flex gap-2">
-                <button @click="previousPage" :disabled="currentPage === 1" class="p-2 border border-slate-200 dark:border-slate-700 rounded-lg text-[#4e7397] disabled:opacity-50">
-                  <span class="material-symbols-outlined">chevron_left</span>
-                </button>
-                <button v-for="page in visiblePages" :key="page" @click="goToPage(page)" :class="['px-4 py-2 rounded-lg text-sm font-medium', page === currentPage ? 'bg-primary text-white' : 'border border-slate-200 dark:border-slate-700 text-[#4e7397]']">{{ page }}</button>
-                <button @click="nextPage" :disabled="currentPage === totalPages" class="p-2 border border-slate-200 dark:border-slate-700 rounded-lg text-[#4e7397] disabled:opacity-50">
-                  <span class="material-symbols-outlined">chevron_right</span>
-                </button>
-              </div>
-            </div>
+            <input v-model="searchQuery" class="flex-1 border-none bg-transparent text-[#0e141b] dark:text-slate-50 focus:ring-0 px-2 text-sm placeholder:text-[#4e7397]" placeholder="Nom ou matricule..." />
           </div>
+        </div>
+
+         <!-- Class Filter (Optional) -->
+        <div class="flex flex-col gap-1 w-full md:w-48">
+            <label class="text-xs font-bold text-slate-500 uppercase">Classe (Optionnel)</label>
+            <select v-model="selectedClass" class="w-full h-11 bg-slate-50 dark:bg-slate-800 border-none rounded-lg px-4 text-sm font-medium focus:ring-2 ring-primary/50 text-slate-700 dark:text-slate-200">
+                <option value="">Toutes les classes</option>
+                <option v-for="c in classes" :key="c._id" :value="c._id">{{ c.niveau }} {{ c.section }}</option>
+            </select>
+        </div>
+
+        <button @click="fetchData" class="h-11 px-6 bg-primary text-white rounded-lg font-bold hover:bg-primary/90 transition-colors shadow-lg shadow-primary/20 flex items-center gap-2">
+            <span class="material-symbols-outlined">refresh</span>
+            Actualiser
+        </button>
+      </div>
+
+      <!-- Loading State -->
+      <div v-if="isLoading" class="flex justify-center items-center py-20">
+        <span class="material-symbols-outlined text-4xl animate-spin text-primary">progress_activity</span>
+      </div>
+
+      <!-- Content: Class List -->
+      <div v-else class="flex flex-col gap-6 pb-10">
+        <div v-if="filteredClassesData.length === 0" class="text-center py-12 bg-white dark:bg-slate-900 rounded-xl border border-dashed border-slate-300 dark:border-slate-700">
+            <span class="material-symbols-outlined text-4xl text-slate-300 mb-2">folder_off</span>
+            <p class="text-slate-500 text-lg">Aucun bulletin trouvé pour cette période.</p>
+            <p class="text-slate-400 text-sm">Essayez de changer les filtres ou l'année scolaire.</p>
+        </div>
+
+        <div v-for="group in filteredClassesData" :key="group.classe._id" class="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-slate-200 dark:border-slate-800 overflow-hidden transition-all duration-300">
+            <!-- Class Header -->
+            <div 
+                @click="toggleClasse(group.classe._id)"
+                class="p-5 border-b border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/50 flex flex-wrap justify-between items-center gap-4 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+            >
+                <div class="flex items-center gap-4">
+                    <div class="size-10 rounded-lg bg-indigo-100 text-indigo-600 dark:bg-indigo-500/20 dark:text-indigo-400 flex items-center justify-center font-bold text-lg">
+                        {{ group.classe.niveau.substring(0,2).toUpperCase() }}{{ group.classe.section.substring(0,1) }}
+                    </div>
+                    <div>
+                        <h3 class="text-lg font-bold text-[#0e141b] dark:text-white">{{ group.classe.niveau }} {{ group.classe.section }}</h3>
+                        <p class="text-xs text-[#4e7397] dark:text-slate-400">
+                            {{ group.bulletins.length }} bulletins trouvés
+                        </p>
+                    </div>
+                </div>
+
+                <div class="flex items-center gap-3">
+                     <button 
+                        @click.stop="downloadClassPDF(group)"
+                        class="px-3 py-1.5 bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-lg text-xs font-bold hover:bg-slate-50 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 flex items-center gap-2 transition-colors z-10"
+                        title="Télécharger tous les bulletins de la classe"
+                    >
+                        <span class="material-symbols-outlined text-sm">download</span>
+                        PDF Classe
+                    </button>
+                    <span class="material-symbols-outlined text-slate-400 transition-transform duration-300" :class="{ 'rotate-180': expandedClasses[group.classe._id] }">expand_more</span>
+                </div>
+            </div>
+
+            <!-- Bulletins List (Accordion Content) -->
+            <div v-show="expandedClasses[group.classe._id]" class="overflow-x-auto">
+                <table class="w-full text-left">
+                    <thead class="bg-slate-50 dark:bg-slate-800/30 text-slate-500 dark:text-slate-400 text-xs uppercase tracking-wider">
+                        <tr>
+                            <th class="px-6 py-3 font-semibold">Matricule</th>
+                            <th class="px-6 py-3 font-semibold">Élève</th>
+                            <th class="px-6 py-3 font-semibold">Moyenne</th>
+                            <th class="px-6 py-3 font-semibold">Rang</th>
+                            <th class="px-6 py-3 font-semibold">Mention</th>
+                            <th class="px-6 py-3 font-semibold text-right">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
+                        <tr v-for="bulletin in group.bulletins" :key="bulletin._id" class="hover:bg-slate-50/50 dark:hover:bg-slate-800/50 transition-colors">
+                            <td class="px-6 py-3 text-sm font-medium text-slate-500">{{ bulletin.eleve.matricule || '-' }}</td>
+                            <td class="px-6 py-3 text-sm font-medium text-slate-900 dark:text-slate-100">
+                                {{ bulletin.eleve.nom }} {{ bulletin.eleve.prenom }}
+                            </td>
+                            <td class="px-6 py-3 text-sm font-bold" :class="getGradeColor(bulletin.moyenneGenerale)">
+                                {{ bulletin.moyenneGenerale ? bulletin.moyenneGenerale.toFixed(2) : '-' }}
+                            </td>
+                            <td class="px-6 py-3 text-sm text-slate-600 dark:text-slate-400">
+                                {{ bulletin.rang ? bulletin.rang + 'e' : '-' }}
+                            </td>
+                              <td class="px-6 py-3 text-sm italic">
+                                <span v-if="bulletin.signatureProviseur" class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-green-100 text-green-700 dark:bg-green-500/10 dark:text-green-400 text-[10px] font-bold">
+                                  <span class="material-symbols-outlined text-[12px]">verified</span>
+                                  Validé
+                                </span>
+                                <span v-else class="text-slate-400 dark:text-slate-500 text-[10px]">
+                                  Non signé
+                                </span>
+                            </td>
+                            <td class="px-6 py-3 text-right">
+                                <div class="flex items-center gap-2 justify-end">
+                                    <button 
+                                        @click="viewBulletin(bulletin)"
+                                        class="text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700 p-2 rounded-full transition-colors"
+                                        title="Prévisualiser le bulletin"
+                                    >
+                                        <span class="material-symbols-outlined">visibility</span>
+                                    </button>
+                                    <button 
+                                        v-if="bulletin.signatureProviseur"
+                                        @click="downloadBulletin(bulletin._id)"
+                                        class="text-primary hover:bg-primary/10 p-2 rounded-full transition-colors"
+                                        title="Télécharger le PDF"
+                                    >
+                                        <span class="material-symbols-outlined">download</span>
+                                    </button>
+                                    <div v-else class="text-[10px] italic text-amber-600 bg-amber-50 dark:bg-amber-900/20 px-2 py-1 rounded" title="Non signé par le Proviseur">
+                                        Non signé
+                                    </div>
+                                </div>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
         </div>
       </div>
     </main>
 
-    <!-- Confirmation Modal -->
-    <ConfirmationModal
-      :is-open="showConfirmModal"
-      :title="confirmModalTitle"
-      :message="confirmModalMessage"
-      :confirm-text="confirmModalActionText"
-      :cancel-text="confirmModalCancelText"
-      :type="confirmModalType"
-      @confirm="executeConfirmAction"
-      @cancel="closeConfirmModal"
-    />
+    <!-- Bulletin Preview Modal -->
+    <div v-if="showPreview" class="fixed inset-0 z-[100] overflow-y-auto no-print">
+        <BulletinTemplate 
+            :bulletin="selectedBulletinData" 
+            :eleve="selectedBulletinData.eleve" 
+            :classe="selectedBulletinData.classe"
+            :is-student-view="false"
+            @close="showPreview = false"
+            @download="() => downloadBulletin(selectedBulletinData._id)"
+        />
+    </div>
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted, computed } from 'vue';
+import { ref, onMounted, computed, watch } from 'vue';
 import api from '@/services/api';
-import { useToast } from '@/composables/useToast';
-import ConfirmationModal from '@/components/modals/ConfirmationModal.vue';
+import { handlePDFAction } from '@/utils/pdfHelpers';
+import BulletinTemplate from '@/components/bulletin/BulletinTemplate.vue';
 
-const { success, error, info } = useToast();
-
-const students = ref([]);
-const classes = ref([]);
-const filieres = ref([]);
-const annees = ref([]);
 const isLoading = ref(false);
-const currentPage = ref(1);
-const perPage = ref(10);
-const totalStudents = ref(0);
+const classes = ref([]);
+const classesData = ref([]); // { classe: Object, bulletins: Array }
+const expandedClasses = ref({});
+const searchQuery = ref('');
+const selectedClass = ref('');
+const annees = ref([]);
+const showPreview = ref(false);
+const selectedBulletinData = ref(null);
 
 const filters = ref({
-  search: '',
-  annee: '',
-  filiere: '',
-  classe: ''
+    annee: '2025-2026',
+    periode: 'Trimestre 1'
 });
 
-// Modal state
-const showConfirmModal = ref(false);
-const confirmModalTitle = ref('');
-const confirmModalMessage = ref('');
-const confirmModalActionText = ref('Confirmer');
-const confirmModalCancelText = ref('Annuler');
-const confirmModalType = ref('info');
-const pendingAction = ref(null);
-
-const fetchStudents = async () => {
-  try {
-    isLoading.value = true;
-    const params = {
-      role: 'ELEVE',
-      page: currentPage.value,
-      limit: perPage.value,
-      populate: 'classe'
-    };
-    
-    if (filters.value.search) params.search = filters.value.search;
-    if (filters.value.classe) params.classe = filters.value.classe;
-    
-    const res = await api.getUsers(params);
-    if (res.data.success) {
-      students.value = res.data.data;
-      totalStudents.value = res.data.count || res.data.data.length;
-    }
-  } catch (err) {
-    console.error('Erreur chargement élèves:', err);
-  } finally {
-    isLoading.value = false;
-  }
-};
-
-const fetchClasses = async () => {
-  try {
-    const res = await api.getClasses();
-    if (res.data.success) {
-      classes.value = res.data.data;
-      // Extract unique filieres from classes
-      const uniqueFilieres = [...new Set(classes.value.map(c => c.filiere).filter(Boolean))];
-      filieres.value = uniqueFilieres;
-    }
-  } catch (err) {
-    console.error('Erreur chargement classes:', err);
-  }
-};
-
-const fetchAnnees = async () => {
-  try {
-    // Fetch unique years from students or use default
+const generateYears = () => {
     const currentYear = new Date().getFullYear();
-    annees.value = [
-      `${currentYear}-${currentYear + 1}`,
-      `${currentYear - 1}-${currentYear}`,
-      `${currentYear - 2}-${currentYear - 1}`
-    ];
-  } catch (err) {
-    console.error('Erreur chargement années:', err);
-  }
+    const years = [];
+    // Generate last 5 years
+    for (let i = 0; i < 5; i++) {
+        years.push(`${currentYear - i}-${currentYear - i + 1}`);
+    }
+    // Also add previous one just in case we are at start of year/overlap
+    years.push(`${currentYear - 1}-${currentYear}`);
+    
+    // Deduplicate and Sort
+    const uniqueYears = [...new Set(years)].sort().reverse();
+    annees.value = uniqueYears;
+    
+    // Set default if exists
+    if (uniqueYears.length > 1) {
+         filters.value.annee = uniqueYears[1]; // Usually prefer current academic year
+    } else if (uniqueYears.length > 0) {
+        filters.value.annee = uniqueYears[0];
+    }
 };
 
-const resetFilters = () => {
-  filters.value = {
-    search: '',
-    annee: '',
-    filiere: '',
-    classe: ''
-  };
-  currentPage.value = 1;
-  fetchStudents();
+const toggleClasse = (classeId) => {
+    expandedClasses.value[classeId] = !expandedClasses.value[classeId];
 };
 
-const totalPages = computed(() => Math.ceil(totalStudents.value / perPage.value));
+const getGradeColor = (grade) => {
+    if (grade === undefined || grade === null) return 'text-slate-400';
+    if (grade >= 10) return 'text-green-600 dark:text-green-400';
+    if (grade >= 7) return 'text-amber-600 dark:text-amber-400';
+    return 'text-red-600 dark:text-red-400';
+};
 
-const visiblePages = computed(() => {
-  const pages = [];
-  const maxVisible = 3;
-  let start = Math.max(1, currentPage.value - 1);
-  let end = Math.min(totalPages.value, start + maxVisible - 1);
-  
-  if (end - start < maxVisible - 1) {
-    start = Math.max(1, end - maxVisible + 1);
-  }
-  
-  for (let i = start; i <= end; i++) {
-    pages.push(i);
-  }
-  return pages;
+const fetchData = async () => {
+    if (!filters.value.annee || !filters.value.periode) return;
+
+    try {
+        isLoading.value = true;
+        classesData.value = []; // Reset
+
+        // 1. Fetch Classes (Optimization: could cache this)
+        if (classes.value.length === 0) {
+            const classesRes = await api.getClasses();
+            if (classesRes.data.success) {
+                classes.value = classesRes.data.data;
+            }
+        }
+
+        // 2. Fetch bulletins for each class
+        // We fetch for all classes for the selected period/year
+        const promises = classes.value.map(async (classe) => {
+             try {
+                const res = await api.getBulletinsByClasse(classe._id, {
+                    anneeScolaire: filters.value.annee,
+                    periode: filters.value.periode
+                });
+                
+                const bulletins = res.data.data || [];
+                
+                // Only return if there are bulletins (archives view shouldn't show empty classes usually)
+                if (bulletins.length > 0) {
+                    return {
+                        classe,
+                        bulletins
+                    };
+                }
+                return null;
+             } catch (e) {
+                 // console.error(e);
+                 return null;
+             }
+        });
+
+        const results = await Promise.all(promises);
+        classesData.value = results.filter(r => r !== null);
+        
+    } catch (error) {
+        console.error("Erreur chargement archives:", error);
+    } finally {
+        isLoading.value = false;
+    }
+};
+
+const filteredClassesData = computed(() => {
+    let data = classesData.value;
+
+    if (selectedClass.value) {
+        data = data.filter(group => group.classe._id === selectedClass.value);
+    }
+
+    if (searchQuery.value.trim()) {
+        const query = searchQuery.value.toLowerCase().trim();
+        data = data.map(group => {
+            const matchingBulletins = group.bulletins.filter(b => 
+                (b.eleve.nom && b.eleve.nom.toLowerCase().includes(query)) ||
+                (b.eleve.prenom && b.eleve.prenom.toLowerCase().includes(query)) ||
+                (b.eleve.matricule && b.eleve.matricule.toLowerCase().includes(query))
+            );
+
+            if (matchingBulletins.length > 0) {
+                expandedClasses.value[group.classe._id] = true; // Auto expand when searching
+                return { ...group, bulletins: matchingBulletins };
+            }
+            return null;
+        }).filter(g => g !== null);
+    }
+    
+    return data;
 });
 
-const previousPage = () => {
-  if (currentPage.value > 1) {
-    currentPage.value--;
-    fetchStudents();
-  }
+const downloadBulletin = (id) => {
+    handlePDFAction(id, `Bulletin_Archive_${id}.pdf`, 'download');
 };
 
-const nextPage = () => {
-  if (currentPage.value < totalPages.value) {
-    currentPage.value++;
-    fetchStudents();
-  }
+const viewBulletin = (bulletin) => {
+    selectedBulletinData.value = bulletin;
+    showPreview.value = true;
 };
 
-const goToPage = (page) => {
-  currentPage.value = page;
-  fetchStudents();
-};
-
-const openConfirmModal = (title, message, actionText, action, type = 'info', cancelText = 'Annuler') => {
-  confirmModalTitle.value = title;
-  confirmModalMessage.value = message;
-  confirmModalActionText.value = actionText;
-  confirmModalCancelText.value = cancelText;
-  confirmModalType.value = type;
-  pendingAction.value = action;
-  showConfirmModal.value = true;
-};
-
-const closeConfirmModal = () => {
-  showConfirmModal.value = false;
-  pendingAction.value = null;
-};
-
-const executeConfirmAction = async () => {
-  if (pendingAction.value) {
-    await pendingAction.value();
-  }
-  closeConfirmModal();
-};
-
-const viewStudent = (student) => {
-  openConfirmModal(
-    'Détails de l\'élève',
-    `Nom & Prénom: ${student.prenom} ${student.nom}\nMatricule: ${student.matricule || 'N/A'}\nClasse: ${student.classe?.nom || 'N/A'}`,
-    'Fermer',
-    () => {},
-    'info',
-    'Fermer'
-  );
-  // Hack to ensure logic works as "OK" closing it.
-  confirmModalActionText.value = 'OK';
-  confirmModalCancelText.value = 'Fermer';
-};
-
-const printDuplicata = (student) => {
-  info(`Génération de duplicata pour ${student.prenom} ${student.nom}...`);
-  // Mock functionality
-  setTimeout(() => {
-    success('Duplicata généré avec succès');
-  }, 1000);
-};
-
-const exportCSV = async () => {
-  try {
-    const csvContent = [
-      ['Matricule', 'Nom', 'Prénom', 'Classe', 'Année'].join(','),
-      ...students.value.map(s => [
-        s.matricule || 'N/A',
-        s.nom,
-        s.prenom,
-        s.classe?.nom || 'N/A',
-        s.annee || '2023-2024'
-      ].join(','))
-    ].join('\n');
-    
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-    const link = document.createElement('a');
-    link.href = URL.createObjectURL(blob);
-    link.download = `archives_eleves_${new Date().toISOString().split('T')[0]}.csv`;
-    link.click();
-    success('Export CSV réussi');
-  } catch (err) {
-    console.error('Erreur export CSV:', err);
-    error('Erreur lors de l\'export CSV');
-  }
-};
-
-const exportZIP = () => {
-  info('Fonction Archive ZIP en cours de développement.');
+const downloadClassPDF = async (group) => {
+    try {
+        const response = await api.downloadClassBulletins(group.classe._id, {
+            anneeScolaire: filters.value.annee,
+            periode: filters.value.periode
+        });
+        
+        const url = window.URL.createObjectURL(new Blob([response.data]));
+        const link = document.createElement('a');
+        link.href = url;
+         // Clean filename
+        const safePeriod = filters.value.periode.replace(/\s+/g, '-');
+        link.setAttribute('download', `bulletins-archive-${group.classe.niveau}-${group.classe.section}-${safePeriod}.pdf`);
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+    } catch (error) {
+        console.error("Download error", error);
+        alert("Erreur lors du téléchargement. Assurez-vous que tous les bulletins sont validés.");
+    }
 };
 
 onMounted(() => {
-  fetchStudents();
-  fetchClasses();
-  fetchAnnees();
-  
-  const link = document.createElement('link');
-  link.href = 'https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap';
-  link.rel = 'stylesheet';
-  document.head.appendChild(link);
-
-  const lexendLink = document.createElement('link');
-  lexendLink.href = 'https://fonts.googleapis.com/css2?family=Lexend:wght@100..900&family=Noto+Sans:wght@100..900&display=swap';
-  lexendLink.rel = 'stylesheet';
-  document.head.appendChild(lexendLink);
-
-  const style = document.createElement('style');
-  style.textContent = `
-    body { font-family: 'Lexend', 'Noto Sans', sans-serif; }
-    .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
-  `;
-  document.head.appendChild(style);
+    generateYears();
+    fetchData();
 });
 </script>

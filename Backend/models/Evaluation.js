@@ -51,6 +51,10 @@ const EvaluationSchema = new mongoose.Schema({
     description: {
         type: String
     },
+    anneeScolaire: {
+        type: String,
+        default: '2025-2026'
+    },
     createdAt: {
         type: Date,
         default: Date.now

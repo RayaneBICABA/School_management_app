@@ -20,62 +20,85 @@
       <!-- Stats/KPI Grid -->
       <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
 
-        <div class="flex flex-col gap-2 rounded-xl p-6 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-sm">
+        <div class="flex flex-col gap-2 rounded-2xl p-6 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-sm transition-all soft-lift">
           <div class="flex justify-between items-start">
-            <p class="text-slate-500 dark:text-slate-400 text-sm font-medium uppercase tracking-wider">Saisie des notes</p>
-            <span class="material-symbols-outlined text-orange-500 bg-orange-500/10 p-2 rounded-lg">edit_note</span>
+            <p class="text-slate-500 dark:text-slate-400 text-[10px] font-black uppercase tracking-[0.2em]">Saisie des notes</p>
+            <div class="material-symbols-outlined text-orange-500 bg-orange-500/10 p-2.5 rounded-xl shadow-sm">edit_note</div>
           </div>
-          <p class="text-[#0e141b] dark:text-white tracking-tight text-3xl font-bold leading-tight">{{ kpis.saisieNotes }}%</p>
-
+          <div class="mt-2">
+              <p class="text-[#0e141b] dark:text-white tracking-tight text-4xl font-black leading-tight">{{ kpis.saisieNotes }}</p>
+              <p class="text-[10px] font-bold text-slate-400 mt-1 uppercase tracking-widest">Professeurs ayant validé</p>
+          </div>
         </div>
-        <div class="flex flex-col gap-2 rounded-xl p-6 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-sm">
-          <div class="flex justify-between items-start">
-            <p class="text-slate-500 dark:text-slate-400 text-sm font-medium uppercase tracking-wider">Bulletins en attente</p>
-            <span class="material-symbols-outlined text-primary bg-primary/10 p-2 rounded-lg">pending_actions</span>
-          </div>
-          <p class="text-[#0e141b] dark:text-white tracking-tight text-3xl font-bold leading-tight">{{ kpis.bulletinsAttente }}</p>
 
+        <div class="flex flex-col gap-2 rounded-2xl p-6 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-sm transition-all soft-lift">
+          <div class="flex justify-between items-start">
+            <p class="text-slate-500 dark:text-slate-400 text-[10px] font-black uppercase tracking-[0.2em]">Bulletins en attente</p>
+            <div class="material-symbols-outlined text-primary bg-primary/10 p-2.5 rounded-xl shadow-sm">pending_actions</div>
+          </div>
+           <div class="mt-2">
+              <p class="text-[#0e141b] dark:text-white tracking-tight text-4xl font-black leading-tight">{{ kpis.bulletinsAttente }}</p>
+              <p class="text-[10px] font-bold text-slate-400 mt-1 uppercase tracking-widest">En attente de validation</p>
+           </div>
         </div>
       </div>
 
-
-
-      <!-- Strategic Section -->
-      <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        <!-- Left Column: Operations -->
-        <div class="flex flex-col gap-6">
-        </div>
-
-        <!-- Right Column: Alerts & Notifications -->
-        <div class="flex flex-col gap-6">
-          <div class="bg-white dark:bg-slate-800 rounded-xl p-6 border border-slate-200 dark:border-slate-700 shadow-sm">
-            <h2 class="text-[#0e141b] dark:text-white text-xl font-bold mb-6">Alertes & Notifications</h2>
-            <div class="space-y-4">
-              <div v-for="alerte in alertes" :key="alerte.id" class="flex items-start gap-3 p-4 rounded-lg border" :class="getAlerteClass(alerte.type)">
-                <span class="material-symbols-outlined text-xl" :class="getAlerteIconClass(alerte.type)">{{ alerte.icon }}</span>
-                <div class="flex-1">
-                  <h4 class="font-bold text-[#0e141b] dark:text-white">{{ alerte.titre }}</h4>
-                  <p class="text-sm text-[#4e7397] dark:text-slate-400 mt-1">{{ alerte.description }}</p>
+      <!-- Strategic Section: Actions & Alerts (Equal Height Grid) -->
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
+        
+         <!-- Left: Actions rapides -->
+         <div class="bg-white dark:bg-slate-800 rounded-2xl p-8 border border-slate-200 dark:border-slate-700 shadow-sm flex flex-col h-full relative overflow-hidden group">
+            <div class="absolute -right-12 -top-12 size-32 bg-primary/5 rounded-full blur-3xl group-hover:scale-150 transition-transform duration-1000"></div>
+            <h2 class="text-[#0e141b] dark:text-white text-xs font-black uppercase tracking-[0.2em] mb-8 flex items-center gap-3 relative">
+                <span class="material-symbols-outlined text-primary text-xl">bolt</span>
+                Actions rapides
+            </h2>
+            <div class="grid grid-cols-2 gap-4 flex-1 relative">
+              <router-link to="/proviseur/suivi-activite" class="flex flex-col items-center justify-center gap-3 p-6 bg-slate-50/50 dark:bg-slate-800/50 rounded-2xl hover:bg-white dark:hover:bg-slate-700 transition-all border border-slate-100 dark:border-slate-700 shadow-sm hover:shadow-xl hover:-translate-y-1 group/item click-press">
+                <div class="size-14 rounded-2xl bg-primary/10 flex items-center justify-center text-primary transition-transform group-hover/item:rotate-12">
+                  <span class="material-symbols-outlined text-3xl">analytics</span>
                 </div>
-              </div>
-            </div>
-          </div>
-
-          <div class="bg-white dark:bg-slate-800 rounded-xl p-6 border border-slate-200 dark:border-slate-700 shadow-sm">
-            <h2 class="text-[#0e141b] dark:text-white text-xl font-bold mb-6">Actions rapides</h2>
-            <div class="grid grid-cols-2 gap-4">
-              <button class="flex flex-col items-center gap-2 p-4 bg-slate-50 dark:bg-slate-800 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors">
-                <span class="material-symbols-outlined text-primary text-2xl">download</span>
-                <span class="text-sm font-medium text-[#0e141b] dark:text-white">Export</span>
-              </button>
-
-              <router-link to="/proviseur/suivi-activite" class="flex flex-col items-center gap-2 p-4 bg-slate-50 dark:bg-slate-800 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors">
-                <span class="material-symbols-outlined text-primary text-2xl">analytics</span>
-                <span class="text-sm font-medium text-[#0e141b] dark:text-white">Stats</span>
+                <span class="text-[10px] font-black uppercase tracking-widest text-[#0e141b] dark:text-white mt-1">Statistiques</span>
+              </router-link>
+              
+              <router-link to="/proviseur/validation-bulletins" class="flex flex-col items-center justify-center gap-3 p-6 bg-slate-50/50 dark:bg-slate-800/50 rounded-2xl hover:bg-white dark:hover:bg-slate-700 transition-all border border-slate-100 dark:border-slate-700 shadow-sm hover:shadow-xl hover:-translate-y-1 group/item click-press">
+                <div class="size-14 rounded-2xl bg-primary/10 flex items-center justify-center text-primary transition-transform group-hover/item:rotate-12">
+                  <span class="material-symbols-outlined text-3xl">fact_check</span>
+                </div>
+                <span class="text-[10px] font-black uppercase tracking-widest text-[#0e141b] dark:text-white mt-1">Validations</span>
               </router-link>
             </div>
           </div>
-        </div>
+
+        <!-- Right: Alerts & Notifications -->
+        <div class="bg-white dark:bg-slate-800 rounded-2xl p-8 border border-slate-200 dark:border-slate-700 shadow-sm flex flex-col h-full">
+            <h2 class="text-[#0e141b] dark:text-white text-xs font-black uppercase tracking-[0.2em] mb-8 flex items-center gap-3">
+                <span class="material-symbols-outlined text-orange-500 text-xl">notifications_active</span>
+                Alertes & Notifications
+            </h2>
+            <div class="space-y-4 flex-1 overflow-y-auto max-h-[340px] custom-scrollbar pr-2">
+              <div v-if="alertes.length === 0" class="flex flex-col items-center justify-center h-full text-slate-400 py-10">
+                  <span class="material-symbols-outlined text-5xl mb-4 opacity-20">notifications_off</span>
+                  <span class="text-xs font-bold uppercase tracking-widest">Aucune nouvelle alerte</span>
+              </div>
+              <TransitionGroup
+                enter-active-class="transition-all duration-500 ease-out-expo"
+                enter-from-class="opacity-0 translate-y-4"
+                enter-to-class="opacity-100 translate-y-0"
+              >
+                <div v-for="alerte in alertes" :key="alerte.id" class="flex items-start gap-4 p-5 rounded-2xl border transition-all hover:shadow-lg hover:-translate-x-1 group" :class="getAlerteClass(alerte.type)">
+                  <div class="size-12 rounded-xl flex items-center justify-center shrink-0 border-2 border-white dark:border-slate-800 shadow-sm transition-transform group-hover:scale-110" :class="getAlerteIconClass(alerte.type)">
+                    <span class="material-symbols-outlined text-2xl">{{ alerte.icon }}</span>
+                  </div>
+                  <div class="flex-1 min-w-0">
+                    <h4 class="font-black text-[#0e141b] dark:text-white text-sm tracking-tight group-hover:text-primary transition-colors truncate">{{ alerte.titre }}</h4>
+                    <p class="text-[11px] font-medium text-slate-500 dark:text-slate-400 mt-1 line-clamp-2 leading-relaxed">{{ alerte.description }}</p>
+                  </div>
+                </div>
+              </TransitionGroup>
+            </div>
+          </div>
+
       </div>
 
       <!-- Section Footer info -->

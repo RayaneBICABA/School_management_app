@@ -17,30 +17,58 @@
         </button>
         <div class="h-8 w-px bg-slate-200 dark:bg-slate-700 mx-2"></div>
         <div class="flex items-center gap-3">
-          <span class="text-sm font-medium hidden md:block">Enfant: {{ currentChild.name }} ({{ currentChild.class }})</span>
+          <!-- Child Selector -->
+          <div v-if="children.length > 0" class="relative">
+            <select v-model="selectedChildId" @change="updateCurrentChild" class="appearance-none bg-slate-100 dark:bg-slate-800 border-none rounded-lg px-4 py-2 pr-10 font-bold text-sm focus:ring-2 focus:ring-primary/20 cursor-pointer">
+              <option v-for="child in children" :key="child._id" :value="child._id">
+                {{ child.prenom }} {{ child.nom }}
+              </option>
+            </select>
+            <span class="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-slate-500 text-lg">expand_more</span>
+          </div>
           <div class="size-8 rounded-full bg-cover bg-center ring-2 ring-primary/20" :style="`background-image: url('${currentChild.avatar}')`"></div>
         </div>
       </div>
     </header>
 
     <div class="p-8 space-y-8 max-w-7xl mx-auto w-full">
-      <!-- Page Heading -->
-      <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div>
-          <h1 class="text-3xl font-black text-slate-900 dark:text-white tracking-tight">Discipline et Assiduité</h1>
-          <p class="text-slate-500 dark:text-slate-400 mt-1">Suivi complet de l'assiduité pour {{ currentChild.name }} • Année 2023-2024</p>
-        </div>
-        <div class="flex gap-3">
-          <button @click="downloadReport" class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 px-4 py-2 rounded-lg text-sm font-semibold hover:bg-slate-50 transition-colors flex items-center gap-2">
-            <span class="material-symbols-outlined text-sm">download</span>
-            Rapport PDF
-          </button>
-          <button @click="justifyAbsence" class="bg-primary text-white px-4 py-2 rounded-lg text-sm font-semibold hover:bg-primary/90 transition-colors flex items-center gap-2">
-            <span class="material-symbols-outlined text-sm">add_circle</span>
-            Justifier une absence
-          </button>
-        </div>
+      <!-- No Children State -->
+      <div v-if="children.length === 0" class="text-center py-20 bg-white dark:bg-slate-900 rounded-xl border border-dashed border-slate-200 dark:border-slate-700">
+        <span class="material-symbols-outlined text-4xl text-slate-400 mb-4">family_restroom</span>
+        <h3 class="text-lg font-semibold text-slate-600 dark:text-slate-400 mb-2">Aucun enfant associé</h3>
+        <p class="text-slate-500 dark:text-slate-400 mb-4">Vous devez d'abord associer un enfant à votre compte pour accéder aux données de discipline.</p>
+        <button @click="attachChild" class="px-6 py-2 bg-primary text-white rounded-lg font-medium hover:bg-primary/90 transition-colors">
+          Associer un enfant
+        </button>
       </div>
+
+      <!-- Content when children exist -->
+      <div v-else>
+        <!-- Loading State -->
+        <div v-if="isLoading" class="flex items-center justify-center py-20">
+          <span class="material-symbols-outlined text-4xl text-primary animate-spin mr-3">sync</span>
+          <span class="text-slate-500 dark:text-slate-400">Chargement des données de discipline...</span>
+        </div>
+
+        <!-- Actual Content -->
+        <div v-else>
+          <!-- Page Heading -->
+        <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div>
+            <h1 class="text-3xl font-black text-slate-900 dark:text-white tracking-tight">Discipline et Assiduité</h1>
+            <p class="text-slate-500 dark:text-slate-400 mt-1">Suivi complet de l'assiduité pour {{ currentChild.name }} • Année {{ currentChild.year }}</p>
+          </div>
+          <div class="flex gap-3">
+            <button @click="downloadReport" class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 px-4 py-2 rounded-lg text-sm font-semibold hover:bg-slate-50 transition-colors flex items-center gap-2">
+              <span class="material-symbols-outlined text-sm">download</span>
+              Rapport PDF
+            </button>
+            <button @click="justifyAbsence" class="bg-primary text-white px-4 py-2 rounded-lg text-sm font-semibold hover:bg-primary/90 transition-colors flex items-center gap-2">
+              <span class="material-symbols-outlined text-sm">add_circle</span>
+              Justifier une absence
+            </button>
+          </div>
+        </div>
 
       <!-- Stats Grid -->
       <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -191,6 +219,8 @@
           </div>
         </div>
       </div>
+        </div>
+      </div>
 
       <!-- Guidance / Information Section -->
       <div class="bg-primary/5 dark:bg-primary/10 rounded-xl border border-primary/20 p-6 flex items-start gap-4">
@@ -204,6 +234,7 @@
           </p>
         </div>
       </div>
+    </div>
     </div>
 
     <!-- Footer Padding -->
@@ -327,49 +358,53 @@
         </div>
       </div>
     </div>
-  </div>
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
+import api from '@/services/api'
+
+const router = useRouter()
 
 // Données réactives
 const searchQuery = ref('')
 const showJustificationModal = ref(false)
 const selectedAbsence = ref('')
+const isLoading = ref(true)
 
-// Enfant actuel
-const currentChild = ref({
-  name: 'Lucas Dupont',
-  class: '3ème A',
-  avatar: 'https://lh3.googleusercontent.com/aida-public/AB6AXuDOGlu2mO3yVXJw5p-kE_CXcnkcLNdotPuWx3kc9-GPRG1htzrzWXrdkrYZJs3Z70jFfCwfDfmPcu6AglLnXE1tU9JUxHLOoZ8ebPY8wMEAS3u6FTTyHZ2q6794_mn6kOCf4OFiaNQZmSi8ZAggbXuFUU3LfWFgBtxuY2cMxYjjJTgOdy7ZSpBQlh1v6Rt61qgqP5-Einl3nSwiC2dMfcZxAxF0heBOYlQvSC_MPyB4GS6nCjkmHleHaO-ELh5IFpj-WTkgHYLtpbQ'
-})
+// Enfant actuel et enfants
+const currentChild = ref({})
+const children = ref([])
+const selectedChildId = ref('')
+
+// Update current child when selection changes
+const updateCurrentChild = () => {
+  const child = children.value.find(c => c._id === selectedChildId.value)
+  if (child) {
+    currentChild.value = {
+      name: `${child.prenom} ${child.nom}`,
+      class: child.classe ? `${child.classe.niveau} ${child.classe.section}` : 'Sans classe',
+      year: child.classe?.anneeScolaire || '2023-2024',
+      avatar: child.photo === 'no-photo.jpg' 
+        ? `https://ui-avatars.com/api/?name=${child.prenom}+${child.nom}&background=random`
+        : `/uploads/${child.photo}`
+    }
+    // Fetch discipline data for selected child
+    fetchDisciplineData()
+  }
+}
 
 // Statistiques
 const stats = ref({
-  absences: 3,
-  delays: 5,
-  sanctions: 1,
-  achievements: 12
+  absences: 0,
+  delays: 0,
+  sanctions: 0,
+  achievements: 0
 })
 
 // Absences en attente de justification
-const pendingAbsences = ref([
-  {
-    id: 1,
-    subject: 'Mathématiques',
-    date: '12 Oct 2023',
-    time: '08:00 - 10:00 (2h)',
-    teacher: 'M. Lefebvre'
-  },
-  {
-    id: 2,
-    subject: 'Histoire-Géographie',
-    date: '14 Oct 2023',
-    time: '14:00 - 15:00 (1h)',
-    teacher: 'Mme. Durand'
-  }
-])
+const pendingAbsences = ref([])
 
 // Formulaire de justification
 const justificationForm = ref({
@@ -382,100 +417,194 @@ const justificationForm = ref({
 const weekDays = ref(['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim'])
 
 // Mois actuel
-const currentMonthYear = ref('Octobre 2023')
+const currentMonthYear = ref('')
 
 // Jours du calendrier
-const calendarDays = ref([
-  { date: 25, isPreviousMonth: true },
-  { date: 26, isPreviousMonth: true },
-  { date: 27, isPreviousMonth: true },
-  { date: 28, isPreviousMonth: true },
-  { date: 29, isPreviousMonth: true },
-  { date: 30, isPreviousMonth: true },
-  { date: 1 },
-  { date: 2 },
-  { date: 3, event: { type: 'absence', label: 'Absence injustifiée' } },
-  { date: 4 },
-  { date: 5 },
-  { date: 6 },
-  { date: 7 },
-  { date: 8 },
-  { date: 9 },
-  { date: 10 },
-  { date: 11 },
-  { date: 12, event: { type: 'delay', label: 'Retard 15 min' } },
-  { date: 13 },
-  { date: 14 },
-  { date: 15 },
-  { date: 16 },
-  { date: 17 },
-  { date: 18 },
-  { date: 19, isToday: true, event: { type: 'today', label: 'Aujourd\'hui' } },
-  { date: 20 },
-  { date: 21 },
-  { date: 22 }
-])
+const calendarDays = ref([])
 
 // Données de présence mensuelle
-const attendanceData = ref([
-  { name: 'Sep', studentPercentage: 95, classAverage: 80 },
-  { name: 'Oct', studentPercentage: 90, classAverage: 85 },
-  { name: 'Nov', studentPercentage: 88, classAverage: 82 },
-  { name: 'Déc', studentPercentage: 85, classAverage: 80 },
-  { name: 'Jan', studentPercentage: 98, classAverage: 90 },
-  { name: 'Fév', studentPercentage: 92, classAverage: 85 }
-])
+const attendanceData = ref([])
 
 // Logs disciplinaires
-const disciplinaryLogs = ref([
-  {
-    id: 1,
-    type: 'achievement',
-    typeLabel: 'Félicitation',
-    icon: 'star',
-    title: 'Excellente participation en Mathématiques',
-    description: 'Lucas a montré une grande maîtrise lors du contrôle de trigonométrie et a aidé ses camarades.',
-    author: 'M. Martin (Prof. Maths)',
-    time: 'Aujourd\'hui, 10:30',
-    showLine: true
-  },
-  {
-    id: 2,
-    type: 'sanction',
-    typeLabel: 'Sanction',
-    icon: 'warning',
-    title: 'Oubli de matériel répété',
-    description: 'Manque le manuel de Français pour la 3ème fois cette semaine.',
-    action: 'Observation carnet',
-    author: 'Mme Lefebvre (Prof. Français)',
-    time: '14 Oct 2023',
-    showLine: true
-  },
-  {
-    id: 3,
-    type: 'delay',
-    typeLabel: 'Retard',
-    icon: 'history',
-    title: 'Retard en début de journée',
-    description: 'Arrivée à 08:15 au lieu de 08:00 (Cours de Technologie).',
-    status: 'Justifié (Transport)',
-    author: 'Vie Scolaire',
-    time: '12 Oct 2023',
-    showLine: true
-  },
-  {
-    id: 4,
-    type: 'incident',
-    typeLabel: 'Incident',
-    icon: 'info',
-    title: 'Absence non justifiée',
-    description: 'Absence signalée sur l\'ensemble de la journée.',
-    attachable: true,
-    author: 'Vie Scolaire',
-    time: '03 Oct 2023',
-    showLine: false
+const disciplinaryLogs = ref([])
+
+// Fetch children
+const fetchChildren = async () => {
+  try {
+    const res = await api.getChildren()
+    if (res.data.success) {
+      children.value = res.data.data
+      if (children.value.length > 0) {
+        // Set first child as selected by default
+        selectedChildId.value = children.value[0]._id
+        updateCurrentChild()
+      }
+    }
+  } catch (error) {
+    console.error('Error fetching children:', error)
   }
-])
+}
+
+// Fetch discipline data
+const fetchDisciplineData = async () => {
+  try {
+    if (!selectedChildId.value) return
+    
+    // Fetch real data from API
+    let statsData, pendingData, attendanceData, logsData
+    
+    try {
+      const statsRes = await api.getChildDisciplineStats(selectedChildId.value)
+      if (statsRes.data.success) {
+        const data = statsRes.data.data
+        statsData = {
+          absences: data.totalAbsences || 0,
+          delays: data.totalDelays || 0,
+          sanctions: data.activeSanctions || 0,
+          achievements: data.totalAchievements || 0
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching discipline stats:', error)
+      statsData = { absences: 0, delays: 0, sanctions: 0, achievements: 0 }
+    }
+    
+    try {
+      const pendingRes = await api.getChildPendingAbsences(selectedChildId.value)
+      if (pendingRes.data.success) {
+        pendingData = pendingRes.data.data.map(absence => ({
+          id: absence._id,
+          subject: absence.matiere?.nom || 'Non spécifiée',
+          date: new Date(absence.date).toLocaleDateString('fr-FR', { 
+            day: 'numeric', 
+            month: 'short', 
+            year: 'numeric' 
+          }),
+          time: `${absence.heureDebut} - ${absence.heureFin} (${absence.duree}h)`,
+          teacher: absence.professeur ? `${absence.professeur.prenom} ${absence.professeur.nom}` : 'Non spécifié'
+        }))
+      }
+    } catch (error) {
+      console.error('Error fetching pending absences:', error)
+      pendingData = []
+    }
+    
+    try {
+      const attendanceRes = await api.getChildAttendance(selectedChildId.value, { 
+        year: new Date().getFullYear(),
+        month: new Date().getMonth() + 1
+      })
+      if (attendanceRes.data.success) {
+        const data = attendanceRes.data.data
+        attendanceData = data.monthlyData || []
+        generateCalendarDays(data.dailyAttendance || [])
+      }
+    } catch (error) {
+      console.error('Error fetching attendance:', error)
+      attendanceData = []
+      generateCalendarDays([])
+    }
+    
+    try {
+      const logsRes = await api.getChildDisciplinaryLogs(selectedChildId.value)
+      if (logsRes.data.success) {
+        logsData = logsRes.data.data.map(log => ({
+          id: log._id,
+          type: log.type,
+          typeLabel: log.type === 'achievement' ? 'Félicitation' : 
+                     log.type === 'sanction' ? 'Sanction' : 
+                     log.type === 'delay' ? 'Retard' : 'Incident',
+          icon: log.type === 'achievement' ? 'star' : 
+                log.type === 'sanction' ? 'warning' : 
+                log.type === 'delay' ? 'schedule' : 'error',
+          title: log.titre,
+          description: log.description,
+          author: log.auteur ? `${log.auteur.prenom} ${log.auteur.nom}` : 'Système',
+          time: new Date(log.date).toLocaleDateString('fr-FR', {
+            day: 'numeric',
+            month: 'short',
+            year: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit'
+          }),
+          action: log.action,
+          status: log.statut,
+          attachable: log.type === 'absence' || log.type === 'delay',
+          showLine: true
+        }))
+      }
+    } catch (error) {
+      console.error('Error fetching disciplinary logs:', error)
+      logsData = []
+    }
+    
+    // Update all reactive data
+    stats.value = statsData
+    pendingAbsences.value = pendingData
+    attendanceData.value = attendanceData
+    disciplinaryLogs.value = logsData
+    
+    // Set current month/year
+    const now = new Date()
+    const monthNames = ['Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin', 'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre']
+    currentMonthYear.value = `${monthNames[now.getMonth()]} ${now.getFullYear()}`
+    
+  } catch (error) {
+    console.error('Error fetching discipline data:', error)
+    // Set default values on error
+    stats.value = { absences: 0, delays: 0, sanctions: 0, achievements: 0 }
+    pendingAbsences.value = []
+    attendanceData.value = []
+    disciplinaryLogs.value = []
+    calendarDays.value = []
+  }
+}
+
+// Generate calendar days from attendance data
+const generateCalendarDays = (dailyAttendance) => {
+  const now = new Date()
+  const year = now.getFullYear()
+  const month = now.getMonth()
+  const firstDay = new Date(year, month, 1)
+  const lastDay = new Date(year, month + 1, 0)
+  const days = []
+  
+  // Create attendance lookup
+  const attendanceLookup = {}
+  dailyAttendance.forEach(day => {
+    const date = new Date(day.date)
+    attendanceLookup[date.getDate()] = day
+  })
+  
+  // Generate calendar days
+  for (let i = 1; i <= lastDay.getDate(); i++) {
+    const currentDate = new Date(year, month, i)
+    const isToday = currentDate.toDateString() === now.toDateString()
+    const attendance = attendanceLookup[i]
+    
+    days.push({
+      date: i,
+      isPreviousMonth: false,
+      isToday,
+      event: attendance ? {
+        type: attendance.status === 'present' ? 'present' : 
+              attendance.status === 'absent' ? 'absence' : 
+              attendance.status === 'late' ? 'delay' : 'unknown',
+        label: attendance.status === 'present' ? 'Présent' : 
+               attendance.status === 'absent' ? 'Absence' : 
+               attendance.status === 'late' ? `Retard ${attendance.delayMinutes}min` : 'Inconnu'
+      } : null
+    })
+  }
+  
+  // Add previous month days
+  const prevMonthLastDay = new Date(year, month, 0).getDate()
+  for (let i = 6; i >= 0; i--) {
+    days.unshift({ date: prevMonthLastDay - i, isPreviousMonth: true })
+  }
+  
+  calendarDays.value = days
+}
 
 // Fonctions utilitaires
 const getDayClass = (day) => {
@@ -483,6 +612,7 @@ const getDayClass = (day) => {
   if (day.isToday) return 'bg-primary/5 dark:bg-primary/20 relative ring-2 ring-primary'
   if (day.event?.type === 'absence') return 'bg-red-50 dark:bg-red-900/10'
   if (day.event?.type === 'delay') return 'bg-amber-50 dark:bg-amber-900/10 ring-1 ring-inset ring-amber-200'
+  if (day.event?.type === 'present') return 'bg-green-50 dark:bg-green-900/10'
   return 'bg-white dark:bg-slate-900'
 }
 
@@ -496,6 +626,7 @@ const getEventClass = (type) => {
   switch (type) {
     case 'absence': return 'bg-red-500'
     case 'delay': return 'bg-amber-500'
+    case 'present': return 'bg-green-500'
     case 'today': return 'bg-primary text-center'
     default: return 'bg-slate-500'
   }
@@ -532,25 +663,50 @@ const nextMonth = () => {
 
 const downloadReport = () => {
   console.log('Télécharger le rapport PDF')
+  // TODO: Generate and download PDF report for selected child
 }
 
 const justifyAbsence = () => {
   showJustificationModal.value = true
 }
 
-const submitJustification = () => {
-  console.log('Soumettre la justification:', {
-    selectedAbsence: selectedAbsence.value,
-    form: justificationForm.value
-  })
-  showJustificationModal.value = false
-  // Réinitialiser le formulaire
-  justificationForm.value = {
-    reason: 'maladie',
-    details: '',
-    file: null
+const submitJustification = async () => {
+  try {
+    if (!selectedAbsence.value) {
+      alert('Veuillez sélectionner une absence à justifier')
+      return
+    }
+    
+    const formData = new FormData()
+    formData.append('absenceId', selectedAbsence.value)
+    formData.append('reason', justificationForm.value.reason)
+    formData.append('details', justificationForm.value.details)
+    
+    if (justificationForm.value.file) {
+      formData.append('justificatif', justificationForm.value.file)
+    }
+    
+    await api.submitAbsenceJustification(selectedChildId.value, formData)
+    
+    // Show success message
+    alert('Justification envoyée avec succès')
+    
+    // Close modal and reset form
+    showJustificationModal.value = false
+    justificationForm.value = {
+      reason: 'maladie',
+      details: '',
+      file: null
+    }
+    selectedAbsence.value = ''
+    
+    // Refresh data
+    await fetchDisciplineData()
+    
+  } catch (error) {
+    console.error('Error submitting justification:', error)
+    alert('Erreur lors de l\'envoi de la justification')
   }
-  selectedAbsence.value = ''
 }
 
 const handleFileUpload = (event) => {
@@ -568,4 +724,19 @@ const attachDocument = (log) => {
 const viewFullHistory = () => {
   console.log('Voir l\'historique complet')
 }
+
+const attachChild = () => {
+  console.log('Associer un enfant')
+  router.push('/parent/enfants')
+}
+
+// Initialize data
+onMounted(async () => {
+  isLoading.value = true
+  await Promise.all([
+    fetchChildren(),
+    fetchDisciplineData()
+  ])
+  isLoading.value = false
+})
 </script>

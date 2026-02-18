@@ -157,19 +157,6 @@
           </div>
         </div>
       </div>
-
-      <!-- Delete Account Section -->
-      <div class="mt-12 p-6 border-t border-slate-200 dark:border-slate-800">
-        <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-          <div>
-            <p class="text-sm font-bold text-red-500">Zone de danger</p>
-            <p class="text-sm text-slate-500">Supprimer définitivement votre compte et toutes vos données associées.</p>
-          </div>
-          <button @click="deleteAccount" class="px-4 py-2 border border-red-200 text-red-600 rounded-lg text-sm font-bold hover:bg-red-50 dark:hover:bg-red-950/20 transition-colors">
-            Supprimer le compte
-          </button>
-        </div>
-      </div>
     </div>
   </div>
 </template>

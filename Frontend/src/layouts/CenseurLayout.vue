@@ -9,8 +9,12 @@
       </Header>
 
       <!-- Page Content -->
-      <div class="flex-grow">
-        <router-view :showModal="showModal" @close-modal="showModal = false" />
+      <div class="flex-grow pb-8">
+        <router-view v-slot="{ Component }">
+          <transition name="page" mode="out-in">
+            <component :is="Component" />
+          </transition>
+        </router-view>
       </div>
       <footer class="mt-auto p-6 text-center text-slate-400 text-xs">
         © 2024 Système de Gestion Scolaire Intégré - Dashboard Censeur v2.4.0

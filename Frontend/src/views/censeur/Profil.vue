@@ -1,15 +1,23 @@
 <template>
-  <div v-if="user" class="max-w-5xl mx-auto p-8">
+  <div class="profil-view">
+    <div v-if="user" class="p-8 max-w-7xl mx-auto w-full space-y-8">
+      <!-- Breadcrumbs -->
+      <nav class="flex items-center gap-2 text-sm">
+        <router-link to="/censeur" class="text-[#4e7397] hover:text-primary font-medium">Censeur</router-link>
+        <span class="text-[#4e7397] material-symbols-outlined text-sm">chevron_right</span>
+        <span class="font-medium text-slate-400">Mon Profil</span>
+      </nav>
+
     <!-- Page Heading -->
-    <div class="flex flex-wrap justify-between items-end gap-4 mb-8">
-      <div class="flex flex-col gap-2">
-        <h1 class="text-slate-900 dark:text-white text-4xl font-black leading-tight tracking-[-0.033em]">Mon Profil</h1>
-        <p class="text-slate-600 dark:text-slate-400 text-base font-normal">Gérez vos informations personnelles, votre sécurité et vos alertes administratives</p>
+    <div class="flex flex-wrap justify-between items-end gap-4">
+      <div class="flex flex-col gap-1">
+        <h1 class="text-4xl font-black tracking-tight text-[#0e141b] dark:text-white">Paramètres du Profil</h1>
+        <p class="text-[#4e7397] dark:text-slate-400 text-base">Gérez vos informations personnelles et vos préférences de sécurité.</p>
       </div>
       <button @click="handleUpdateDetails" :disabled="isUpdating" class="flex items-center gap-2 cursor-pointer rounded-lg h-11 px-6 bg-primary text-white text-sm font-bold shadow-lg shadow-primary/20 hover:bg-primary/90 transition-all disabled:opacity-50">
         <span class="material-symbols-outlined" v-if="!isUpdating">save</span>
         <span class="material-symbols-outlined animate-spin" v-else>sync</span>
-        <span>{{ isUpdating ? 'Enregistrement...' : 'Enregistrer les modifications' }}</span>
+        <span>{{ isUpdating ? 'Enregistrement...' : 'Enregistrer' }}</span>
       </button>
     </div>
 
@@ -119,20 +127,8 @@
         <div>
           <p class="text-sm font-bold text-primary">Aide & Support</p>
           <p class="text-xs text-primary/80 mt-1">Besoin d'aide pour configurer votre profil ? Contactez l'administrateur informatique de l'établissement.</p>
+          </div>
         </div>
-      </div>
-    </div>
-
-    <!-- Delete Account Section -->
-    <div class="mt-8 pt-8 border-t border-slate-200 dark:border-slate-800">
-      <div class="bg-red-50 dark:bg-red-900/10 border border-red-200 dark:border-red-900/30 rounded-xl p-6 flex flex-col md:flex-row justify-between items-center gap-4">
-        <div class="text-center md:text-left">
-          <h4 class="text-red-600 dark:text-red-400 font-bold">Désactiver le compte</h4>
-          <p class="text-sm text-red-500/80">Cette action est irréversible. Toutes vos données seront archivées selon les règles administratives.</p>
-        </div>
-        <button @click="desactiverCompte" class="bg-red-600 hover:bg-red-700 text-white text-sm font-bold px-6 py-2 rounded-lg transition-colors">
-          Désactiver mon profil
-        </button>
       </div>
     </div>
   </div>

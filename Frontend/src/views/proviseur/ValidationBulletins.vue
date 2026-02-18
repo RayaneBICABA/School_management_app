@@ -1,30 +1,39 @@
 <template>
-  <div class="flex-1 overflow-y-auto bg-background-light dark:bg-background-dark">
-    <div class="max-w-6xl mx-auto px-8 py-8">
-      <!-- Page Heading -->
-      <div class="flex flex-wrap justify-between items-end gap-4 mb-8">
-        <div class="flex flex-col gap-2">
-          <h2 class="text-[#0e141b] dark:text-white text-4xl font-black leading-tight tracking-[-0.033em]">Validation des Bulletins</h2>
-          <div class="flex items-center gap-2 text-[#4e7397] dark:text-slate-400">
-            <span class="material-symbols-outlined text-lg">calendar_today</span>
-            <p class="text-base font-normal">Trimestre 1, Année Scolaire 2023-2024</p>
-          </div>
-        </div>
-        <div class="flex gap-3">
-          <button class="flex items-center gap-2 cursor-pointer justify-center rounded-lg h-10 px-5 bg-white dark:bg-slate-800 border border-[#d0dbe7] dark:border-slate-700 text-[#0e141b] dark:text-white text-sm font-bold shadow-sm hover:bg-slate-50">
-            <span class="material-symbols-outlined text-xl">help_outline</span>
-            <span>Aide</span>
-          </button>
-          <button @click="toutValider" class="flex items-center gap-2 cursor-pointer justify-center rounded-lg h-10 px-5 bg-primary text-white text-sm font-bold shadow-lg shadow-primary/30 hover:bg-primary/90">
-            <span class="material-symbols-outlined text-xl">done_all</span>
-            <span>Tout Valider</span>
-          </button>
+  <div class="flex-1 min-w-0 bg-background-light dark:bg-background-dark overflow-y-auto">
+    <div class="max-w-7xl mx-auto p-8">
+      <!-- Loading State -->
+      <div v-if="isLoading" class="flex justify-center items-center min-h-[400px]">
+        <div class="text-center">
+          <span class="material-symbols-outlined text-6xl text-primary animate-spin">progress_activity</span>
+          <p class="text-[#4e7397] mt-4">Chargement des classes...</p>
         </div>
       </div>
 
-      <!-- Statistics Cards -->
+      <!-- Content -->
+      <div v-else>
+        <!-- Page Header -->
+        <div class="mb-8">
+          <div class="flex items-center justify-between mb-6">
+            <div>
+              <h1 class="text-3xl font-black text-[#0e141b] dark:text-white mb-2">Validation des Bulletins</h1>
+              <div class="flex items-center gap-2 text-sm text-[#4e7397] dark:text-slate-400">
+                <span class="material-symbols-outlined text-lg">calendar_today</span>
+                <p class="text-base font-normal">Trimestre 1, Année Scolaire 2025-2026</p>
+              </div>
+            </div>
+            <div class="flex gap-3">
+              <!-- Removed Aide button -->
+              <button @click="toutValider" class="flex items-center gap-2 cursor-pointer justify-center rounded-lg h-10 px-5 bg-primary text-white text-sm font-bold shadow-lg shadow-primary/30 hover:bg-primary/90">
+                <span class="material-symbols-outlined text-xl">done_all</span>
+                <span>Tout Valider</span>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Statistics Cards -->
       <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-        <div class="flex flex-col gap-3 rounded-xl p-6 bg-white dark:bg-slate-800 border border-[#d0dbe7] dark:border-slate-700 shadow-sm">
+        <div class="flex flex-col gap-3 rounded-xl p-6 bg-white dark:bg-slate-800 border border-[#d0dbe7] dark:border-slate-700 shadow-sm col-span-1 md:col-span-3">
           <div class="flex justify-between items-start">
             <p class="text-[#4e7397] dark:text-slate-400 text-sm font-semibold uppercase tracking-wider">Classes prêtes</p>
             <span class="p-2 bg-green-100 dark:bg-green-900/30 text-green-600 rounded-lg material-symbols-outlined">assignment_turned_in</span>
@@ -32,28 +41,10 @@
           <p class="text-[#0e141b] dark:text-white tracking-tight text-3xl font-black">{{ stats.classesPretes }}</p>
           <div class="flex items-center gap-1 text-green-600 font-bold text-sm">
             <span class="material-symbols-outlined text-sm font-bold">trending_up</span>
-            <span>+80% complété</span>
+            <span>Prêtes à être validées (Toutes matières ont min 2 évals)</span>
           </div>
         </div>
-        <div class="flex flex-col gap-3 rounded-xl p-6 bg-white dark:bg-slate-800 border border-[#d0dbe7] dark:border-slate-700 shadow-sm">
-          <div class="flex justify-between items-start">
-            <p class="text-[#4e7397] dark:text-slate-400 text-sm font-semibold uppercase tracking-wider">Élèves concernés</p>
-            <span class="p-2 bg-blue-100 dark:bg-blue-900/30 text-blue-600 rounded-lg material-symbols-outlined">groups</span>
-          </div>
-          <p class="text-[#0e141b] dark:text-white tracking-tight text-3xl font-black">{{ stats.elevesConcernes }}</p>
-          <p class="text-[#4e7397] dark:text-slate-400 text-sm">En attente de signature finale</p>
-        </div>
-        <div class="flex flex-col gap-3 rounded-xl p-6 bg-white dark:bg-slate-800 border border-[#d0dbe7] dark:border-slate-700 shadow-sm">
-          <div class="flex justify-between items-start">
-            <p class="text-[#4e7397] dark:text-slate-400 text-sm font-semibold uppercase tracking-wider">Moyenne Générale</p>
-            <span class="p-2 bg-purple-100 dark:bg-purple-900/30 text-purple-600 rounded-lg material-symbols-outlined">monitoring</span>
-          </div>
-          <p class="text-[#0e141b] dark:text-white tracking-tight text-3xl font-black">{{ stats.moyenneGenerale }}/20</p>
-          <div class="flex items-center gap-1 text-green-600 font-bold text-sm">
-            <span class="material-symbols-outlined text-sm font-bold">trending_up</span>
-            <span>+0.5 pts vs T3</span>
-          </div>
-        </div>
+        <!-- Removed "Élèves concernés" and "Moyenne Générale" cards as requested -->
       </div>
 
       <!-- Actions Bar -->
@@ -66,20 +57,9 @@
               </div>
               <span class="text-[#0e141b] dark:text-slate-200 text-sm font-medium">{{ classesSelectionnees }} classes sélectionnées</span>
             </div>
-            <div class="h-6 w-[1px] bg-[#d0dbe7] dark:bg-slate-700"></div>
-            <button class="flex items-center gap-2 text-[#4e7397] dark:text-slate-400 hover:text-primary transition-colors text-sm font-medium">
-              <span class="material-symbols-outlined text-lg">filter_list</span>
-              <span>Filtrer par niveau</span>
-            </button>
-            <button @click="exporterPDF" class="flex items-center gap-2 text-[#4e7397] dark:text-slate-400 hover:text-primary transition-colors text-sm font-medium">
-              <span class="material-symbols-outlined text-lg">download</span>
-              <span>Exporter (.pdf)</span>
-            </button>
+            <!-- Removed Filter and Export buttons -->
           </div>
-          <div class="relative min-w-[280px]">
-            <span class="absolute left-3 top-1/2 -translate-y-1/2 material-symbols-outlined text-slate-400">search</span>
-            <input v-model="searchQuery" class="w-full pl-10 pr-4 py-2 bg-slate-50 dark:bg-slate-900 border-[#d0dbe7] dark:border-slate-700 rounded-lg text-sm focus:ring-primary focus:border-primary" placeholder="Rechercher une classe..." type="text"/>
-          </div>
+          <!-- Removed Search Bar -->
         </div>
       </div>
 
@@ -96,8 +76,10 @@
             </tr>
           </thead>
           <tbody class="divide-y divide-[#d0dbe7] dark:divide-slate-700">
-            <!-- Row 1 -->
-            <tr v-for="classe in classes" :key="classe.id" class="hover:bg-slate-50 dark:hover:bg-slate-900/30 transition-colors group">
+            <tr v-if="filteredClasses.length === 0">
+                <td colspan="5" class="px-6 py-8 text-center text-slate-500 text-sm">Toutes les classes sont validées ou aucune classe trouvée.</td>
+            </tr>
+            <tr v-for="classe in filteredClasses" :key="classe.id" class="hover:bg-slate-50 dark:hover:bg-slate-900/30 transition-colors group">
               <td class="px-6 py-4">
                 <input v-model="classe.selected" class="h-5 w-5 rounded border-[#d0dbe7] text-primary focus:ring-primary transition-all" type="checkbox"/>
               </td>
@@ -128,87 +110,47 @@
                 <div class="flex items-center justify-end gap-2">
                   <button @click="voirDetails(classe.id)" class="text-primary hover:text-primary/80 text-sm font-medium">Voir</button>
                   <button @click="validerClasse(classe.id)" class="text-[#4e7397] hover:text-primary text-sm font-medium">Valider</button>
-                  <button class="text-[#4e7397] hover:text-primary text-sm font-medium">Imprimer</button>
+                  <!-- Removed 'Imprimer' button -->
                 </div>
               </td>
             </tr>
           </tbody>
         </table>
       </div>
+      </div>
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
+import api from '@/services/api'
+import { useToast } from '@/composables/useToast'
 
 const router = useRouter()
-
-const searchQuery = ref('')
+const { success, error: showError } = useToast()
 
 const stats = ref({
-  classesPretes: '12/15',
-  elevesConcernes: 342,
-  moyenneGenerale: 13.45
+  classesPretes: '0/0'
 })
 
-const classes = ref([
-  {
-    id: 1,
-    nom: '6ème A',
-    professeur: 'M. Dupont (Mathématiques)',
-    moyenne: '14.2',
-    min: '09.0',
-    max: '18.5',
-    statut: 'Prêt',
-    selected: true
-  },
-  {
-    id: 2,
-    nom: '6ème B',
-    professeur: 'Mme. Laurent (Français)',
-    moyenne: '13.8',
-    min: '08.5',
-    max: '17.2',
-    statut: 'Prêt',
-    selected: true
-  },
-  {
-    id: 3,
-    nom: '5ème A',
-    professeur: 'M. Bernard (Histoire)',
-    moyenne: '12.5',
-    min: '07.0',
-    max: '16.8',
-    statut: 'En cours',
-    selected: false
-  },
-  {
-    id: 4,
-    nom: '5ème B',
-    professeur: 'Mme. Martin (Sciences)',
-    moyenne: '11.2',
-    min: '06.5',
-    max: '15.9',
-    statut: 'En attente',
-    selected: false
-  },
-  {
-    id: 5,
-    nom: '4ème A',
-    professeur: 'M. Dubois (Maths)',
-    moyenne: '15.1',
-    min: '10.2',
-    max: '18.7',
-    statut: 'Prêt',
-    selected: true
-  }
-])
+const classes = ref([])
+const isLoading = ref(true)
 
 const classesSelectionnees = computed(() => {
-  return classes.value.filter(c => c.selected).length
+  return filteredClasses.value.filter(c => c.selected).length
 })
+
+const filteredClasses = computed(() => {
+    // Hide classes that are fully validated (all bulletins signed by proviseur)
+    return classes.value.filter(c => {
+        if (c.bulletinsCount > 0 && c.signedCount === c.bulletinsCount) {
+            return false;
+        }
+        return true;
+    });
+});
 
 const getStatutClass = (statut) => {
   switch(statut) {
@@ -228,26 +170,71 @@ const getStatutDotClass = (statut) => {
   }
 }
 
-const toutValider = () => {
-  console.log('Tout valider')
-  const classesPretes = classes.value.filter(c => c.statut === 'Prêt')
-  console.log('Classes à valider:', classesPretes)
-}
+// Charger les classes depuis l'API
+// Charger les classes depuis l'API
+const fetchClasses = async () => {
+  try {
+    isLoading.value = true
+    // Use new endpoint
+    const response = await api.getValidationPageStats();
+    const { classes: classesData, stats: statsData } = response.data.data;
+    
+    classes.value = classesData.map(c => ({
+        ...c,
+        selected: false
+    }));
 
-const voirDetails = (classeId) => {
-  console.log('Voir détails de la classe:', classeId)
-  router.push(`/proviseur/classe/${classeId}`)
-}
-
-const validerClasse = (classeId) => {
-  console.log('Valider classe:', classeId)
-  const classe = classes.value.find(c => c.id === classeId)
-  if (classe) {
-    classe.statut = 'Prêt'
+    stats.value = {
+      classesPretes: `${statsData.classesPretes}/${statsData.totalClasses}`
+    }
+    
+  } catch (error) {
+    console.error('Erreur chargement classes:', error)
+    // Keep empty state
+    classes.value = []
+  } finally {
+    isLoading.value = false
   }
 }
 
-const exporterPDF = () => {
-  console.log('Exporter en PDF')
+const toutValider = async () => {
+  if (!confirm('Voulez-vous valider TOUTES les classes prêtes ?')) return;
+  
+  const classesPretes = classes.value.filter(c => c.statut === 'Prêt');
+  if (classesPretes.length === 0) {
+      showError('Aucune classe n\'est prête à être validée.');
+      return;
+  }
+
+  for (const classe of classesPretes) {
+      try {
+          await api.validateClassBulletins(classe.id);
+      } catch (e) {
+          console.error(`Erreur validation classe ${classe.nom}`, e);
+      }
+  }
+  success('Validation terminée.');
+  fetchClasses();
 }
+
+const voirDetails = (classeId) => {
+  router.push(`/proviseur/validation-bulletins/${classeId}`)
+}
+
+const validerClasse = async (classeId) => {
+  if (!confirm('Valider tous les bulletins de cette classe ?')) return;
+    try {
+        await api.validateClassBulletins(classeId);
+        success('Classe validée avec succès');
+        fetchClasses();
+    } catch (e) {
+        console.error(e);
+        showError('Erreur lors de la validation');
+    }
+}
+
+// Charger les classes au montage du composant
+onMounted(() => {
+  fetchClasses()
+})
 </script>

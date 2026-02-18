@@ -108,27 +108,19 @@ exports.getCPEDashboard = async (req, res, next) => {
         const tomorrow = new Date(today);
         tomorrow.setUTCDate(tomorrow.getUTCDate() + 1);
 
-        // 1. KPIs for Today
+        // 1. KPIs for Today - Retards signalés par professeurs
         const attendanceToday = await Attendance.aggregate([
-            { $match: { date: { $gte: today, $lt: tomorrow } } },
-            { $group: { _id: '$statut', count: { $sum: 1 } } }
+            {
+                $match: {
+                    date: { $gte: today, $lt: tomorrow },
+                    statut: 'late',
+                    markedBy: { $exists: true, $ne: null }
+                }
+            },
+            { $group: { _id: '$markedBy', count: { $sum: 1 } } }
         ]);
 
-        const counts = { present: 0, absent: 0, late: 0 };
-        attendanceToday.forEach(a => {
-            if (counts.hasOwnProperty(a._id)) {
-                counts[a._id] = a.count;
-            }
-        });
-
-        const totalAttendance = counts.present + counts.absent + counts.late;
-        const presenceRate = totalAttendance > 0 ? ((counts.present + counts.late) / totalAttendance) * 100 : 96.2;
-
-        const incidentsToday = await Incident.countDocuments({
-            createdAt: { $gte: today, $lt: tomorrow }
-        });
-
-        const delaysToday = counts.late;
+        const delaysToday = attendanceToday.reduce((total, item) => total + item.count, 0);
 
         // 2. Recent Incidents (Last 5)
         const recentIncidents = await Incident.find()
@@ -173,16 +165,32 @@ exports.getCPEDashboard = async (req, res, next) => {
             };
         });
 
+        // 4. Recent Absences to Validate (Last 5 unjustified)
+        const recentAbsences = await Attendance.find({
+            statut: 'absent',
+            justifie: false
+        })
+            .sort({ date: -1, createdAt: -1 })
+            .limit(5)
+            .populate('eleve', 'prenom nom photo')
+            .populate('classe', 'niveau section');
+
+        const formattedAbsences = recentAbsences.map(abs => ({
+            id: abs._id,
+            eleve: abs.eleve ? `${abs.eleve.prenom} ${abs.eleve.nom}` : 'Élève inconnu',
+            classe: abs.classe ? `${abs.classe.niveau} ${abs.classe.section}` : 'N/A',
+            date: new Date(abs.date).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short' }),
+            avatar: abs.eleve?.photo ? (abs.eleve.photo.startsWith('http') ? abs.eleve.photo : `http://localhost:5000/${abs.eleve.photo}`) : null
+        }));
+
         res.status(200).json({
             success: true,
             data: {
                 stats: {
-                    presence: Math.round(presenceRate * 10) / 10,
-                    incidents: incidentsToday,
                     retards: delaysToday
                 },
-                incidents: formattedIncidents,
-                councils: formattedCouncils
+                councils: formattedCouncils,
+                recentAbsences: formattedAbsences
             }
         });
 

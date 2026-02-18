@@ -19,11 +19,32 @@ const BulletinSchema = new mongoose.Schema({
     anneeScolaire: {
         type: String,
         required: [true, 'L\'année scolaire est requise'],
-        default: '2023-2024'
+        default: '2025-2026'
     },
     notes: [{
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'Note'
+        matiere: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'Matiere'
+        },
+        professeur: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'User'
+        },
+        int: Number, // Int (1)
+        dev: Number, // Dev (2)
+        compo: Number, // Compo (3)
+        interroGrades: [Number],
+        devoirGrades: [Number],
+        compoGrades: [Number],
+        moyenneMatiere: Number,
+        coeff: Number,
+        notePonderee: Number,
+        retraitPoints: {
+            type: Number,
+            default: 0
+        },
+        appreciation: String,
+        categorie: String
     }],
     moyenneGenerale: {
         type: Number,
@@ -38,13 +59,43 @@ const BulletinSchema = new mongoose.Schema({
         type: Number,
         default: 0
     },
-    rang: {
+    moyenneClasse: {
         type: Number,
-        min: 1
+        default: 0
+    },
+    meilleureMoyenneClasse: {
+        type: Number,
+        default: 0
+    },
+    pireMoyenneClasse: {
+        type: Number,
+        default: 0
+    },
+    rang: {
+        type: String // Changed to String to support "1er", "2e", "ex"
     },
     effectif: {
         type: Number,
         min: 1
+    },
+    absencesJustifiees: {
+        type: Number,
+        default: 0
+    },
+    absencesNonJustifiees: {
+        type: Number,
+        default: 0
+    },
+    conduite: {
+        type: String
+    },
+    retraitPoints: {
+        type: Number,
+        default: 0 // Global withdrawal (if any)
+    },
+    moyenneDefinitive: {
+        type: Number,
+        default: 0
     },
     appreciationGenerale: {
         type: String,
@@ -52,7 +103,6 @@ const BulletinSchema = new mongoose.Schema({
     },
     decision: {
         type: String,
-        enum: ['Admis', 'Redouble', 'Ajourné', 'En cours'],
         default: 'En cours'
     },
     genereePar: {
@@ -96,52 +146,79 @@ BulletinSchema.index({ anneeScolaire: 1, statut: 1 });
 
 // Méthode pour calculer la moyenne générale
 BulletinSchema.methods.calculerMoyenneGenerale = async function () {
-    await this.populate('notes');
+    try {
+        if (!this.notes || this.notes.length === 0) {
+            this.moyenneGenerale = 0;
+            this.totalPoints = 0;
+            this.totalCoefficients = 0;
+            return this.moyenneGenerale;
+        }
 
-    if (!this.notes || this.notes.length === 0) {
+        let totalPoints = 0;
+        let totalCoefficients = 0;
+
+        for (const note of this.notes) {
+            const coefficient = note.coeff || 1;
+            const moyenne = note.moyenneMatiere || 0;
+            const retrait = note.retraitPoints || 0;
+
+            // Note pondérée = (moyenne - retrait) * coefficient
+            // We ensure (moyenne - retrait) doesn't go below 0
+            const finalNoteMatiere = Math.max(0, moyenne - retrait);
+
+            totalPoints += finalNoteMatiere * coefficient;
+            totalCoefficients += coefficient;
+        }
+
+        this.totalPoints = totalPoints;
+        this.totalCoefficients = totalCoefficients;
+
+        // Apply global withdrawal (retraitPoints) to the weighted total during average calculation
+        const totalRetrait = this.retraitPoints || 0;
+        const weightedTotalApresRetrait = Math.max(0, totalPoints - totalRetrait);
+
+        // The average is now (weightedTotal - retrait) / totalCoefficients
+        this.moyenneGenerale = totalCoefficients > 0 ? weightedTotalApresRetrait / totalCoefficients : 0;
+
+        // Moyenne définitive is same as moyenneGenerale after deductions
+        this.moyenneDefinitive = this.moyenneGenerale;
+
+        return this.moyenneGenerale;
+    } catch (error) {
+        console.error('Erreur calcul moyenne générale:', error);
+        this.moyenneGenerale = 0;
         return 0;
     }
-
-    let totalPoints = 0;
-    let totalCoefficients = 0;
-
-    for (const note of this.notes) {
-        await note.populate('matiere');
-        const coefficient = note.matiere?.coefficient || 1;
-        totalPoints += (note.moyenne || 0) * coefficient;
-        totalCoefficients += coefficient;
-    }
-
-    this.totalPoints = totalPoints;
-    this.totalCoefficients = totalCoefficients;
-    this.moyenneGenerale = totalCoefficients > 0 ? totalPoints / totalCoefficients : 0;
-
-    return this.moyenneGenerale;
 };
 
 // Méthode pour calculer le rang
 BulletinSchema.methods.calculerRang = async function () {
-    const Bulletin = mongoose.model('Bulletin');
+    try {
+        const User = mongoose.model('User');
 
-    const bulletins = await Bulletin.find({
-        classe: this.classe,
-        periode: this.periode,
-        anneeScolaire: this.anneeScolaire,
-        statut: { $ne: 'BROUILLON' }
-    }).sort({ moyenneGenerale: -1 });
+        const bulletins = await Bulletin.find({
+            classe: this.classe,
+            periode: this.periode,
+            anneeScolaire: this.anneeScolaire
+        }).sort({ moyenneGenerale: -1 });
 
-    this.effectif = bulletins.length;
+        this.effectif = await User.countDocuments({ classe: this.classe, role: 'ELEVE' });
 
-    const rang = bulletins.findIndex(b => b._id.toString() === this._id.toString()) + 1;
-    this.rang = rang > 0 ? rang : bulletins.length;
+        const rang = bulletins.findIndex(b => b._id.toString() === this._id.toString()) + 1;
+        this.rang = rang > 0 ? rang : bulletins.length;
 
-    return this.rang;
+        return this.rang;
+    } catch (error) {
+        console.error('Erreur calcul rang:', error);
+        this.rang = 1;
+        this.effectif = 1;
+        return 1;
+    }
 };
 
 // Middleware pour mettre à jour updatedAt
-BulletinSchema.pre('save', function (next) {
+BulletinSchema.pre('save', async function () {
     this.updatedAt = Date.now();
-    next();
 });
 
 module.exports = mongoose.model('Bulletin', BulletinSchema);

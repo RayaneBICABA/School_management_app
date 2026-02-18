@@ -4,9 +4,13 @@
     <EleveSidebar @logout="handleLogout" />
     <div class="flex-1 flex flex-col overflow-hidden ml-72">
       <Header :title="pageTitle" />
-      <main class="flex-1 overflow-y-auto p-8">
-        <router-view />
-      </main>
+      <div class="flex-grow pb-8 overflow-y-auto">
+        <router-view v-slot="{ Component }">
+          <transition name="page" mode="out-in">
+            <component :is="Component" />
+          </transition>
+        </router-view>
+      </div>
     </div>
   </div>
 </template>
@@ -25,7 +29,10 @@ const pageTitle = ref('Espace Élève')
 const pageTitles = {
   'EleveDashboard': 'Tableau de bord',
   'EleveNotes': 'Mes Notes',
-  'EleveCours': 'Mon Emploi du Temps',
+  'EleveProgression': 'Ma Progression',
+  'EleveBulletins': 'Mes Bulletins',
+  'EleveDiscipline': 'Discipline',
+  'EleveCalendrier': 'Mon Emploi du Temps',
   'EleveNotifications': 'Mes Notifications',
   'EleveProfil': 'Mon Profil'
 }

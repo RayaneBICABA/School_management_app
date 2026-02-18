@@ -1,164 +1,197 @@
 <template>
-  <div class="flex-1 ml-72">
-    <!-- Header -->
-    <header class="h-16 flex items-center justify-between px-8 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 sticky top-0 z-10">
-      <h2 class="text-lg font-bold">Tableau de bord</h2>
-      <div class="flex items-center gap-6">
-        <div class="relative hidden lg:block">
-          <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">search</span>
-          <input v-model="searchQuery" class="bg-slate-100 dark:bg-slate-800 border-none rounded-lg pl-10 pr-4 py-2 text-sm w-64 focus:ring-2 focus:ring-primary" placeholder="Rechercher..." type="text"/>
-        </div>
-        <div class="flex items-center gap-3">
-          <button class="p-2 text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg relative">
-            <span class="material-symbols-outlined">notifications</span>
-            <span class="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full"></span>
-          </button>
-          <button class="p-2 text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg">
-            <span class="material-symbols-outlined">settings</span>
-          </button>
-          <div class="w-px h-6 bg-slate-200 dark:bg-slate-700 mx-2"></div>
-          <div class="flex items-center gap-3">
-            <div class="text-right hidden sm:block">
-              <p class="text-sm font-semibold">{{ userProfile.name }}</p>
-              <p class="text-xs text-slate-500">{{ userProfile.role }}</p>
-            </div>
-            <div class="size-10 rounded-full bg-cover bg-center border-2 border-primary/20" :style="`background-image: url('${userProfile.avatar}')`"></div>
-          </div>
-        </div>
-      </div>
-    </header>
-
+  <div class="flex-1 flex flex-col overflow-y-auto">
     <!-- Page Content -->
     <div class="p-8 max-w-6xl mx-auto">
-      <div class="mb-8">
-        <h1 class="text-3xl font-bold tracking-tight mb-2">Bonjour, {{ userProfile.name }}</h1>
-        <p class="text-slate-500 dark:text-slate-400">Voici un aperçu de la progression de vos enfants pour aujourd'hui.</p>
-      </div>
-
-      <!-- Children Grid Summary -->
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
-        <!-- Child Card 1: Léo -->
-        <div class="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-slate-200 dark:border-slate-800 overflow-hidden hover:shadow-md transition-shadow">
-          <div class="p-6">
-            <div class="flex items-start justify-between mb-6">
-              <div class="flex items-center gap-4">
-                <div class="size-16 rounded-xl bg-cover bg-center border-4 border-primary/10" :style="`background-image: url('${children[0].avatar}')`"></div>
-                <div>
-                  <h3 class="text-xl font-bold">{{ children[0].name }}</h3>
-                  <p class="text-sm text-slate-500">{{ children[0].class }}</p>
-                </div>
-              </div>
-              <div class="bg-primary/10 text-primary px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider">
-                {{ children[0].status }}
-              </div>
-            </div>
-            <div class="grid grid-cols-2 gap-4 mb-6">
-              <div class="bg-slate-50 dark:bg-slate-800/50 p-4 rounded-xl text-center border border-slate-100 dark:border-slate-800">
-                <p class="text-xs text-slate-500 uppercase font-semibold mb-1">Moyenne actuelle</p>
-                <p class="text-3xl font-bold text-primary">{{ children[0].average }}<span class="text-sm text-slate-400 font-normal">/20</span></p>
-              </div>
-              <div class="bg-slate-50 dark:bg-slate-800/50 p-4 rounded-xl text-center border border-slate-100 dark:border-slate-800">
-                <p class="text-xs text-slate-500 uppercase font-semibold mb-1">Dernière note</p>
-                <p class="text-2xl font-bold text-green-600">{{ children[0].lastNote }}<span class="text-sm text-slate-400 font-normal">/20</span></p>
-                <p class="text-[10px] text-slate-400">{{ children[0].lastNoteSubject }} ({{ children[0].lastNoteDate }})</p>
-              </div>
-            </div>
-            <div class="space-y-4">
-              <div class="flex items-center gap-3 p-3 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-100 dark:border-yellow-900/30 rounded-lg">
-                <span class="material-symbols-outlined text-yellow-600">event</span>
-                <div class="flex-1">
-                  <p class="text-xs font-bold text-yellow-800 dark:text-yellow-400 uppercase">Prochain événement</p>
-                  <p class="text-sm font-medium">{{ children[0].nextEvent }}</p>
-                </div>
-              </div>
-              <div class="flex items-center gap-3 p-3 bg-slate-50 dark:bg-slate-800 border border-slate-100 dark:border-slate-800 rounded-lg">
-                <span class="material-symbols-outlined text-slate-400">info</span>
-                <div class="flex-1">
-                  <p class="text-xs font-bold text-slate-500 uppercase">Note récente</p>
-                  <p class="text-sm font-medium">{{ children[0].recentNote }}</p>
-                </div>
-              </div>
-            </div>
-          </div>
-          <div class="bg-slate-50 dark:bg-slate-800/50 px-6 py-4 border-t border-slate-100 dark:border-slate-800 flex justify-between items-center">
-            <button @click="viewReport(children[0])" class="text-sm font-semibold text-primary hover:underline">Voir le bulletin complet</button>
-            <button @click="sendMessage(children[0])" class="p-2 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors">
-              <span class="material-symbols-outlined text-slate-500">mail</span>
-            </button>
-          </div>
-        </div>
-
-        <!-- Child Card 2: Léa -->
-        <div class="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-slate-200 dark:border-slate-800 overflow-hidden hover:shadow-md transition-shadow">
-          <div class="p-6">
-            <div class="flex items-start justify-between mb-6">
-              <div class="flex items-center gap-4">
-                <div class="size-16 rounded-xl bg-cover bg-center border-4 border-pink-100 dark:border-pink-900/30" :style="`background-image: url('${children[1].avatar}')`"></div>
-                <div>
-                  <h3 class="text-xl font-bold">{{ children[1].name }}</h3>
-                  <p class="text-sm text-slate-500">{{ children[1].class }}</p>
-                </div>
-              </div>
-              <div class="bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider">
-                {{ children[1].status }}
-              </div>
-            </div>
-            <div class="grid grid-cols-2 gap-4 mb-6">
-              <div class="bg-slate-50 dark:bg-slate-800/50 p-4 rounded-xl text-center border border-slate-100 dark:border-slate-800">
-                <p class="text-xs text-slate-500 uppercase font-semibold mb-1">Moyenne actuelle</p>
-                <p class="text-3xl font-bold text-primary">{{ children[1].average }}<span class="text-sm text-slate-400 font-normal">/20</span></p>
-              </div>
-              <div class="bg-slate-50 dark:bg-slate-800/50 p-4 rounded-xl text-center border border-slate-100 dark:border-slate-800">
-                <p class="text-xs text-slate-500 uppercase font-semibold mb-1">Dernière note</p>
-                <p class="text-2xl font-bold text-green-600">{{ children[1].lastNote }}<span class="text-sm text-slate-400 font-normal">/20</span></p>
-                <p class="text-[10px] text-slate-400">{{ children[1].lastNoteSubject }} ({{ children[1].lastNoteDate }})</p>
-              </div>
-            </div>
-            <div class="space-y-4">
-              <div class="flex items-center gap-3 p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-900/30 rounded-lg">
-                <span class="material-symbols-outlined text-blue-600">groups</span>
-                <div class="flex-1">
-                  <p class="text-xs font-bold text-blue-800 dark:text-blue-400 uppercase">Prochain événement</p>
-                  <p class="text-sm font-medium">{{ children[1].nextEvent }}</p>
-                </div>
-              </div>
-              <div class="flex items-center gap-3 p-3 bg-slate-50 dark:bg-slate-800 border border-slate-100 dark:border-slate-800 rounded-lg">
-                <span class="material-symbols-outlined text-slate-400">info</span>
-                <div class="flex-1">
-                  <p class="text-xs font-bold text-slate-500 uppercase">Note récente</p>
-                  <p class="text-sm font-medium">{{ children[1].recentNote }}</p>
-                </div>
-              </div>
-            </div>
-          </div>
-          <div class="bg-slate-50 dark:bg-slate-800/50 px-6 py-4 border-t border-slate-100 dark:border-slate-800 flex justify-between items-center">
-            <button @click="viewReport(children[1])" class="text-sm font-semibold text-primary hover:underline">Voir le bulletin complet</button>
-            <button @click="sendMessage(children[1])" class="p-2 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors">
-              <span class="material-symbols-outlined text-slate-500">mail</span>
-            </button>
-          </div>
+      <!-- Loading State -->
+      <div v-if="isLoading" class="flex justify-center items-center py-20">
+        <div class="text-center">
+          <span class="material-symbols-outlined animate-spin text-4xl text-primary">sync</span>
+          <p class="mt-4 text-slate-500">Chargement des données...</p>
         </div>
       </div>
 
-      <!-- Recent School Notifications Section -->
-      <div class="mt-12">
-        <div class="flex items-center justify-between mb-6">
-          <h2 class="text-xl font-bold">Dernières actualités de l'école</h2>
-          <button @click="viewAllNews" class="text-sm font-semibold text-primary hover:underline">Tout voir</button>
+      <!-- Content when loaded -->
+      <div v-else>
+        <div class="mb-8">
+          <h1 class="text-3xl font-bold tracking-tight mb-2">Bonjour, {{ userProfile.name }}</h1>
+          <p class="text-slate-500 dark:text-slate-400">Voici un aperçu de la progression de vos enfants pour aujourd'hui.</p>
         </div>
-        <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl divide-y divide-slate-100 dark:divide-slate-800">
-          <div v-for="notification in notifications" :key="notification.id" class="p-4 flex gap-4 items-start">
-            <div class="size-10 rounded-full flex items-center justify-center shrink-0" :class="getNotificationIconColor(notification.type)">
-              <span class="material-symbols-outlined">{{ notification.icon }}</span>
-            </div>
-            <div class="flex-1">
-              <div class="flex justify-between items-start mb-1">
-                <h4 class="text-sm font-bold">{{ notification.title }}</h4>
-                <span class="text-xs text-slate-400">{{ notification.time }}</span>
+
+        <!-- Children Grid Summary -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+          <div v-for="(child, index) in children" :key="child.id" class="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 overflow-hidden soft-lift transition-all duration-300">
+            <div class="p-6">
+              <div class="flex items-start justify-between mb-6">
+                <div class="flex items-center gap-4 group">
+                  <div class="size-16 rounded-2xl bg-cover bg-center border-4 border-primary/10 group-hover:border-primary/30 transition-all duration-500 shadow-sm" :style="`background-image: url('${child.avatar}')`"></div>
+                  <div>
+                    <h3 class="text-xl font-black tracking-tight group-hover:text-primary transition-colors">{{ child.name }}</h3>
+                    <p class="text-xs font-bold text-slate-400 uppercase tracking-widest">{{ child.class }}</p>
+                  </div>
+                </div>
+                <div class="bg-primary/5 text-primary px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider border border-primary/10 shadow-sm">
+                  {{ child.status }}
+                </div>
               </div>
-              <p class="text-sm text-slate-600 dark:text-slate-400">{{ notification.description }}</p>
+              <div class="grid grid-cols-2 gap-4 mb-6">
+                <div class="bg-slate-50/50 dark:bg-slate-800/30 p-4 rounded-2xl text-center border border-slate-100 dark:border-slate-800/50 hover:bg-white dark:hover:bg-slate-800 transition-all duration-300">
+                  <p class="text-[10px] text-slate-400 uppercase font-black tracking-widest mb-1.5">Moyenne</p>
+                  <p class="text-3xl font-black text-primary">{{ child.average }}<span class="text-sm text-slate-400 font-medium">/20</span></p>
+                </div>
+                <div class="bg-slate-50/50 dark:bg-slate-800/30 p-4 rounded-2xl text-center border border-slate-100 dark:border-slate-800/50 hover:bg-white dark:hover:bg-slate-800 transition-all duration-300">
+                  <p class="text-[10px] text-slate-400 uppercase font-black tracking-widest mb-1.5">Dernière note</p>
+                  <p class="text-2xl font-black text-green-600">{{ child.lastNote }}<span class="text-sm text-slate-400 font-medium">/20</span></p>
+                  <p class="text-[10px] font-bold text-slate-400 mt-0.5 truncate">{{ child.lastNoteSubject }}</p>
+                </div>
+              </div>
+              <div class="space-y-3">
+                <div class="flex items-center gap-3 p-3 bg-yellow-50/50 dark:bg-yellow-900/10 border border-yellow-100 dark:border-yellow-900/20 rounded-xl transition-transform hover:scale-[1.02]">
+                  <span class="material-symbols-outlined text-yellow-600 bg-yellow-100 dark:bg-yellow-900/30 p-1.5 rounded-lg text-lg">event</span>
+                  <div class="flex-1">
+                    <p class="text-[9px] font-black text-yellow-700/60 dark:text-yellow-400/60 uppercase tracking-widest">Événement à venir</p>
+                    <p class="text-sm font-bold text-yellow-900 dark:text-yellow-100 truncate">{{ child.nextEvent }}</p>
+                  </div>
+                </div>
+                <div class="flex items-center gap-3 p-3 bg-slate-50/50 dark:bg-slate-800/30 border border-slate-100 dark:border-slate-800/50 rounded-xl transition-transform hover:scale-[1.02]">
+                  <span class="material-symbols-outlined text-slate-400 bg-white dark:bg-slate-800 p-1.5 rounded-lg text-lg border border-slate-100 dark:border-slate-700">info</span>
+                  <div class="flex-1">
+                    <p class="text-[9px] font-black text-slate-400 uppercase tracking-widest">Actualité récente</p>
+                    <p class="text-sm font-bold text-slate-700 dark:text-slate-300 truncate">{{ child.recentNote }}</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="bg-slate-50/30 dark:bg-slate-800/20 px-6 py-4 border-t border-slate-100 dark:border-slate-800/50 flex justify-center items-center">
+              <button @click="viewProfile(child)" class="text-xs font-black text-primary hover:bg-primary/5 px-4 py-2 rounded-xl transition-all flex items-center gap-2 group/btn click-press uppercase tracking-widest">
+                <span class="material-symbols-outlined text-lg transition-transform group-hover/btn:scale-110">person</span>
+                Profil complet
+              </button>
             </div>
           </div>
+
+          <!-- Add Child Action Card -->
+          <button @click="showAddModal = true" class="group h-full min-h-[300px] border-2 border-dashed border-slate-200 dark:border-slate-800 rounded-2xl flex flex-col items-center justify-center p-8 hover:border-primary/50 hover:bg-primary/5 transition-all duration-500 click-press">
+            <div class="size-20 rounded-3xl bg-slate-50 dark:bg-slate-800 flex items-center justify-center mb-6 group-hover:bg-primary group-hover:rotate-90 transition-all duration-500 shadow-sm group-hover:shadow-xl group-hover:shadow-primary/20">
+              <span class="material-symbols-outlined text-4xl text-slate-300 group-hover:text-white transition-colors">add</span>
+            </div>
+            <h3 class="text-xl font-black text-slate-900 dark:text-white mb-2 tracking-tight transition-colors group-hover:text-primary">Ajouter un enfant</h3>
+            <p class="text-sm font-medium text-slate-400 text-center max-w-[200px]">Associez un nouvel élève à votre compte parent en quelques clics.</p>
+          </button>
+        </div>
+
+        <!-- Recent School Notifications Section -->
+        <div v-if="notifications.length > 0" class="mt-16">
+          <div class="flex items-center justify-between mb-8">
+            <div class="flex items-center gap-4">
+              <div class="size-12 rounded-2xl bg-primary/10 flex items-center justify-center text-primary shadow-sm shadow-primary/5">
+                <span class="material-symbols-outlined text-2xl">campaign</span>
+              </div>
+              <div>
+                <h2 class="text-2xl font-black tracking-tight">Actualités de l'école</h2>
+                <p class="text-xs font-bold text-slate-400 uppercase tracking-widest mt-0.5">Dernières communications officielles</p>
+              </div>
+            </div>
+            <button @click="viewAllNews" class="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-primary text-sm font-black shadow-sm hover:shadow-xl hover:-translate-y-0.5 transition-all group click-press">
+              <span>Voir tout</span>
+              <span class="material-symbols-outlined text-sm transition-transform group-hover:translate-x-1">arrow_forward</span>
+            </button>
+          </div>
+          <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl divide-y divide-slate-100 dark:divide-slate-800 overflow-hidden shadow-sm">
+            <TransitionGroup
+              enter-active-class="transition-all duration-700 ease-out-expo"
+              enter-from-class="opacity-0 translate-y-8"
+              enter-to-class="opacity-100 translate-y-0"
+            >
+              <div v-for="notification in notifications" :key="notification.id" class="p-6 flex gap-6 items-start hover:bg-slate-50/50 dark:hover:bg-slate-800/50 transition-all group cursor-default">
+                <div class="size-14 rounded-2xl flex items-center justify-center shrink-0 border-2 border-white dark:border-slate-800 shadow-sm transition-transform group-hover:scale-110 group-hover:rotate-3" :class="getNotificationIconColor(notification.type)">
+                  <span class="material-symbols-outlined text-2xl">{{ notification.icon }}</span>
+                </div>
+                <div class="flex-1">
+                  <div class="flex justify-between items-start mb-2">
+                    <h4 class="text-base font-black tracking-tight group-hover:text-primary transition-colors">{{ notification.title }}</h4>
+                    <span class="text-[10px] font-black text-slate-400 uppercase tracking-widest bg-slate-100 dark:bg-slate-800 px-2 py-1 rounded-lg">{{ notification.time }}</span>
+                  </div>
+                  <p class="text-sm font-medium text-slate-600 dark:text-slate-400 leading-relaxed max-w-3xl">{{ notification.description }}</p>
+                </div>
+              </div>
+            </TransitionGroup>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Add Child Modal -->
+    <div v-if="showAddModal" class="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+      <div class="bg-white dark:bg-slate-900 rounded-xl shadow-xl w-full max-w-md p-6 border border-slate-200 dark:border-slate-800">
+        <div class="flex justify-between items-center mb-6">
+          <h3 class="text-xl font-bold">Ajouter un enfant</h3>
+          <button @click="showAddModal = false" class="text-slate-400 hover:text-slate-600">
+            <span class="material-symbols-outlined">close</span>
+          </button>
+        </div>
+        
+        <!-- Search Section -->
+        <div class="mb-6">
+          <label class="block text-xs font-bold uppercase text-slate-500 mb-1">Rechercher un élève</label>
+          <div class="relative">
+            <span class="absolute left-3 top-3 text-slate-400">
+              <span class="material-symbols-outlined">search</span>
+            </span>
+            <input 
+              v-model="searchQuery" 
+              @input="searchStudents"
+              class="w-full pl-10 pr-4 py-3 rounded-lg bg-slate-50 dark:bg-slate-800 border border-slate-100 dark:border-slate-700 focus:ring-2 focus:ring-primary/50 text-sm" 
+              placeholder="Rechercher par nom, prénom ou matricule..." 
+              type="text"
+            />
+          </div>
+          
+          <!-- Search Results -->
+          <div v-if="searchResults.length > 0" class="mt-2 max-h-40 overflow-y-auto border border-slate-100 dark:border-slate-700 rounded-lg shadow-inner bg-slate-50 dark:bg-slate-800/50">
+            <div 
+              v-for="student in searchResults" 
+              :key="student._id"
+              @click="selectStudent(student)"
+              class="p-3 hover:bg-white dark:hover:bg-slate-800 cursor-pointer border-b border-slate-100 dark:border-slate-700 last:border-b-0 transition-colors"
+            >
+              <div class="flex items-center gap-3">
+                <div class="w-8 h-8 bg-primary/10 rounded-full flex items-center justify-center">
+                  <span class="text-primary font-bold text-xs">{{ student.prenom[0] }}{{ student.nom[0] }}</span>
+                </div>
+                <div class="flex-1">
+                  <p class="text-sm font-medium text-slate-900 dark:text-white">{{ student.prenom }} {{ student.nom }}</p>
+                  <p class="text-[10px] text-primary font-bold uppercase tracking-tight">{{ student.matricule }}</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Manual Entry -->
+        <div class="space-y-4">
+          <div class="relative flex items-center justify-center">
+            <div class="absolute inset-0 flex items-center">
+              <div class="w-full border-t border-slate-100 dark:border-slate-800"></div>
+            </div>
+            <span class="relative px-3 bg-white dark:bg-slate-900 text-xs text-slate-400 uppercase font-bold">ou</span>
+          </div>
+          <div>
+            <label class="block text-xs font-bold uppercase text-slate-500 mb-1">Matricule de l'élève</label>
+            <input 
+              v-model="matriculeToAdd" 
+              type="text" 
+              class="w-full px-4 py-3 rounded-lg bg-slate-50 dark:bg-slate-800 border border-slate-100 dark:border-slate-700 focus:ring-2 focus:ring-primary/50 text-sm" 
+              placeholder="Ex: 2023-XY-1234"
+            >
+          </div>
+        </div>
+            
+        <div class="flex gap-3 justify-end mt-8">
+          <button @click="showAddModal = false" class="px-4 py-2 rounded-lg text-slate-500 font-bold hover:bg-slate-100">Annuler</button>
+          <button @click="submitAddChild" :disabled="isSubmitting || !matriculeToAdd" class="px-6 py-2 rounded-lg bg-primary text-white font-bold hover:bg-primary/90 disabled:opacity-50 flex items-center gap-2 shadow-lg shadow-primary/20">
+            <span v-if="isSubmitting" class="material-symbols-outlined animate-spin text-sm">sync</span>
+            <span>Associer l'enfant</span>
+          </button>
         </div>
       </div>
     </div>
@@ -166,67 +199,149 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, onMounted, watch } from 'vue'
+import { useRouter } from 'vue-router'
+import api from '@/services/api'
+import { useToast } from '@/composables/useToast'
 
-// Données réactives
-const searchQuery = ref('')
+const router = useRouter()
+const { success: toastSuccess, error: toastError } = useToast()
 
-// Profil utilisateur
+// Dashboard states
+const isLoading = ref(true)
+const isSubmitting = ref(false)
+
+// User Profile
 const userProfile = ref({
-  name: 'Mme Martin',
+  name: '',
   role: 'Parent',
-  avatar: 'https://lh3.googleusercontent.com/aida-public/AB6AXuCk5k2Bb9T_EEiNFi4qJN6OU49kSHVDvSVaJZ5t87-mFo0qFwS5CcyREdGrKd28aYRGqtm8wO8LcGvj9ULGI3g7rbDG0dq3BSNT9-FasFEJKb70eDOl1vLUgNU3GwPWrtfdXnVZCk1fu0JazN-cOEQK6hUT7PFy1e5PMnXnxq5fsqbr6c1hKmVo6Jq9LG8vLZNoiK2ScjmDgh_eCSMJTPbSPDmbyI_7vo3LLGQUcm6L7cO0cxOKtBxRHZ2a9RNRTkBZprzQyI5AUy4'
+  avatar: ''
 })
 
-// Enfants
-const children = ref([
-  {
-    name: 'Léo Martin',
-    class: 'Classe de 4ème B',
-    status: 'Actif',
-    average: '15.5',
-    lastNote: '18',
-    lastNoteSubject: 'Histoire-Géo',
-    lastNoteDate: 'Hier',
-    nextEvent: 'Contrôle de Mathématiques - Demain',
-    recentNote: 'Anglais : 14/20 (Lundi)',
-    avatar: 'https://lh3.googleusercontent.com/aida-public/AB6AXuCGDeQC6PlSiThmMf52JLvnFAyd9Q6ku9ZzHohcG8zPKE2F6OucQ893e5GatwsT8IOseFpgiSV9QYI_3H_bKkEdCMLVOxb2R2m0FXt7BxNGFoo6ixW1Gu0MtQQ2wBrWnWLIEPyuy4DG9CLAYmlxI2WQbpDABzCMJOSRv5icIWjm7OuO0em1iA7vMwsAaYlmvF5qCuBnlQPWHWchpJWF3yQUMQ7FCPYPg2VrLSb9D7uB6xEJlnyxlD_4aW_mRWueYLPhHcpblXchCMQ'
-  },
-  {
-    name: 'Léa Martin',
-    class: 'Classe de CM2',
-    status: 'Excellence',
-    average: '17.8',
-    lastNote: '19',
-    lastNoteSubject: 'Dictée',
-    lastNoteDate: 'Ce matin',
-    nextEvent: 'Sortie Scolaire - Vendredi',
-    recentNote: 'Sciences : 16.5/20 (Vendredi)',
-    avatar: 'https://lh3.googleusercontent.com/aida-public/AB6AXuDjnNS75dp0kGUdG9ri0UKWqh39_18NgCMhl3JUVsex_6nDwFpbZqifQL53NHyC-wK5n-OURYrOmGopN6MaQ4niZkO1KFEJ2Yi2866PExSJh1XnXHyEXD-6MrnoOM3bdAJ0h7wy1zRn63xaHNfTF1sXZt1JaT3SX6cD1kIPgAlVZvsUUY8ObHKelUd1XfPc5hBjQ8B0zDLGhainCIB5U1LTkotm4Wy7uv7YBdeAoJ4rompDNFE5XusawjXYykUzrBK5PZePOCHJLlc'
-  }
-])
+// Children & Notifications
+const children = ref([])
+const notifications = ref([])
 
-// Notifications
-const notifications = ref([
-  {
-    id: 1,
-    type: 'info',
-    icon: 'campaign',
-    title: 'Réunion Parents-Professeurs',
-    time: 'Il y a 2 heures',
-    description: 'La réunion trimestrielle pour le collège aura lieu le jeudi 14 mars à 18h00 dans l\'amphithéâtre.'
-  },
-  {
-    id: 2,
-    type: 'info',
-    icon: 'restaurant',
-    title: 'Menu de la cantine - Semaine prochaine',
-    time: 'Hier',
-    description: 'Le menu de la semaine du 11 au 15 mars est désormais disponible dans l\'onglet documents.'
-  }
-])
+// Add Child Modal states
+const showAddModal = ref(false)
+const matriculeToAdd = ref('')
+const searchQuery = ref('')
+const searchResults = ref([])
+const searchTimeout = ref(null)
 
-// Fonctions utilitaires
+// Actions
+const viewReport = (child) => {
+  router.push(`/parent/bulletins?child=${child.id}`)
+}
+
+const viewProfile = (child) => {
+  router.push(`/parent/enfants/${child.id}`)
+}
+
+const viewAllNews = () => {
+  router.push('/parent/notifications')
+}
+
+// Search students with debounce
+const searchStudents = () => {
+  if (searchTimeout.value) clearTimeout(searchTimeout.value)
+  
+  if (searchQuery.value.length < 2) {
+    searchResults.value = []
+    return
+  }
+  
+  searchTimeout.value = setTimeout(async () => {
+    try {
+      const res = await api.searchStudents({
+        query: searchQuery.value,
+        limit: 10
+      })
+      searchResults.value = res.data.data
+    } catch (error) {
+      console.error('Error searching students:', error)
+      searchResults.value = []
+    }
+  }, 400)
+}
+
+const selectStudent = (student) => {
+  matriculeToAdd.value = student.matricule
+  searchResults.value = []
+  searchQuery.value = student.prenom + ' ' + student.nom
+}
+
+const submitAddChild = async () => {
+  if (!matriculeToAdd.value) return
+  
+  isSubmitting.value = true
+  try {
+    await api.addChild(matriculeToAdd.value)
+    toastSuccess('Enfant ajouté avec succès')
+    matriculeToAdd.value = ''
+    searchQuery.value = ''
+    showAddModal.value = false
+    await fetchDashboardData() // Refresh children list
+  } catch (error) {
+    if (error.response?.status === 404) {
+      toastError('Matricule non trouvé. Veuillez vérifier les informations.')
+    }
+  } finally {
+    isSubmitting.value = false
+  }
+}
+
+// Fetch user profile
+const fetchUserProfile = async () => {
+  try {
+    const res = await api.getMe()
+    if (res.data.success) {
+      const user = res.data.data
+      userProfile.name = `${user.prenom} ${user.nom}`
+      userProfile.avatar = user.photo === 'no-photo.jpg' 
+        ? `https://ui-avatars.com/api/?name=${user.prenom}+${user.nom}&background=random`
+        : `/uploads/${user.photo}`
+    }
+  } catch (error) {
+    console.error('Error fetching profile:', error)
+  }
+}
+
+// Fetch dashboard data
+const fetchDashboardData = async () => {
+  try {
+    const res = await api.getParentDashboard()
+    if (res.data.success) {
+      const { children: childrenStats, notifications: notifs } = res.data.data
+      children.value = childrenStats
+      notifications.value = notifs.map(notif => ({
+        id: notif._id,
+        type: notif.type || 'info',
+        icon: notif.type === 'meeting' ? 'groups' : 
+              notif.type === 'food' ? 'restaurant' : 'campaign',
+        title: notif.subject || notif.titre || 'Notification',
+        time: formatTime(notif.createdAt),
+        description: notif.content || notif.message || notif.description
+      }))
+    }
+  } catch (error) {
+    console.error('Error fetching dashboard info:', error)
+  }
+}
+
+// Format time helper
+const formatTime = (dateString) => {
+  const date = new Date(dateString)
+  const now = new Date()
+  const diffMs = now - date
+  const diffHours = Math.floor(diffMs / (1000 * 60 * 60))
+  const diffDays = Math.floor(diffHours / 24)
+  
+  if (diffDays > 0) return `Il y a ${diffDays} jour${diffDays > 1 ? 's' : ''}`
+  if (diffHours > 0) return `Il y a ${diffHours} heure${diffHours > 1 ? 's' : ''}`
+  return 'À l\'instant'
+}
+
 const getNotificationIconColor = (type) => {
   switch (type) {
     case 'info': return 'bg-blue-100 dark:bg-blue-900/30 text-blue-600'
@@ -237,16 +352,13 @@ const getNotificationIconColor = (type) => {
   }
 }
 
-// Fonctions d'action
-const viewReport = (child) => {
-  console.log('Voir le bulletin complet de:', child.name)
-}
-
-const sendMessage = (child) => {
-  console.log('Envoyer un message à:', child.name)
-}
-
-const viewAllNews = () => {
-  console.log('Voir toutes les actualités')
-}
+// Initialize
+onMounted(async () => {
+  isLoading.value = true
+  await Promise.all([
+    fetchUserProfile(),
+    fetchDashboardData()
+  ])
+  isLoading.value = false
+})
 </script>

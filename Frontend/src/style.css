@@ -2,15 +2,100 @@
 @tailwind components;
 @tailwind utilities;
 
-body {
-  font-family: 'Inter', 'Public Sans', 'Lexend', sans-serif;
+:root {
+  --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-in-out-soft: cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-fast: 150ms var(--ease-in-out-soft);
+  --transition-medium: 350ms var(--ease-out-expo);
+  --transition-slow: 550ms var(--ease-out-expo);
 }
 
+body {
+  font-family: 'Inter', 'Public Sans', system-ui, -apple-system, sans-serif;
+  @apply bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+/* Page Transitions */
+.page-enter-active,
+.page-leave-active {
+  transition: opacity 300ms var(--ease-in-out-soft), transform 300ms var(--ease-out-expo);
+}
+
+.page-enter-from {
+  opacity: 0;
+  transform: translateY(8px);
+}
+
+.page-leave-to {
+  opacity: 0;
+  transform: translateY(-8px);
+}
+
+/* Micro-interactions */
+.soft-lift {
+  transition: transform var(--transition-medium), box-shadow var(--transition-medium), border-color var(--transition-fast);
+  will-change: transform, box-shadow;
+}
+
+.soft-lift:hover {
+  transform: translateY(-5px);
+  @apply shadow-xl shadow-slate-200/50 dark:shadow-black/20 border-primary/20 dark:border-primary/40;
+}
+
+.click-press {
+  transition: transform 150ms var(--ease-out-expo);
+  will-change: transform;
+}
+
+.click-press:active {
+  transform: scale(0.95);
+}
+
+.glass-morphism {
+  @apply bg-white/70 dark:bg-slate-900/70 backdrop-blur-md border border-white/20 dark:border-slate-800/20 shadow-sm;
+}
+
+/* Modern Sidebar Active State */
 .sidebar-active {
-  background-color: #197fe6;
-  color: white !important;
+  @apply bg-primary text-white font-semibold shadow-lg shadow-primary/30 outline-none;
+  transform: translateX(4px);
+  transition: all 400ms var(--ease-out-expo);
 }
 
 .sidebar-active .material-symbols-outlined {
-  color: white !important;
+  @apply text-white;
+}
+
+/* Scrollbar Refinement */
+::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+}
+
+::-webkit-scrollbar-track {
+  @apply bg-transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  @apply bg-slate-200 dark:bg-slate-800 rounded-full hover:bg-slate-300 dark:hover:bg-slate-700 transition-colors;
+}
+
+/* Utility for smooth entry */
+.animate-fade-in {
+  animation: fadeIn 500ms var(--ease-out-expo) forwards;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }

@@ -5,43 +5,71 @@
         <div class="bg-primary/10 p-2 rounded-lg">
           <span class="material-symbols-outlined text-primary text-3xl">school</span>
         </div>
-        <span class="text-xl font-bold tracking-tight">EduDash</span>
+        <span class="text-xl font-bold tracking-tight text-slate-800 dark:text-white">Giscard</span>
       </div>
 
-      <nav class="flex flex-col gap-1">
-        <router-link to="/eleve" class="flex items-center gap-3 px-3 py-2.5 rounded-lg font-medium transition-colors" :class="isActive('EleveDashboard') ? 'bg-primary text-white' : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800'">
-          <span class="material-symbols-outlined">dashboard</span>
-          <span class="text-sm">Tableau de bord</span>
+      <nav class="flex flex-col gap-1.5 flex-grow">
+        <router-link to="/eleve" 
+          class="flex items-center gap-3 px-4 py-2.5 rounded-xl transition-all duration-300 ease-out-expo group" 
+          :class="isActive('EleveDashboard') ? 'sidebar-active' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/50 hover:text-primary transition-all'"
+        >
+          <span class="material-symbols-outlined transition-transform group-hover:scale-110">dashboard</span>
+          <span class="text-sm font-medium">Tableau de bord</span>
         </router-link>
-        <router-link to="/eleve/notes" class="flex items-center gap-3 px-3 py-2.5 rounded-lg font-medium transition-colors" :class="isActive('EleveNotes') ? 'bg-primary text-white' : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800'">
-          <span class="material-symbols-outlined">history_edu</span>
-          <span class="text-sm font-medium">Historique des notes</span>
+        <router-link to="/eleve/progression" 
+          class="flex items-center gap-3 px-4 py-2.5 rounded-xl transition-all duration-300 ease-out-expo group" 
+          :class="isActive('EleveProgression') ? 'sidebar-active' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/50 hover:text-primary transition-all'"
+        >
+          <span class="material-symbols-outlined transition-transform group-hover:scale-110">insights</span>
+          <span class="text-sm font-medium">Ma Progression</span>
         </router-link>
-        <router-link to="/eleve/bulletins" class="flex items-center gap-3 px-3 py-2.5 rounded-lg font-medium transition-colors" :class="isActive('EleveBulletins') ? 'bg-primary text-white' : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800'">
-          <span class="material-symbols-outlined">description</span>
+        <router-link to="/eleve/notes" 
+          class="flex items-center gap-3 px-4 py-2.5 rounded-xl transition-all duration-300 ease-out-expo group" 
+          :class="isActive('EleveNotes') ? 'sidebar-active' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/50 hover:text-primary transition-all'"
+        >
+          <span class="material-symbols-outlined transition-transform group-hover:scale-110">history_edu</span>
+          <span class="text-sm font-medium">Mes Notes</span>
+        </router-link>
+        <router-link to="/eleve/bulletins" 
+          class="flex items-center gap-3 px-4 py-2.5 rounded-xl transition-all duration-300 ease-out-expo group" 
+          :class="isActive('EleveBulletins') ? 'sidebar-active' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/50 hover:text-primary transition-all'"
+        >
+          <span class="material-symbols-outlined transition-transform group-hover:scale-110">description</span>
           <span class="text-sm font-medium">Bulletins</span>
         </router-link>
-        <router-link to="/eleve/discipline" class="flex items-center gap-3 px-3 py-2.5 rounded-lg font-medium transition-colors" :class="isActive('EleveDiscipline') ? 'bg-primary text-white' : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800'">
-          <span class="material-symbols-outlined">security_update_warning</span>
+        <router-link to="/eleve/discipline" 
+          class="flex items-center gap-3 px-4 py-2.5 rounded-xl transition-all duration-300 ease-out-expo group" 
+          :class="isActive('EleveDiscipline') ? 'sidebar-active' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/50 hover:text-primary transition-all'"
+        >
+          <span class="material-symbols-outlined transition-transform group-hover:scale-110">security_update_warning</span>
           <span class="text-sm font-medium">Discipline</span>
         </router-link>
-        <router-link to="/eleve/calendrier" class="flex items-center gap-3 px-3 py-2.5 rounded-lg font-medium transition-colors" :class="isActive('EleveCalendrier') ? 'bg-primary text-white' : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800'">
-          <span class="material-symbols-outlined">calendar_today</span>
+        <router-link to="/eleve/calendrier" 
+          class="flex items-center gap-3 px-4 py-2.5 rounded-xl transition-all duration-300 ease-out-expo group" 
+          :class="isActive('EleveCalendrier') ? 'sidebar-active' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/50 hover:text-primary transition-all'"
+        >
+          <span class="material-symbols-outlined transition-transform group-hover:scale-110">calendar_today</span>
           <span class="text-sm font-medium">Calendrier</span>
         </router-link>
-        <router-link to="/eleve/notifications" class="flex items-center gap-3 px-3 py-2.5 rounded-lg font-medium transition-colors" :class="isActive('EleveNotifications') ? 'bg-primary text-white' : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800'">
-          <span class="material-symbols-outlined">notifications</span>
+        <router-link to="/eleve/notifications" 
+          class="flex items-center gap-3 px-4 py-2.5 rounded-xl transition-all duration-300 ease-out-expo group" 
+          :class="isActive('EleveNotifications') ? 'sidebar-active' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/50 hover:text-primary transition-all'"
+        >
+          <span class="material-symbols-outlined transition-transform group-hover:scale-110">notifications</span>
           <span class="text-sm font-medium">Notifications</span>
-          <span class="ml-auto bg-red-500 text-white text-[10px] px-1.5 py-0.5 rounded-full">3</span>
+          <span class="ml-auto bg-red-500 text-white text-[10px] px-1.5 py-0.5 rounded-full shadow-sm">3</span>
         </router-link>
-        <router-link to="/eleve/profil" class="flex items-center gap-3 px-3 py-2.5 rounded-lg font-medium transition-colors" :class="isActive('EleveProfil') ? 'bg-primary text-white' : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800'">
-          <span class="material-symbols-outlined">person</span>
+        <router-link to="/eleve/profil" 
+          class="flex items-center gap-3 px-4 py-2.5 rounded-xl transition-all duration-300 ease-out-expo group" 
+          :class="isActive('EleveProfil') ? 'sidebar-active' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/50 hover:text-primary transition-all'"
+        >
+          <span class="material-symbols-outlined transition-transform group-hover:scale-110">person</span>
           <span class="text-sm font-medium">Mon Profil</span>
         </router-link>
       </nav>
     </div>
     <div class="mt-auto p-6 border-t border-slate-200 dark:border-slate-700">
-      <router-link to="/login" class="flex items-center gap-3 px-3 py-2 text-red-500 hover:text-red-600 transition-colors">
+      <router-link to="/login" class="flex items-center gap-3 px-3 py-2 text-red-500 hover:text-red-600 transition-all click-press">
         <span class="material-symbols-outlined">logout</span>
         <span class="text-sm font-medium">Déconnexion</span>
       </router-link>
@@ -51,8 +79,10 @@
 
 <script setup>
 import { useRoute } from 'vue-router'
+import { useAcademicYear } from '@/composables/useAcademicYear'
 
 const route = useRoute()
+const { academicYear } = useAcademicYear()
 
 const isActive = (routeName) => {
   return route.name === routeName

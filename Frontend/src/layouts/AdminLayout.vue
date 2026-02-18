@@ -12,7 +12,11 @@
       
       <!-- Content -->
       <div class="flex-1 overflow-y-auto p-8">
-        <router-view />
+        <router-view v-slot="{ Component }">
+          <transition name="page" mode="out-in">
+            <component :is="Component" />
+          </transition>
+        </router-view>
       </div>
     </main>
 

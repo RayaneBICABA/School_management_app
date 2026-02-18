@@ -2,7 +2,7 @@
   <div class="flex-1 min-w-0">
 
     <!-- Main Content -->
-    <main class="flex-1 p-8">
+    <main class="flex-1 p-8 pb-12">
       <!-- Call Header -->
       <div class="mb-8">
         <div class="flex items-center gap-4 mb-4">
@@ -82,9 +82,9 @@
             </div>
           </div>
         </div>
-        <div class="overflow-x-auto">
-          <table class="w-full">
-            <thead class="bg-slate-50 dark:bg-slate-800">
+        <div class="overflow-x-auto scroll-fade-mask">
+          <table class="w-full border-separate border-spacing-0">
+            <thead class="bg-slate-50 dark:bg-slate-800 sticky top-0 z-10 shadow-sm">
               <tr>
                 <th class="px-6 py-3 text-left text-xs font-medium text-[#4e7397] dark:text-slate-400 uppercase tracking-wider">Élève</th>
                 <th class="px-6 py-3 text-center text-xs font-medium text-[#4e7397] dark:text-slate-400 uppercase tracking-wider">Présent</th>
@@ -142,6 +142,10 @@
                   >
                 </td>
               </tr>
+              <!-- Bottom Padding Row -->
+              <tr>
+                <td colspan="5" class="py-6"></td>
+              </tr>
             </tbody>
           </table>
         </div>
@@ -158,6 +162,7 @@ import api from '@/services/api'
 const route = useRoute()
 const router = useRouter()
 const classeId = route.query.id
+const matiereId = route.query.matiereId // Fixed: Capture matiere ID
 const classeInfo = ref({ nom: 'Chargement...' })
 
 const currentDate = ref(new Date().toLocaleDateString('fr-FR', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }))
@@ -222,6 +227,7 @@ const saveCall = async () => {
   try {
     const attendanceData = {
       classeId,
+      matiereId, // Fixed: Send matiere ID
       date: new Date(),
       attendanceList: students.value.map(s => ({
         studentId: s.id,
@@ -239,3 +245,49 @@ const saveCall = async () => {
   }
 }
 </script>
+ 
+<style scoped>
+/* Custom Scrollbar */
+.custom-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(79, 70, 229, 0.2) transparent;
+  scroll-behavior: smooth;
+}
+ 
+.custom-scrollbar::-webkit-scrollbar {
+  width: 5px;
+}
+ 
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+ 
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background-color: rgba(79, 70, 229, 0.1);
+  border-radius: 20px;
+  transition: all 0.3s ease;
+}
+ 
+.custom-scrollbar:hover::-webkit-scrollbar-thumb {
+  background-color: rgba(79, 70, 229, 0.3);
+}
+
+/* Ensure sticky header borders look right */
+th {
+  background-clip: padding-box;
+}
+
+/* Premium Scroll Fade Effect */
+.scroll-fade-mask {
+  mask-image: linear-gradient(to bottom, 
+    black 0%, 
+    black 90%, 
+    transparent 100%
+  );
+  -webkit-mask-image: linear-gradient(to bottom, 
+    black 0%, 
+    black 90%, 
+    transparent 100%
+  );
+}
+</style>

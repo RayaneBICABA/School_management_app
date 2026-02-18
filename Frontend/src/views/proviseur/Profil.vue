@@ -32,18 +32,7 @@
         </div>
       </div>
 
-      <!-- Stats Grid -->
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-        <div v-for="stat in stats" :key="stat.id" class="bg-white dark:bg-slate-900 p-6 rounded-3xl border border-slate-100 dark:border-slate-800 shadow-sm flex items-center gap-4">
-          <div class="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center flex-shrink-0">
-            <span class="material-symbols-outlined text-primary w-6 h-6 text-2xl">{{ stat.icon }}</span>
-          </div>
-          <div>
-            <p class="text-2xl font-black text-slate-900 dark:text-white">{{ stat.value }}</p>
-            <p class="text-xs font-bold text-slate-500 uppercase tracking-widest">{{ stat.label }}</p>
-          </div>
-        </div>
-      </div>
+      <!-- Removed Stats Grid as requested -->
 
       <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
         <!-- Main Content -->
@@ -130,7 +119,7 @@
           <div class="bg-slate-900 dark:bg-primary/20 rounded-3xl p-6 text-white border border-slate-800 shadow-xl">
             <div class="flex items-center gap-3 mb-8">
               <div class="w-10 h-10 rounded-xl bg-white/10 flex items-center justify-center flex-shrink-0">
-                <span class="material-symbols-outlined text-primary w-5 h-5 text-xl">vps_key</span>
+                <span class="material-symbols-outlined text-primary w-5 h-5 text-xl">vpn_key</span>
               </div>
               <h2 class="text-lg font-bold">Sécurité Accès</h2>
             </div>
@@ -217,29 +206,6 @@ const securityData = ref({
   newPassword: '',
   confirmPassword: ''
 });
-
-const stats = ref([
-  { id: 1, label: 'Élèves', value: '0', icon: 'groups' },
-  { id: 2, label: 'Enseignants', value: '0', icon: 'person_work' }
-])
-
-const fetchStats = async () => {
-  try {
-    // Fetch students count
-    const studentsRes = await api.getUsers({ role: 'ELEVE' })
-    if (studentsRes.data.success) {
-      stats.value[0].value = studentsRes.data.count || studentsRes.data.data.length
-    }
-    
-    // Fetch teachers count
-    const teachersRes = await api.getUsers({ role: 'PROFESSEUR' })
-    if (teachersRes.data.success) {
-      stats.value[1].value = teachersRes.data.count || teachersRes.data.data.length
-    }
-  } catch (err) {
-    console.error('Erreur chargement stats:', err)
-  }
-}
 
 const fetchData = async () => {
     try {
@@ -328,7 +294,6 @@ const parseUserAgent = (ua) => {
 
 onMounted(() => {
     fetchData();
-    fetchStats();
     const link = document.createElement('link');
     link.href = 'https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap';
     link.rel = 'stylesheet';

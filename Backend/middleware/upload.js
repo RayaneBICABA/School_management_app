@@ -27,13 +27,22 @@ function checkFileType(file, cb) {
     }
 }
 
-// Init upload
+// Init upload with more permissive settings
 const upload = multer({
     storage: storage,
-    limits: { fileSize: 2000000 }, // 2MB
+    limits: { 
+        fileSize: 5000000, // 5MB
+        files: 1, // Limit to 1 file per request
+        fieldSize: 1024 * 1024, // 1MB for field size
+        fields: 10 // Limit number of fields
+    },
     fileFilter: function (req, file, cb) {
         checkFileType(file, cb);
-    }
+    },
+    // Add more permissive parsing options
+    preserveNullAndUndefined: true,
+    defParamCharset: 'utf8',
+    defCharset: 'utf8'
 });
 
 module.exports = upload;

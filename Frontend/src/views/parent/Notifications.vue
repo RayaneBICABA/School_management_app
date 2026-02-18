@@ -29,13 +29,16 @@
           </div>
           <!-- Chips / Child Selector -->
           <div class="flex gap-2 p-1 overflow-x-auto">
-            <button @click="selectedChild = 'all'" class="flex h-9 shrink-0 items-center justify-center gap-x-2 rounded-full bg-primary text-white pl-3 pr-4 cursor-pointer shadow-sm">
+            <button @click="handleChildSelect('all')" class="flex h-9 shrink-0 items-center justify-center gap-x-2 rounded-full px-4 transition-all" :class="selectedChild === 'all' ? 'bg-primary text-white shadow-sm' : 'bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 hover:bg-slate-50'">
               <span class="material-symbols-outlined text-[18px]">group</span>
-              <p class="text-xs font-semibold">Tous</p>
+              <p class="text-xs font-semibold">Toutes</p>
             </button>
-            <button v-for="child in children" :key="child.id" @click="selectedChild = child.id" class="flex h-9 shrink-0 items-center justify-center gap-x-2 rounded-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 pl-3 pr-4 cursor-pointer hover:bg-slate-200 transition-colors" :class="{ 'bg-primary text-white': selectedChild === child.id }">
-              <span class="material-symbols-outlined text-[18px]" :class="selectedChild === child.id ? 'text-white' : 'text-slate-500'">{{ child.icon }}</span>
-              <p class="text-xs font-medium" :class="selectedChild === child.id ? 'text-white' : 'text-slate-900 dark:text-slate-200'">{{ child.name }}</p>
+            <button v-for="child in children" :key="child._id" @click="handleChildSelect(child._id)" class="flex h-9 shrink-0 items-center justify-center gap-x-2 rounded-full px-4 transition-all" :class="selectedChild === child._id ? 'bg-primary text-white shadow-sm' : 'bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 hover:bg-slate-50'">
+              <div class="size-5 rounded-full bg-primary/10 flex items-center justify-center overflow-hidden">
+                <img v-if="child.photo && child.photo !== 'no-photo.jpg'" :src="`/uploads/${child.photo}`" class="w-full h-full object-cover">
+                <span v-else class="text-[10px] font-bold text-primary">{{ child.prenom[0] }}{{ child.nom[0] }}</span>
+              </div>
+              <p class="text-xs font-medium">{{ child.prenom }}</p>
             </button>
           </div>
         </div>
@@ -119,18 +122,43 @@ import api from '@/services/api'
 // Données réactives
 const searchQuery = ref('')
 const notifications = ref([])
+const children = ref([])
+const selectedChild = ref('all')
 const isLoading = ref(false)
+
+const fetchChildren = async () => {
+  try {
+    const res = await api.getChildren()
+    if (res.data.success) {
+      children.value = res.data.data
+    }
+  } catch (error) {
+    console.error('Erreur chargement enfants:', error)
+  }
+}
 
 const fetchData = async () => {
   try {
     isLoading.value = true
-    const response = await api.getNotifications()
+    let response
+    
+    if (selectedChild.value === 'all') {
+      response = await api.getNotifications()
+    } else {
+      response = await api.getStudentNotifications(selectedChild.value)
+    }
+    
     notifications.value = response.data.data
   } catch (error) {
     console.error('Erreur chargement notifications:', error)
   } finally {
     isLoading.value = false
   }
+}
+
+const handleChildSelect = (childId) => {
+  selectedChild.value = childId
+  fetchData()
 }
 
 const filteredNotifications = computed(() => {
@@ -186,7 +214,10 @@ const getNotificationClass = (notification) => {
   return 'bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl shadow-sm hover:border-primary/30 transition-all cursor-pointer opacity-80'
 }
 
-onMounted(() => {
-  fetchData()
+onMounted(async () => {
+  isLoading.value = true
+  await fetchChildren()
+  await fetchData()
+  isLoading.value = false
 })
 </script>

@@ -16,10 +16,21 @@ connectDB();
 const app = express();
 
 // Middleware
-app.use(express.json());
-app.use(cors());
+app.use(express.json({ limit: '10mb' })); // Increased limit for base64 images
+app.use(express.urlencoded({ limit: '10mb', extended: true }));
+app.use(cors({
+    origin: ['http://localhost:3000', 'http://localhost:3001'],
+    credentials: true
+}));
 app.use(helmet({
     crossOriginResourcePolicy: false,
+    contentSecurityPolicy: {
+        directives: {
+            defaultSrc: ["'self'"],
+            imgSrc: ["'self'", "data:", "https:", "http:"],
+            connectSrc: ["'self'", "https:", "http:"]
+        }
+    }
 }));
 app.use(morgan('dev'));
 app.use(fileUpload());
@@ -53,6 +64,14 @@ const bulletins = require('./routes/bulletins');
 const noteColumns = require('./routes/noteColumns');
 const unlockRequests = require('./routes/unlockRequests');
 const parentRoutes = require('./routes/parentRoutes');
+const bulletinWorkflowRoutes = require('./routes/bulletinWorkflowRoutes');
+const studentRoutes = require('./routes/studentRoutes');
+const messageRoutes = require('./routes/messageRoutes');
+const calendarRoutes = require('./routes/calendarRoutes');
+const examenRoutes = require('./routes/examenRoutes');
+const studentProfileRoutes = require('./routes/studentProfileRoutes');
+const absenceJourRoutes = require('./routes/absenceJourRoutes');
+const printHistoryRoutes = require('./routes/printHistoryRoutes');
 
 // Mount routers
 app.use('/api/v1/auth', authRoutes);
@@ -75,6 +94,14 @@ app.use('/api/v1/bulletins', bulletins);
 app.use('/api/v1/note-columns', noteColumns);
 app.use('/api/v1/unlock-requests', unlockRequests);
 app.use('/api/v1/parents', parentRoutes);
+app.use('/api/v1/bulletin-workflow', bulletinWorkflowRoutes);
+app.use('/api/v1/eleves', studentRoutes);
+app.use('/api/v1/messages', messageRoutes);
+app.use('/api/v1/calendar', calendarRoutes);
+app.use('/api/v1/examens', examenRoutes);
+app.use('/api/v1/student-profile', studentProfileRoutes);
+app.use('/api/v1/absences-jour', absenceJourRoutes);
+app.use('/api/v1/print-history', printHistoryRoutes);
 
 // Error Handler Middleware
 const errorHandler = require('./middleware/error');

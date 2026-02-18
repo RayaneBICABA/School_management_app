@@ -3,9 +3,13 @@
     <ProviseurSidebar @logout="handleLogout" />
     <div class="flex-1 flex flex-col overflow-hidden">
       <Header :title="pageTitle" />
-      <main class="flex-1 overflow-y-auto p-8">
-        <router-view />
-      </main>
+      <div class="flex-grow pb-8 overflow-y-auto">
+        <router-view v-slot="{ Component }">
+          <transition name="page" mode="out-in">
+            <component :is="Component" />
+          </transition>
+        </router-view>
+      </div>
     </div>
 
   </div>
@@ -27,6 +31,10 @@ const pageTitles = {
   'ProviseurDashboard': 'Tableau de bord',
   'ProviseurSuivi': 'Suivi d\'activité',
   'ProviseurValidation': 'Validation des Bulletins',
+  'ProviseurClasses': 'Classes & Filières',
+  'ProviseurEmploiTemps': 'Emploi du Temps',
+  'ProviseurAffectationEleves': 'Affectation des élèves',
+  'ProviseurUtilisateurs': 'Gestion des Utilisateurs',
   'ProviseurProfil': 'Mon Profil'
 }
 

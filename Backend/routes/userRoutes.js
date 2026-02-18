@@ -25,15 +25,15 @@ router.use(protect);
 router
     .route('/')
     .get(authorize('ADMIN', 'CPE', 'PROVISEUR', 'CENSEUR', 'PROFESSEUR', 'SECRETAIRE'), getUsers)
-    .post(authorize('ADMIN', 'PROVISEUR', 'CENSEUR'), createUser);
+    .post(authorize('ADMIN', 'PROVISEUR', 'CENSEUR', 'SECRETAIRE'), createUser);
 
 router.post('/import', authorize('ADMIN'), upload.single('file'), importStudents);
 router.post('/bulk-students', authorize('PROVISEUR', 'ADMIN'), bulkCreateStudents);
 
 router
     .route('/:id')
-    .get(authorize('ADMIN', 'CPE', 'PROVISEUR', 'CENSEUR', 'PROFESSEUR', 'SECRETAIRE'), getUser)
-    .put(authorize('ADMIN', 'PROVISEUR', 'CENSEUR'), updateUser)
-    .delete(authorize('ADMIN', 'PROVISEUR', 'CENSEUR'), deleteUser);
+    .get(authorize('ADMIN', 'CPE', 'PROVISEUR', 'CENSEUR', 'PROFESSEUR', 'SECRETAIRE', 'PARENT'), getUser)
+    .put(authorize('ADMIN', 'PROVISEUR', 'CENSEUR', 'SECRETAIRE'), updateUser)
+    .delete(authorize('ADMIN', 'PROVISEUR', 'CENSEUR', 'SECRETAIRE'), deleteUser);
 
 module.exports = router;

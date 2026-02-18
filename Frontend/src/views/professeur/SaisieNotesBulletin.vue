@@ -249,6 +249,26 @@ import ConfirmationModal from '@/components/modals/ConfirmationModal.vue';
 
 const { success, error, warning } = useToast();
 
+// Générer un matricule unique
+const generateMatricule = (student, index) => {
+  // Si l'étudiant a déjà un matricule, le conserver
+  if (student.matricule && student.matricule !== 'N/A' && student.matricule !== '-') {
+    return student.matricule
+  }
+  
+  // Sinon, générer un matricule dynamiquement
+  const currentYear = new Date().getFullYear()
+  const baseMatricule = `${currentYear}`
+  
+  // Utiliser le nom et prénom pour créer une partie unique
+  const namePart = `${student.nom?.slice(0, 3).toUpperCase() || 'ELV'}${student.prenom?.slice(0, 3).toUpperCase() || 'ELE'}`
+  
+  // Ajouter un index pour garantir l'unicité
+  const indexPart = String(index + 1).padStart(3, '0')
+  
+  return `${baseMatricule}-${namePart}${indexPart}`
+}
+
 const classes = ref([]);
 const matieres = ref([]);
 const eleves = ref([]);
@@ -329,7 +349,12 @@ const loadData = async () => {
       role: 'ELEVE' 
     });
     if (elevesRes.data.success) {
-      eleves.value = elevesRes.data.data;
+      // Transformer les données avec génération de matricules
+      const rawData = elevesRes.data.data;
+      eleves.value = rawData.map((student, index) => ({
+        ...student,
+        matricule: generateMatricule(student, index)
+      }));
     }
 
     // Charger les évaluations (colonnes)

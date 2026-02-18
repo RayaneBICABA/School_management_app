@@ -34,7 +34,7 @@
             <p class="text-[#4e7397] dark:text-slate-400 text-sm font-medium">Moyenne Générale</p>
             <span class="material-symbols-outlined text-primary">analytics</span>
           </div>
-          <p class="text-[#0e141b] dark:text-white tracking-tight text-3xl font-bold">15.5/20</p>
+          <p class="text-[#0e141b] dark:text-white tracking-tight text-3xl font-bold">{{ progressionData.moyenneGenerale?.toFixed(1) || '--' }}/20</p>
           <div class="flex items-center gap-1 text-[#078838] text-sm font-bold">
             <span class="material-symbols-outlined text-sm">trending_up</span>
             <span>+0.5 ce mois</span>
@@ -45,7 +45,8 @@
             <p class="text-[#4e7397] dark:text-slate-400 text-sm font-medium">Rang de classe</p>
             <span class="material-symbols-outlined text-primary">leaderboard</span>
           </div>
-          <p class="text-[#0e141b] dark:text-white tracking-tight text-3xl font-bold">4<sup>ème</sup> <span class="text-lg font-normal text-[#4e7397]">/ 32</span></p>
+          <p class="text-[#0e141b] dark:text-white tracking-tight text-3xl font-bold">{{ progressionData.rangClasse || '--' }}<sup>ème</sup> <span class="text-lg font-normal text-[#4e7397]">/ {{ progressionData.effectifClasse || '--' }}</span></p>
+          <p class="text-slate-500 dark:text-slate-400 text-xs font-normal">Sur {{ progressionData.effectifClasse || '--' }} élèves</p>
           <div class="flex items-center gap-1 text-[#e73908] text-sm font-bold">
             <span class="material-symbols-outlined text-sm">trending_down</span>
             <span>-1 place</span>
@@ -80,7 +81,7 @@
           </div>
           <div class="flex flex-col gap-4">
             <div class="h-[220px] w-full relative">
-              <svg fill="none" height="100%" preserveaspectratio="none" viewbox="0 0 478 150" width="100%" xmlns="http://www.w3.org/2000/svg">
+              <svg fill="none" height="100%" preserveAspectRatio="none" viewBox="0 0 478 150" width="100%" xmlns="http://www.w3.org/2000/svg">
                 <!-- Student Line Shadow -->
                 <path d="M0 100C50 90 100 120 150 80C200 40 250 60 300 30C350 10 400 40 478 20V150H0V100Z" fill="url(#studentGradient)"></path>
                 <!-- Class Avg Line (Reference) -->
@@ -88,10 +89,10 @@
                 <!-- Student Main Line -->
                 <path d="M0 100C50 90 100 120 150 80C200 40 250 60 300 30C350 10 400 40 478 20" stroke="#197fe6" stroke-linecap="round" stroke-width="4"></path>
                 <defs>
-                  <lineargradient gradientunits="userSpaceOnUse" id="studentGradient" x1="239" x2="239" y1="20" y2="150">
+                  <linearGradient gradientUnits="userSpaceOnUse" id="studentGradient" x1="239" x2="239" y1="20" y2="150">
                     <stop stop-color="#197fe6" stop-opacity="0.2"></stop>
                     <stop offset="1" stop-color="#197fe6" stop-opacity="0"></stop>
-                  </lineargradient>
+                  </linearGradient>
                 </defs>
               </svg>
             </div>
@@ -108,57 +109,23 @@
         <!-- Comparison by Subject -->
         <div class="flex flex-col gap-4 rounded-xl border border-[#d0dbe7] dark:border-slate-700 bg-white dark:bg-slate-800 p-6 shadow-sm">
           <p class="text-[#0e141b] dark:text-white text-lg font-bold">Performance par matière</p>
-          <div class="flex flex-col gap-4 py-2">
-            <!-- Math -->
-            <div class="flex flex-col gap-1">
+          <div v-if="progressionData.matieres.length > 0" class="flex flex-col gap-4 py-2">
+            <div v-for="matiere in progressionData.matieres" :key="matiere.nom" class="flex flex-col gap-1">
               <div class="flex justify-between text-xs font-medium mb-1">
-                <span>Mathématiques</span>
-                <span class="text-primary font-bold">18.5 / 14.2 avg</span>
+                <span>{{ matiere.nom }}</span>
+                <span class="text-primary font-bold">{{ matiere.moyenne.toFixed(1) }} / {{ matiere.moyenneClasse?.toFixed(1) || '12.0' }} avg</span>
               </div>
               <div class="w-full h-2 bg-[#e7edf3] dark:bg-slate-700 rounded-full overflow-hidden flex">
-                <div class="bg-primary h-full" style="width: 92%"></div>
+                <div 
+                  class="h-full transition-all duration-500" 
+                  :class="matiere.moyenne >= 10 ? 'bg-primary' : 'bg-red-400'"
+                  :style="{ width: `${Math.min(100, (matiere.moyenne / 20) * 100)}%` }"
+                ></div>
               </div>
             </div>
-            <!-- Physique -->
-            <div class="flex flex-col gap-1">
-              <div class="flex justify-between text-xs font-medium mb-1">
-                <span>Physique-Chimie</span>
-                <span class="text-primary font-bold">16.0 / 13.8 avg</span>
-              </div>
-              <div class="w-full h-2 bg-[#e7edf3] dark:bg-slate-700 rounded-full overflow-hidden flex">
-                <div class="bg-primary h-full" style="width: 80%"></div>
-              </div>
-            </div>
-            <!-- Français -->
-            <div class="flex flex-col gap-1">
-              <div class="flex justify-between text-xs font-medium mb-1">
-                <span>Français</span>
-                <span class="text-[#4e7397] font-bold">12.0 / 12.5 avg</span>
-              </div>
-              <div class="w-full h-2 bg-[#e7edf3] dark:bg-slate-700 rounded-full overflow-hidden flex">
-                <div class="bg-[#4e7397] h-full" style="width: 60%"></div>
-              </div>
-            </div>
-            <!-- Anglais -->
-            <div class="flex flex-col gap-1">
-              <div class="flex justify-between text-xs font-medium mb-1">
-                <span>Anglais</span>
-                <span class="text-primary font-bold">17.0 / 14.0 avg</span>
-              </div>
-              <div class="w-full h-2 bg-[#e7edf3] dark:bg-slate-700 rounded-full overflow-hidden flex">
-                <div class="bg-primary h-full" style="width: 85%"></div>
-              </div>
-            </div>
-            <!-- Philo -->
-            <div class="flex flex-col gap-1">
-              <div class="flex justify-between text-xs font-medium mb-1">
-                <span>Philosophie</span>
-                <span class="text-primary font-bold">14.5 / 11.2 avg</span>
-              </div>
-              <div class="w-full h-2 bg-[#e7edf3] dark:bg-slate-700 rounded-full overflow-hidden flex">
-                <div class="bg-primary h-full" style="width: 72%"></div>
-              </div>
-            </div>
+          </div>
+          <div v-else class="py-8 text-center text-slate-400 text-sm">
+            Aucune donnée disponible pour ce trimestre.
           </div>
         </div>
       </div>
@@ -171,26 +138,17 @@
             <span class="material-symbols-outlined text-[#078838]">verified</span>
             <h3 class="text-[#0e141b] dark:text-white font-bold">Points Forts</h3>
           </div>
-          <ul class="flex flex-col gap-3">
-            <li class="flex gap-3 items-start">
+          <ul v-if="progressionData.pointsForts.length > 0" class="flex flex-col gap-3">
+            <li v-for="(point, idx) in progressionData.pointsForts" :key="idx" class="flex gap-3 items-start">
               <div class="mt-1 flex-shrink-0 size-5 rounded-full bg-[#078838]/10 flex items-center justify-center text-[#078838]">
                 <span class="material-symbols-outlined text-[14px]">check</span>
               </div>
-              <p class="text-sm text-[#4e7397] dark:text-slate-300"><span class="font-bold text-[#0e141b] dark:text-slate-100">Excellence en sciences :</span> Votre moyenne en Mathématiques est dans le top 3% de la classe.</p>
-            </li>
-            <li class="flex gap-3 items-start">
-              <div class="mt-1 flex-shrink-0 size-5 rounded-full bg-[#078838]/10 flex items-center justify-center text-[#078838]">
-                <span class="material-symbols-outlined text-[14px]">check</span>
-              </div>
-              <p class="text-sm text-[#4e7397] dark:text-slate-300"><span class="font-bold text-[#0e141b] dark:text-slate-100">Assiduité exemplaire :</span> Aucun retard signalé sur le trimestre actuel.</p>
-            </li>
-            <li class="flex gap-3 items-start">
-              <div class="mt-1 flex-shrink-0 size-5 rounded-full bg-[#078838]/10 flex items-center justify-center text-[#078838]">
-                <span class="material-symbols-outlined text-[14px]">check</span>
-              </div>
-              <p class="text-sm text-[#4e7397] dark:text-slate-300"><span class="font-bold text-[#0e141b] dark:text-slate-100">Langues :</span> Bonne progression orale en Anglais.</p>
+              <p class="text-sm text-[#4e7397] dark:text-slate-300">
+                <span class="font-bold text-[#0e141b] dark:text-white">{{ point.titre }} :</span> {{ point.description }}
+              </p>
             </li>
           </ul>
+          <p v-else class="text-sm text-slate-400 italic">Analysez vos notes pour identifier vos points forts.</p>
         </div>
 
         <!-- Axes d'Amélioration -->
@@ -199,26 +157,17 @@
             <span class="material-symbols-outlined text-[#e73908]">info</span>
             <h3 class="text-[#0e141b] dark:text-white font-bold">Axes d'amélioration</h3>
           </div>
-          <ul class="flex flex-col gap-3">
-            <li class="flex gap-3 items-start">
+          <ul v-if="progressionData.axesAmelioration.length > 0" class="flex flex-col gap-3">
+            <li v-for="(axe, idx) in progressionData.axesAmelioration" :key="idx" class="flex gap-3 items-start">
               <div class="mt-1 flex-shrink-0 size-5 rounded-full bg-[#e73908]/10 flex items-center justify-center text-[#e73908]">
                 <span class="material-symbols-outlined text-[14px]">warning</span>
               </div>
-              <p class="text-sm text-[#4e7397] dark:text-slate-300"><span class="font-bold text-[#0e141b] dark:text-slate-100">Français :</span> Analyse de texte à approfondir pour les prochaines évaluations.</p>
-            </li>
-            <li class="flex gap-3 items-start">
-              <div class="mt-1 flex-shrink-0 size-5 rounded-full bg-[#e73908]/10 flex items-center justify-center text-[#e73908]">
-                <span class="material-symbols-outlined text-[14px]">warning</span>
-              </div>
-              <p class="text-sm text-[#4e7397] dark:text-slate-300"><span class="font-bold text-[#0e141b] dark:text-slate-100">Participation :</span> Essayez de prendre davantage la parole en cours de Philosophie.</p>
-            </li>
-            <li class="flex gap-3 items-start">
-              <div class="mt-1 flex-shrink-0 size-5 rounded-full bg-[#e73908]/10 flex items-center justify-center text-[#e73908]">
-                <span class="material-symbols-outlined text-[14px]">warning</span>
-              </div>
-              <p class="text-sm text-[#4e7397] dark:text-slate-300"><span class="font-bold text-[#0e141b] dark:text-slate-100">Gestion du temps :</span> Travaillez la structure de vos rédactions sous pression.</p>
+              <p class="text-sm text-[#4e7397] dark:text-slate-300">
+                <span class="font-bold text-[#0e141b] dark:text-white">{{ axe.titre }} :</span> {{ axe.description }}
+              </p>
             </li>
           </ul>
+          <p v-else class="text-sm text-slate-400 italic">Continuez vos efforts dans toutes les matières.</p>
         </div>
       </div>
 
@@ -235,7 +184,115 @@
 </template>
 
 <script setup>
-import { onMounted } from 'vue';
+import { ref, onMounted } from 'vue';
+import api from '@/services/api';
+
+const isLoading = ref(true);
+const user = ref(null);
+const progressionData = ref({
+  moyenneGenerale: 0,
+  rangClasse: 0,
+  effectifClasse: 0,
+  matieres: [],
+  pointsForts: [],
+  axesAmelioration: []
+});
+
+const selectedPeriod = ref('T2');
+
+const fetchData = async () => {
+  try {
+    isLoading.value = true;
+    
+    // Récupérer l'utilisateur connecté
+    const userRes = await api.getMe();
+    user.value = userRes.data.data;
+    
+    // Récupérer les statistiques de l'élève
+    if (user.value._id) {
+      try {
+        const statsRes = await api.getStudentStats(user.value._id.toString())
+        if (statsRes.data.success) {
+          progressionData.value.moyenneGenerale = statsRes.data.data.moyenneGenerale;
+          // Rankings usually come from Bulletins or a dedicated ranking system
+          // We'll try to find the latest bulletin to get the rank if available
+          const bulletinsRes = await api.getBulletinsByEleve(user.value._id);
+          if (bulletinsRes.data.success && bulletinsRes.data.data.length > 0) {
+            const latestBulletin = bulletinsRes.data.data[0];
+            progressionData.value.rangClasse = latestBulletin.rang;
+            progressionData.value.effectifClasse = latestBulletin.effectif;
+          }
+        }
+      } catch (error) {
+        console.warn('Stats non disponibles:', error);
+      }
+    }
+    
+    // Récupérer les notes pour les matières
+    if (user.value._id) {
+      try {
+        const notesRes = await api.getNotes({ eleve: user.value._id.toString(), statut: 'VALIDEE' });
+        if (notesRes.data.success) {
+          const allNotes = notesRes.data.data;
+          
+          // Group notes by matiere
+          const matiereGroups = {};
+          allNotes.forEach(note => {
+            if (!note.matiere) return;
+            const mId = note.matiere._id;
+            if (!matiereGroups[mId]) {
+              matiereGroups[mId] = {
+                nom: note.matiere.nom,
+                total: 0,
+                count: 0
+              };
+            }
+            matiereGroups[mId].total += note.moyenne;
+            matiereGroups[mId].count += 1;
+          });
+          
+          progressionData.value.matieres = Object.values(matiereGroups).map(m => ({
+            nom: m.nom,
+            moyenne: m.total / m.count,
+            moyenneClasse: 12.0, // Placeholder as class avg per subject is complex to fetch
+            evolution: '+0.0'
+          }));
+
+          // Derive points forts from subjects with moyenne > 15
+          progressionData.value.pointsForts = progressionData.value.matieres
+            .filter(m => m.moyenne >= 15)
+            .map(m => ({
+              titre: `Excellence en ${m.nom}`,
+              description: `Votre moyenne de ${m.moyenne.toFixed(1)} témoigne d'une excellente maîtrise.`
+            }));
+            
+          if (progressionData.value.pointsForts.length === 0) {
+            progressionData.value.pointsForts.push({ titre: 'Assiduité', description: 'Continuez vos efforts réguliers dans toutes les matières.' });
+          }
+
+          // Derive axes d'amélioration from subjects with moyenne < 10
+          progressionData.value.axesAmelioration = progressionData.value.matieres
+            .filter(m => m.moyenne < 10)
+            .map(m => ({
+              titre: `${m.nom} à renforcer`,
+              description: `Une moyenne de ${m.moyenne.toFixed(1)} nécessite un travail plus approfondi.`
+            }));
+
+          if (progressionData.value.axesAmelioration.length === 0) {
+            progressionData.value.axesAmelioration.push({ titre: 'Participation', description: 'N\'hésitez pas à prendre davantage la parole en classe.' });
+          }
+        }
+      } catch (error) {
+        console.warn('Notes non disponibles:', error);
+      }
+    }
+    
+  } catch (error) {
+    console.error('Erreur lors du chargement des données:', error);
+  } finally {
+    isLoading.value = false;
+  }
+};
 
 onMounted(() => {
   // Add Material Symbols font

@@ -1,9 +1,26 @@
 <template>
-  <div class="p-8 max-w-7xl mx-auto w-full">
-    <div class="flex justify-between items-end mb-8">
-      <div>
-        <h2 class="text-3xl font-black text-slate-900 dark:text-white">Validation des Évaluations</h2>
-        <p class="text-slate-500 dark:text-slate-400 mt-1">Examinez et validez les demandes d'évaluation des professeurs.</p>
+  <div class="validation-evaluations-view">
+    <div class="p-8 max-w-7xl mx-auto w-full space-y-8">
+      <!-- Breadcrumbs -->
+      <nav class="flex items-center gap-2 text-sm">
+        <router-link to="/censeur" class="text-[#4e7397] hover:text-primary font-medium">Censeur</router-link>
+        <span class="text-[#4e7397] material-symbols-outlined text-sm">chevron_right</span>
+        <span class="font-medium">Validation Évaluations</span>
+      </nav>
+
+    <!-- Back Button -->
+    <div class="mb-4">
+      <button @click="$router.push('/censeur')" class="flex items-center gap-2 px-3 py-2 text-slate-600 dark:text-slate-400 hover:text-primary dark:hover:text-primary hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors font-medium">
+        <span class="material-symbols-outlined">arrow_back</span>
+        <span>Retour au tableau de bord</span>
+      </button>
+    </div>
+
+    <!-- Page Heading -->
+    <div class="flex flex-wrap justify-between items-end gap-4">
+      <div class="flex flex-col gap-1">
+        <h1 class="text-4xl font-black tracking-tight text-[#0e141b] dark:text-white">Validation des Évaluations</h1>
+        <p class="text-[#4e7397] dark:text-slate-400 text-base">Examinez et validez les demandes d'évaluation des professeurs.</p>
       </div>
       <div class="flex gap-3">
           <button @click="fetchPending" class="px-4 py-2 bg-slate-100 dark:bg-slate-800 rounded-lg text-sm font-semibold hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors flex items-center gap-2">
@@ -58,6 +75,7 @@
           </div>
         </div>
       </div>
+    </div>
     </div>
   </div>
 </template>

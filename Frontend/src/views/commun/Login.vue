@@ -1,10 +1,14 @@
 <template>
   <div class="flex min-h-screen flex-col md:flex-row bg-background-light dark:bg-background-dark">
     <!-- Left Side: Visual/Hero Section -->
-    <div class="relative hidden w-1/2 flex-col justify-between overflow-hidden bg-primary lg:flex">
-      <div class="absolute inset-0 bg-cover bg-center bg-no-repeat opacity-80" style="background-image: url('https://images.unsplash.com/photo-1523050854058-8df90110c9f1?w=1200');">
-        <div class="absolute inset-0 bg-primary/40 mix-blend-multiply"></div>
-        <div class="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
+    <div class="relative hidden w-1/2 flex-col justify-between overflow-hidden lg:flex">
+      <!-- Premium CSS Mesh Background -->
+      <div class="absolute inset-0 bg-primary overflow-hidden">
+        <div class="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] bg-blue-400/20 rounded-full blur-[120px] animate-pulse"></div>
+        <div class="absolute bottom-[-10%] right-[-10%] w-[60%] h-[60%] bg-indigo-500/30 rounded-full blur-[150px] animate-pulse" style="animation-delay: 1s"></div>
+        <div class="absolute top-[20%] right-[10%] w-[40%] h-[40%] bg-emerald-400/10 rounded-full blur-[100px] animate-pulse" style="animation-delay: 2s"></div>
+        <div class="absolute inset-0 bg-gradient-to-br from-primary via-indigo-900 to-slate-900 opacity-90"></div>
+        <div class="absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-black/20 to-transparent"></div>
       </div>
       <div class="relative z-10 p-12">
         <div class="flex items-center gap-3 text-white">

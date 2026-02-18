@@ -4,42 +4,88 @@ const AttendanceSchema = new mongoose.Schema({
     eleve: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'User',
-        required: true
+        required: [true, 'L\'élève est requis']
     },
     classe: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Classe',
-        required: true
-    },
-    professeur: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'User',
-        required: true
+        required: [true, 'La classe est requise']
     },
     date: {
         type: Date,
-        default: Date.now,
-        required: true
+        required: [true, 'La date est requise']
     },
     statut: {
         type: String,
-        enum: ['present', 'late', 'absent'],
-        default: 'present',
-        required: true
+        enum: ['present', 'absent', 'late'],
+        required: [true, 'Le statut est requis']
     },
-    observations: {
+    heures: {
+        type: Number,
+        default: 0,
+        min: 0,
+        max: 24
+    },
+    sauvegarde: {
+        type: Boolean,
+        default: false
+    },
+    markedBy: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User',
+        required: [true, 'Le marqueur est requis']
+    },
+    updatedBy: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User'
+    },
+    notes: {
         type: String,
-        trim: true
+        maxlength: 500
+    },
+    matiere: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Matiere'
+    },
+    heureDebut: {
+        type: String
+    },
+    heureFin: {
+        type: String
+    },
+    justifie: {
+        type: Boolean,
+        default: false
+    },
+    statusJustification: {
+        type: String,
+        enum: ['NON_JUSTIFIEE', 'EN_ATTENTE', 'VALIDE', 'REFUTE'],
+        default: 'NON_JUSTIFIEE'
+    },
+    justificatif: {
+        type: String // Path to uploaded file
+    },
+    motivation: {
+        type: String // Reason code: maladie, famille, etc.
     },
     createdAt: {
+        type: Date,
+        default: Date.now
+    },
+    updatedAt: {
         type: Date,
         default: Date.now
     }
 });
 
-// Index to quickly find attendance for a class on a specific date
-AttendanceSchema.index({ classe: 1, date: 1 });
-// Index to find a student's attendance history
+// Index for efficient queries
+AttendanceSchema.index({ date: 1, statut: 1 });
 AttendanceSchema.index({ eleve: 1, date: 1 });
+AttendanceSchema.index({ classe: 1, date: 1 });
+
+// Middleware to update updatedAt
+AttendanceSchema.pre('save', async function () {
+    this.updatedAt = Date.now();
+});
 
 module.exports = mongoose.model('Attendance', AttendanceSchema);

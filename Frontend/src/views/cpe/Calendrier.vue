@@ -18,9 +18,9 @@
       <div class="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 p-4 mb-6 flex flex-wrap items-center justify-between gap-4">
         <div class="flex items-center gap-4">
           <div class="flex bg-slate-100 dark:bg-slate-800 p-1 rounded-xl">
-            <button @click="viewMode = 'month'" class="px-4 py-2 text-sm font-bold bg-white dark:bg-slate-700 text-primary rounded-lg shadow-sm">Mois</button>
-            <button @click="viewMode = 'week'" class="px-4 py-2 text-sm font-medium text-slate-500 hover:text-slate-900 dark:hover:text-white transition-colors">Semaine</button>
-            <button @click="viewMode = 'day'" class="px-4 py-2 text-sm font-medium text-slate-500 hover:text-slate-900 dark:hover:text-white transition-colors">Jour</button>
+            <button @click="setViewMode('month')" :class="viewMode === 'month' ? 'bg-white dark:bg-slate-700 text-primary rounded-lg shadow-sm' : 'text-slate-500 hover:text-slate-900 dark:hover:text-white'" class="px-4 py-2 text-sm font-bold transition-colors">Mois</button>
+            <button @click="setViewMode('week')" :class="viewMode === 'week' ? 'bg-white dark:bg-slate-700 text-primary rounded-lg shadow-sm' : 'text-slate-500 hover:text-slate-900 dark:hover:text-white'" class="px-4 py-2 text-sm font-bold transition-colors">Semaine</button>
+            <button @click="setViewMode('day')" :class="viewMode === 'day' ? 'bg-white dark:bg-slate-700 text-primary rounded-lg shadow-sm' : 'text-slate-500 hover:text-slate-900 dark:hover:text-white'" class="px-4 py-2 text-sm font-bold transition-colors">Jour</button>
           </div>
           <div class="h-8 w-px bg-slate-200 dark:bg-slate-700 mx-2"></div>
           <div class="flex items-center gap-3">
@@ -66,13 +66,15 @@
         </div>
 
         <!-- Days Grid -->
-        <div class="grid grid-cols-7 auto-rows-[140px]">
-          <!-- Placeholder days from prev month -->
-          <div v-for="day in previousMonthDays" :key="'prev-' + day" class="p-2 border-r border-b border-slate-100 dark:border-slate-800 bg-slate-50/30 dark:bg-slate-800/10 text-slate-300 dark:text-slate-700">
-            {{ day }}
-          </div>
+        <div class="grid" :class="viewMode === 'month' ? 'grid-cols-7 auto-rows-[140px]' : viewMode === 'week' ? 'grid-cols-7 auto-rows-[200px]' : 'grid-cols-1 auto-rows-[300px]'">
+          <!-- Placeholder days from prev month (month view only) -->
+          <template v-if="viewMode === 'month'">
+            <div v-for="day in previousMonthDays" :key="'prev-' + day" class="p-2 border-r border-b border-slate-100 dark:border-slate-800 bg-slate-50/30 dark:bg-slate-800/10 text-slate-300 dark:text-slate-700">
+              {{ day }}
+            </div>
+          </template>
 
-          <!-- Current month days -->
+          <!-- Current view days -->
           <div v-for="(day, index) in calendarDays" :key="index" 
                class="p-2 border-r border-b border-slate-100 dark:border-slate-800 group hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors"
                :class="{ 'bg-primary/10': day.isToday }">
@@ -167,7 +169,27 @@ const showAddEventModal = ref(false)
 const showEditEventModal = ref(false)
 const currentMonth = ref(new Date().getMonth())
 const currentYear = ref(new Date().getFullYear())
+const currentDate = ref(new Date())
 const isLoading = ref(false)
+
+// Fonctions utilitaires (définies avant utilisation)
+const getWeekNumber = (date) => {
+  const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()))
+  const dayNum = d.getUTCDay() || 7
+  d.setUTCDate(d.getUTCDate() + 4 - dayNum)
+  const yearStart = new Date(Date.UTC(d.getUTCFullYear(),0,1))
+  return Math.ceil((((d - yearStart) / 86400000) + 1)/7)
+}
+
+const getWeekStart = (weekNumber, year) => {
+  const firstDayOfYear = new Date(year, 0, 1)
+  const daysOffset = (weekNumber - 1) * 7 - firstDayOfYear.getDay() + 1
+  const weekStart = new Date(year, 0, daysOffset + 1)
+  return weekStart
+}
+
+// Initialiser currentWeek après définition de getWeekNumber
+const currentWeek = ref(getWeekNumber(new Date()))
 
 // Filtres
 const filters = ref({
@@ -227,7 +249,18 @@ const typeMappingReverse = {
 // Computed properties
 const currentMonthYear = computed(() => {
   const monthNames = ['Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin', 'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre']
-  return `${monthNames[currentMonth.value]} ${currentYear.value}`
+  
+  if (viewMode.value === 'month') {
+    return `${monthNames[currentMonth.value]} ${currentYear.value}`
+  } else if (viewMode.value === 'week') {
+    const weekStart = getWeekStart(currentWeek.value, currentYear.value)
+    const weekEnd = new Date(weekStart)
+    weekEnd.setDate(weekEnd.getDate() + 6)
+    return `${weekStart.getDate()} ${monthNames[weekStart.getMonth()]} - ${weekEnd.getDate()} ${monthNames[weekEnd.getMonth()]} ${currentYear.value}`
+  } else {
+    const dayNames = ['Dimanche', 'Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi']
+    return `${dayNames[currentDate.value.getDay()]} ${currentDate.value.getDate()} ${monthNames[currentDate.value.getMonth()]} ${currentYear.value}`
+  }
 })
 
 const previousMonthDays = computed(() => {
@@ -247,6 +280,16 @@ const previousMonthDays = computed(() => {
 })
 
 const calendarDays = computed(() => {
+  if (viewMode.value === 'month') {
+    return getMonthDays()
+  } else if (viewMode.value === 'week') {
+    return getWeekDays()
+  } else {
+    return getDayEvents()
+  }
+})
+
+const getMonthDays = () => {
   const lastDay = new Date(currentYear.value, currentMonth.value + 1, 0)
   const days = []
   const today = new Date()
@@ -270,7 +313,63 @@ const calendarDays = computed(() => {
   }
   
   return days
-})
+}
+
+const getWeekDays = () => {
+  const weekStart = getWeekStart(currentWeek.value, currentYear.value)
+  const days = []
+  const today = new Date()
+  
+  for (let i = 0; i < 7; i++) {
+    const currentDate = new Date(weekStart)
+    currentDate.setDate(weekStart.getDate() + i)
+    
+    const dayEvents = events.value.filter(event => 
+      event.date.toDateString() === currentDate.toDateString() &&
+      shouldShowEvent(event.type)
+    )
+    
+    days.push({
+      number: currentDate.getDate(),
+      fullDate: currentDate,
+      isToday: currentDate.toDateString() === today.toDateString(),
+      isWeekend: currentDate.getDay() === 0 || currentDate.getDay() === 6,
+      events: dayEvents
+    })
+  }
+  
+  return days
+}
+
+const getDayEvents = () => {
+  const today = new Date()
+  const dayEvents = events.value.filter(event => 
+    event.date.toDateString() === currentDate.value.toDateString() &&
+    shouldShowEvent(event.type)
+  )
+  
+  return [{
+    number: currentDate.value.getDate(),
+    fullDate: currentDate.value,
+    isToday: currentDate.value.toDateString() === today.toDateString(),
+    isWeekend: currentDate.value.getDay() === 0 || currentDate.value.getDay() === 6,
+    events: dayEvents
+  }]
+}
+
+const setViewMode = (mode) => {
+  viewMode.value = mode
+  if (mode === 'month') {
+    // Reset to current month
+    const now = new Date()
+    currentMonth.value = now.getMonth()
+    currentYear.value = now.getFullYear()
+  } else if (mode === 'week') {
+    currentWeek.value = getWeekNumber(new Date())
+  } else {
+    currentDate.value = new Date()
+  }
+}
 
 // Fonctions utilitaires
 const shouldShowEvent = (eventType) => {
@@ -294,20 +393,44 @@ const getEventStyle = (type) => {
 
 // Fonctions d'action
 const previousMonth = () => {
-  if (currentMonth.value === 0) {
-    currentMonth.value = 11
-    currentYear.value--
+  if (viewMode.value === 'month') {
+    if (currentMonth.value === 0) {
+      currentMonth.value = 11
+      currentYear.value--
+    } else {
+      currentMonth.value--
+    }
+  } else if (viewMode.value === 'week') {
+    currentWeek.value--
+    if (currentWeek.value < 1) {
+      currentWeek.value = 52
+      currentYear.value--
+    }
   } else {
-    currentMonth.value--
+    const newDate = new Date(currentDate.value)
+    newDate.setDate(newDate.getDate() - 1)
+    currentDate.value = newDate
   }
 }
 
 const nextMonth = () => {
-  if (currentMonth.value === 11) {
-    currentMonth.value = 0
-    currentYear.value++
+  if (viewMode.value === 'month') {
+    if (currentMonth.value === 11) {
+      currentMonth.value = 0
+      currentYear.value++
+    } else {
+      currentMonth.value++
+    }
+  } else if (viewMode.value === 'week') {
+    currentWeek.value++
+    if (currentWeek.value > 52) {
+      currentWeek.value = 1
+      currentYear.value++
+    }
   } else {
-    currentMonth.value++
+    const newDate = new Date(currentDate.value)
+    newDate.setDate(newDate.getDate() + 1)
+    currentDate.value = newDate
   }
 }
 

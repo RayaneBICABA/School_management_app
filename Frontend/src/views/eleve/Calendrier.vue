@@ -119,6 +119,7 @@ import api from '@/services/api';
 const loading = ref(true);
 const user = ref(null);
 const schedules = ref([]);
+const studentEvents = ref([]);
 
 const days = ['Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi'];
 const hours = Array.from({ length: 12 }, (_, i) => i + 7); // 7 to 18
@@ -129,17 +130,21 @@ const fetchUserAndSchedule = async () => {
         const userRes = await api.getMe();
         user.value = userRes.data.data;
         
-        if (user.value.classe) {
+        if (user.value.classe && user.value.classe._id) {
             const classeId = user.value.classe._id || user.value.classe;
-            console.log('Fetching schedule for class:', classeId);
+            console.log('Fetching schedule for class:', classeId.toString());
 
-            const schedRes = await api.getSchedules({ classe: classeId });
+            const schedRes = await api.getSchedules({ classe: classeId.toString() });
             schedules.value = schedRes.data.data;
             console.log('Schedules received:', schedules.value);
             
             if (schedules.value.length > 0 && schedules.value[0].classe) {
                  user.value.classe = schedules.value[0].classe; 
             }
+
+            // Fetch events
+            const eventRes = await api.getStudentEvents(user.value._id);
+            studentEvents.value = eventRes.data.data;
         }
     } catch (error) {
         console.error('Error fetching data:', error);
@@ -231,10 +236,31 @@ const getSubjectColorClass = (subjectName) => {
 };
 
 const sortedSchedules = computed(() => {
-    // Sort logic to show "upcoming" first or just sorted by day/time
-    return [...schedules.value].sort((a, b) => {
-        const dayA = days.indexOf(a.jour);
-        const dayB = days.indexOf(b.jour);
+    // Combine schedules and events for "upcoming" display
+    const combined = [
+        ...schedules.value.map(s => ({
+            _id: s._id,
+            type: 'course',
+            jour: s.jour,
+            creneau: s.creneau,
+            matiere: s.matiere,
+            professeur: s.professeur,
+            salle: s.salle
+        })),
+        ...studentEvents.value.map(e => ({
+            _id: e._id,
+            type: 'event',
+            jour: new Intl.DateTimeFormat('fr-FR', { weekday: 'long' }).format(new Date(e.date)),
+            creneau: e.time,
+            matiere: { nom: e.title },
+            professeur: { nom: e.typeLabel || 'Événement' },
+            salle: e.notes || '---'
+        }))
+    ];
+
+    return combined.sort((a, b) => {
+        const dayA = days.indexOf(a.jour.charAt(0).toUpperCase() + a.jour.slice(1).toLowerCase());
+        const dayB = days.indexOf(b.jour.charAt(0).toUpperCase() + b.jour.slice(1).toLowerCase());
         if (dayA !== dayB) return dayA - dayB;
         return a.creneau.localeCompare(b.creneau);
     });

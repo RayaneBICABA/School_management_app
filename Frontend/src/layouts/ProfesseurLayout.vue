@@ -3,9 +3,13 @@
     <ProfesseurSidebar @logout="handleLogout" />
     <div class="flex-1 flex flex-col overflow-hidden">
       <Header :title="pageTitle" />
-      <main class="flex-1 overflow-y-auto p-8">
-        <router-view />
-      </main>
+      <div class="flex-grow pb-8 overflow-y-auto">
+        <router-view v-slot="{ Component }">
+          <transition name="page" mode="out-in">
+            <component :is="Component" />
+          </transition>
+        </router-view>
+      </div>
     </div>
 
   </div>
@@ -27,8 +31,8 @@ const pageTitles = {
   'ProfesseurDashboard': 'Tableau de bord',
   'ProfesseurClasses': 'Mes Classes',
   'ProfesseurFaireAppel': 'Faire l\'appel',
-  'ProfesseurNotes': 'Saisie des Notes',
-  'ProfesseurCalendrier': 'Mon Emploi du Temps',
+  'ProfesseurSaisieNotes': 'Saisie des Notes',
+  'ProfesseurEmploiTemps': 'Mon Emploi du Temps',
   'ProfesseurProfil': 'Mon Profil'
 }
 

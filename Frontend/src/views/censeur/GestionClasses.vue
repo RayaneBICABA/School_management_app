@@ -1,11 +1,12 @@
 <template>
-  <div class="space-y-8">
-    <!-- Breadcrumbs -->
-    <nav class="flex items-center gap-2 text-sm">
-      <router-link to="/censeur" class="text-[#4e7397] hover:text-primary font-medium">Censeur</router-link>
-      <span class="text-[#4e7397] material-symbols-outlined text-sm">chevron_right</span>
-      <span class="font-medium">Classes et Filières</span>
-    </nav>
+  <div class="gestion-classes-view">
+    <div class="p-8 max-w-7xl mx-auto w-full space-y-8">
+      <!-- Breadcrumbs -->
+      <nav class="flex items-center gap-2 text-sm">
+        <router-link to="/censeur" class="text-[#4e7397] hover:text-primary font-medium">Censeur</router-link>
+        <span class="text-[#4e7397] material-symbols-outlined text-sm">chevron_right</span>
+        <span class="font-medium">Classes et Filières</span>
+      </nav>
 
     <!-- Page Heading -->
     <div class="flex flex-wrap justify-between items-end gap-4">
@@ -54,7 +55,8 @@
                 <tr 
                   v-for="classe in filieres.Generale" 
                   :key="classe.id"
-                  class="hover:bg-slate-50 dark:hover:bg-slate-800/30 transition-colors"
+                  @click="voirEleves(classe)"
+                  class="hover:bg-slate-50 dark:hover:bg-slate-800/30 transition-colors cursor-pointer"
                 >
                   <td class="px-6 py-4 font-semibold text-[#0e141b] dark:text-white">{{ classe.nom }}</td>
                   <td class="px-6 py-4 text-[#0e141b] dark:text-slate-300">{{ classe.niveau }}</td>
@@ -70,18 +72,14 @@
                     </div>
                   </td>
                   <td class="px-6 py-4 text-[#0e141b] dark:text-slate-300">{{ classe.salle }}</td>
-                  <td class="px-6 py-4 text-right">
+                  <td class="px-6 py-4 text-right" @click.stop>
+                    <!-- Censeur peut seulement voir, pas modifier -->
                     <button 
-                      @click="editClass(classe)"
+                      @click="voirEleves(classe)"
                       class="p-1 hover:text-primary transition-colors"
+                      title="Voir les élèves"
                     >
-                      <span class="material-symbols-outlined text-lg">edit</span>
-                    </button>
-                    <button 
-                      @click="deleteClass(classe.id, 'Générale')"
-                      class="p-1 hover:text-red-500 transition-colors ml-2"
-                    >
-                      <span class="material-symbols-outlined text-lg">delete</span>
+                      <span class="material-symbols-outlined text-lg">visibility</span>
                     </button>
                   </td>
                 </tr>
@@ -122,7 +120,8 @@
                 <tr 
                   v-for="classe in filieres.Technique" 
                   :key="classe.id"
-                  class="hover:bg-slate-50 dark:hover:bg-slate-800/30 transition-colors"
+                  @click="voirEleves(classe)"
+                  class="hover:bg-slate-50 dark:hover:bg-slate-800/30 transition-colors cursor-pointer"
                 >
                   <td class="px-6 py-4 font-semibold text-[#0e141b] dark:text-white">{{ classe.nom }}</td>
                   <td class="px-6 py-4 text-[#0e141b] dark:text-slate-300">{{ classe.specialite }}</td>
@@ -138,18 +137,14 @@
                     </div>
                   </td>
                   <td class="px-6 py-4 text-[#0e141b] dark:text-slate-300">{{ classe.salle }}</td>
-                  <td class="px-6 py-4 text-right">
+                  <td class="px-6 py-4 text-right" @click.stop>
+                    <!-- Censeur peut seulement voir, pas modifier -->
                     <button 
-                      @click="editClass(classe)"
+                      @click="voirEleves(classe)"
                       class="p-1 hover:text-primary transition-colors"
+                      title="Voir les élèves"
                     >
-                      <span class="material-symbols-outlined text-lg">edit</span>
-                    </button>
-                    <button 
-                      @click="deleteClass(classe.id, 'Technique')"
-                      class="p-1 hover:text-red-500 transition-colors ml-2"
-                    >
-                      <span class="material-symbols-outlined text-lg">delete</span>
+                      <span class="material-symbols-outlined text-lg">visibility</span>
                     </button>
                   </td>
                 </tr>
@@ -384,11 +379,26 @@
       </form>
     </div>
   </div>
+</div>
 </template>
 
 <script setup>
 import { ref, reactive, onMounted, computed } from 'vue'
 import api from '@/services/api'
+import { useRouter } from 'vue-router'
+
+const router = useRouter()
+
+// Déclarer les props
+const props = defineProps({
+  showModal: {
+    type: Boolean,
+    default: false
+  }
+})
+
+// Déclarer les emits
+const emit = defineEmits(['closeModal'])
 
 // Données des filières et classes
 const filieres = reactive({
@@ -638,6 +648,12 @@ const removeCourse = async (courseId) => {
       alert('Erreur lors de la suppression de la matière')
     }
   }
+}
+
+// Fonction pour voir les élèves d'une classe
+const voirEleves = (classe) => {
+  // Rediriger vers la liste des élèves de la classe
+  router.push(`/censeur/classes/${classe.id}/eleves`)
 }
 
 onMounted(() => {

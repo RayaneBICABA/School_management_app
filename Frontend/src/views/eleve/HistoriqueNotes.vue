@@ -8,7 +8,11 @@
             <h2 class="text-4xl font-black tracking-tight text-slate-900 dark:text-white">Mon Historique des Notes</h2>
             <p class="text-slate-500 dark:text-slate-400 text-lg">Suivez vos progrès académiques en temps réel.</p>
           </div>
-          <button class="flex items-center gap-2 cursor-pointer rounded-lg h-11 px-6 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white text-sm font-bold shadow-sm hover:bg-slate-50 dark:hover:bg-slate-700 transition-all">
+          <button 
+            @click="downloadLatestBulletin"
+            :disabled="!currentBulletin"
+            class="flex items-center gap-2 rounded-lg h-11 px-6 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white text-sm font-bold shadow-sm hover:bg-slate-50 dark:hover:bg-slate-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+          >
             <span class="material-symbols-outlined text-[20px]">download</span>
             <span>Télécharger le bulletin</span>
           </button>
@@ -125,15 +129,15 @@
 
           <!-- Pagination / Footer -->
           <div class="px-6 py-4 bg-slate-50 dark:bg-slate-900/50 flex justify-between items-center border-t border-slate-200 dark:border-slate-700">
-            <p class="text-xs font-medium text-slate-500">Affichage de 1 à 5 sur 24 épreuves</p>
+            <p class="text-xs font-medium text-slate-500">
+              Affichage de {{ filteredNotes.length }} note(s) validée(s) {{ selectedPeriod !== 'all' ? 'pour ' + selectedPeriod : '' }}
+            </p>
             <div class="flex gap-2">
               <button class="size-8 flex items-center justify-center rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-400 hover:text-primary transition-colors disabled:opacity-50" disabled="">
                 <span class="material-symbols-outlined text-[18px]">chevron_left</span>
               </button>
               <button class="size-8 flex items-center justify-center rounded-lg border border-primary bg-primary text-white text-xs font-bold">1</button>
-              <button class="size-8 flex items-center justify-center rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 text-xs font-bold hover:bg-slate-50 dark:hover:bg-slate-700">2</button>
-              <button class="size-8 flex items-center justify-center rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 text-xs font-bold hover:bg-slate-50 dark:hover:bg-slate-700">3</button>
-              <button class="size-8 flex items-center justify-center rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-400 hover:text-primary transition-colors">
+              <button class="size-8 flex items-center justify-center rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-400 hover:text-primary transition-colors disabled:opacity-50" disabled="">
                 <span class="material-symbols-outlined text-[18px]">chevron_right</span>
               </button>
             </div>
@@ -157,10 +161,18 @@
                 <span class="material-symbols-outlined text-primary text-3xl">picture_as_pdf</span>
               </div>
               <div class="flex flex-col">
-                <p class="text-sm font-bold text-slate-900 dark:text-white">Bulletin Trimestriel</p>
-                <p class="text-xs text-slate-500">Prêt pour téléchargement • PDF • 1.2 MB</p>
+                <p class="text-sm font-bold text-slate-900 dark:text-white">
+                  {{ currentBulletin ? 'Bulletin ' + currentBulletin.trimestre : 'Bulletin indisponible' }}
+                </p>
+                <p class="text-xs text-slate-500">
+                  {{ currentBulletin ? 'Prêt pour téléchargement • PDF' : 'En attente de validation' }}
+                </p>
               </div>
-              <button class="ml-auto text-primary text-sm font-bold hover:underline">
+              <button 
+                v-if="currentBulletin"
+                @click="viewBulletin(currentBulletin._id)"
+                class="ml-auto text-primary text-sm font-bold hover:underline"
+              >
                 Voir
               </button>
             </div>
@@ -174,16 +186,22 @@
 <script setup>
 import { ref, onMounted, computed, watch } from 'vue';
 import api from '@/services/api';
+import { handlePDFAction } from '@/utils/pdfHelpers';
 
 const loading = ref(true);
 const user = ref(null);
 const classe = ref(null);
 const notes = ref([]);
+const bulletins = ref([]);
 const periods = ref([]);
 const selectedPeriod = ref('');
 const searchQuery = ref('');
 
 // Computed
+const currentBulletin = computed(() => {
+  if (!selectedPeriod.value || selectedPeriod.value === 'all') return bulletins.value[0];
+  return bulletins.value.find(b => b.trimestre === selectedPeriod.value);
+});
 const filteredNotes = computed(() => {
   let filtered = notes.value;
   
@@ -243,8 +261,11 @@ const fetchData = async () => {
       const classRes = await api.getClasse(classId);
       classe.value = classRes.data.data;
       
-    // 3. Get Notes
-    await fetchNotes();
+    // 3. Get Notes & Bulletins
+    await Promise.all([
+      fetchNotes(),
+      fetchBulletins()
+    ]);
     
     // 4. Derive available periods from data + defaults based on filiere as fallback
     const distinctPeriods = [...new Set(notes.value.map(n => n.periode))].filter(Boolean).sort();
@@ -272,20 +293,46 @@ const fetchData = async () => {
 };
 
 const fetchNotes = async () => {
-  if (!user.value) return;
-  
+  if (!user.value || !user.value._id) return;
   try {
-     const params = {
-        eleve: user.value._id,
-        statut: 'VALIDEE'
-     };
-     
+     const params = { statut: 'VALIDEE', eleve: user.value._id };
      const res = await api.getNotes(params);
      notes.value = res.data.data;
-     
   } catch (error) {
      console.error('Error fetching notes:', error);
   }
+};
+
+const fetchBulletins = async () => {
+  if (!user.value || !user.value._id) return;
+  try {
+     const res = await api.getBulletinsByEleve(user.value._id);
+     // Filter only validated/finalized bulletins if needed, but per backend logic,
+     // we only show what's available.
+     bulletins.value = res.data.data;
+  } catch (error) {
+     console.error('Error fetching bulletins:', error);
+  }
+};
+
+const downloadLatestBulletin = async () => {
+  if (!currentBulletin.value) return;
+  try {
+    const res = await api.downloadBulletinPDF(currentBulletin.value._id);
+    const url = window.URL.createObjectURL(new Blob([res.data]));
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', `Bulletin_${currentBulletin.value.trimestre}_${currentBulletin.value.anneeScolaire}.pdf`);
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+  } catch (error) {
+    console.error('Error downloading bulletin:', error);
+  }
+};
+
+const viewBulletin = (id) => {
+  handlePDFAction(id, null, 'view');
 };
 
 // UI Helpers

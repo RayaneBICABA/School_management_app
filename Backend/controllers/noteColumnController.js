@@ -21,7 +21,7 @@ exports.createNoteColumn = asyncHandler(async (req, res, next) => {
         matiere,
         classe,
         periode,
-        anneeScolaire: req.body.anneeScolaire || '2023-2024'
+        anneeScolaire: req.body.anneeScolaire || '2025-2026'
     });
 
     const column = await NoteColumn.create({
@@ -31,7 +31,7 @@ exports.createNoteColumn = asyncHandler(async (req, res, next) => {
         professeur: req.user.id,
         periode,
         ordre: existingColumns,
-        anneeScolaire: req.body.anneeScolaire || '2023-2024'
+        anneeScolaire: req.body.anneeScolaire || '2025-2026'
     });
 
     await column.populate(['matiere', 'classe', 'professeur']);

@@ -38,7 +38,7 @@
           <div class="flex items-end">
             <button 
               @click="showAddEvalModal = true" 
-              :disabled="!selectedClasse || !selectedMatiere || !selectedPeriode"
+              :disabled="!selectedClasse || !selectedMatiere || !selectedPeriode || notesStatus === 'VALIDEE' || notesStatus === 'EN_ATTENTE'"
               class="w-full px-4 py-2 bg-primary text-white rounded-lg font-bold hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
             >
               <span class="material-symbols-outlined">add</span>
@@ -139,7 +139,8 @@
                     <span>{{ evaluation.nom }}</span>
                     <button 
                       @click="deleteEvaluation(evaluation._id)" 
-                      class="p-1 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded transition-colors"
+                      :disabled="notesStatus === 'VALIDEE' || notesStatus === 'EN_ATTENTE'"
+                      class="p-1 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
                       title="Supprimer cette évaluation"
                     >
                       <span class="material-symbols-outlined text-sm">close</span>
@@ -170,7 +171,8 @@
                     min="0" 
                     max="20" 
                     step="0.5"
-                    class="w-20 px-2 py-1 text-center rounded border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-[#0e141b] dark:text-white focus:ring-2 focus:ring-primary/20"
+                    :disabled="notesStatus === 'VALIDEE' || notesStatus === 'EN_ATTENTE'"
+                    class="w-20 px-2 py-1 text-center rounded border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-[#0e141b] dark:text-white focus:ring-2 focus:ring-primary/20 disabled:opacity-70 disabled:bg-slate-50 dark:disabled:bg-slate-800/50"
                     placeholder="-"
                   />
                 </td>
@@ -188,7 +190,8 @@
           <p class="text-[#4e7397] mb-4">Aucune évaluation créée pour cette période</p>
           <button 
             @click="showAddEvalModal = true"
-            class="px-6 py-2 bg-primary text-white rounded-lg font-bold hover:bg-primary/90 transition-colors inline-flex items-center gap-2"
+            :disabled="notesStatus === 'VALIDEE' || notesStatus === 'EN_ATTENTE'"
+            class="px-6 py-2 bg-primary text-white rounded-lg font-bold hover:bg-primary/90 transition-colors inline-flex items-center gap-2 disabled:opacity-50"
           >
             <span class="material-symbols-outlined">add</span>
             Créer votre première évaluation
@@ -293,6 +296,26 @@ import { useToast } from '@/composables/useToast';
 import ConfirmationModal from '@/components/modals/ConfirmationModal.vue';
 
 const { success, error, warning } = useToast();
+
+// Générer un matricule unique
+const generateMatricule = (student, index) => {
+  // Si l'étudiant a déjà un matricule, le conserver
+  if (student.matricule && student.matricule !== 'N/A' && student.matricule !== '-') {
+    return student.matricule
+  }
+  
+  // Sinon, générer un matricule dynamiquement
+  const currentYear = new Date().getFullYear()
+  const baseMatricule = `${currentYear}`
+  
+  // Utiliser le nom et prénom pour créer une partie unique
+  const namePart = `${student.nom?.slice(0, 3).toUpperCase() || 'ELV'}${student.prenom?.slice(0, 3).toUpperCase() || 'ELE'}`
+  
+  // Ajouter un index pour garantir l'unicité
+  const indexPart = String(index + 1).padStart(3, '0')
+  
+  return `${baseMatricule}-${namePart}${indexPart}`
+}
 
 const classes = ref([]);
 const matieres = ref([]);
@@ -439,7 +462,12 @@ const loadData = async () => {
       role: 'ELEVE' 
     });
     if (elevesRes.data.success) {
-      eleves.value = elevesRes.data.data;
+      // Transformer les données avec génération de matricules
+      const rawData = elevesRes.data.data;
+      eleves.value = rawData.map((student, index) => ({
+        ...student,
+        matricule: generateMatricule(student, index)
+      }));
     }
 
     // Charger les évaluations (colonnes)

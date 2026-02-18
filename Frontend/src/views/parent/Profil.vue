@@ -81,9 +81,9 @@
                 </div>
                 <div class="flex items-center gap-4">
                   <div class="flex items-center gap-2">
-                    <span class="text-xs font-bold text-slate-400">SMS</span>
-                    <button @click="toggleNotification(pref.id, 'sms')" :class="pref.sms ? 'bg-primary' : 'bg-slate-300 dark:bg-slate-700'" class="w-10 h-6 rounded-full relative transition-colors">
-                      <div :class="pref.sms ? 'translate-x-5' : 'translate-x-1'" class="absolute top-1 w-4 h-4 bg-white rounded-full transition-transform"></div>
+                    <span class="text-xs font-bold text-slate-400">Application</span>
+                    <button @click="toggleNotification(pref.id, 'app')" :class="pref.app ? 'bg-primary' : 'bg-slate-300 dark:bg-slate-700'" class="w-10 h-6 rounded-full relative transition-colors">
+                      <div :class="pref.app ? 'translate-x-5' : 'translate-x-1'" class="absolute top-1 w-4 h-4 bg-white rounded-full transition-transform"></div>
                     </button>
                   </div>
                   <div class="flex items-center gap-2">
@@ -176,7 +176,7 @@
                 </div>
                 <span class="material-symbols-outlined text-slate-300 group-hover:text-primary transition-colors">chevron_right</span>
               </div>
-              <button class="w-full py-3 border-2 border-dashed border-slate-200 dark:border-slate-800 rounded-2xl text-slate-400 text-xs font-bold hover:border-primary hover:text-primary transition-all flex items-center justify-center gap-2">
+              <button @click="attachChild" class="w-full py-3 border-2 border-dashed border-slate-200 dark:border-slate-800 rounded-2xl text-slate-400 text-xs font-bold hover:border-primary hover:text-primary transition-all flex items-center justify-center gap-2">
                 <span class="material-symbols-outlined text-sm">add_circle</span>
                 Rattacher un autre enfant
               </button>
@@ -186,11 +186,68 @@
       </div>
     </div>
   </div>
+
+  <!-- Modal Rattacher un enfant -->
+  <div v-if="showAttachModal" class="fixed inset-0 z-[100] flex items-center justify-center p-4">
+    <div @click="showAttachModal = false" class="absolute inset-0 bg-slate-900/60 backdrop-blur-sm"></div>
+    <div class="relative w-full max-w-lg bg-white dark:bg-slate-900 rounded-3xl shadow-2xl border border-slate-100 dark:border-slate-800 overflow-hidden">
+      <div class="p-6 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center">
+        <h3 class="text-xl font-bold">Rattacher un enfant</h3>
+        <button @click="showAttachModal = false" class="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition-colors">
+          <span class="material-symbols-outlined">close</span>
+        </button>
+      </div>
+      
+      <div class="p-6 space-y-6">
+        <div class="space-y-2">
+          <label class="text-sm font-bold text-slate-500 ml-1">Rechercher par nom ou matricule</label>
+          <div class="relative">
+            <input v-model="searchQuery" @input="handleSearch" type="text" placeholder="Ex: Lucas ou 2023-..." class="w-full pl-12 pr-4 py-4 rounded-2xl border-slate-200 dark:border-slate-700 dark:bg-slate-800 focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all font-medium"/>
+            <span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-slate-400">search</span>
+          </div>
+        </div>
+
+        <!-- Search Results -->
+        <div class="max-h-[300px] overflow-y-auto space-y-2 pr-2">
+          <div v-if="isSearching" class="text-center py-8">
+            <div class="inline-block w-8 h-8 border-4 border-primary/20 border-t-primary rounded-full animate-spin"></div>
+            <p class="text-sm text-slate-500 mt-2 font-medium">Recherche en cours...</p>
+          </div>
+          
+          <div v-else-if="searchResults.length > 0" v-for="student in searchResults" :key="student._id" class="flex items-center justify-between p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-800">
+            <div class="flex items-center gap-4">
+              <div class="w-12 h-12 rounded-xl border-2 border-white dark:border-slate-700 bg-slate-200 dark:bg-slate-700 overflow-hidden">
+                <img v-if="student.photo && student.photo !== 'no-photo.jpg'" :src="`/uploads/${student.photo}`" class="w-full h-full object-cover"/>
+                <div v-else class="w-full h-full flex items-center justify-center bg-primary/10 text-primary font-bold">
+                  {{ student.prenom[0] }}{{ student.nom[0] }}
+                </div>
+              </div>
+              <div>
+                <p class="font-bold text-sm">{{ student.prenom }} {{ student.nom }}</p>
+                <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">{{ student.matricule }} • {{ student.classe?.niveau }} {{ student.classe?.section }}</p>
+              </div>
+            </div>
+            <button @click="handleAddChild(student._id)" :disabled="isAddingChild" class="px-4 py-2 bg-primary text-white text-xs font-bold rounded-xl hover:bg-primary/90 transition-all">
+              Ajouter
+            </button>
+          </div>
+          
+          <div v-else-if="searchQuery.length >= 2" class="text-center py-12 px-4">
+            <span class="material-symbols-outlined text-4xl text-slate-300 mb-2">person_search</span>
+            <p class="text-sm text-slate-500 font-medium leading-relaxed">Aucun élève trouvé pour cette recherche</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
 </template>
 
 <script setup>
 import { ref, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
 import api from '@/services/api'
+
+const router = useRouter()
 
 // Données réactives
 const user = ref(null);
@@ -320,21 +377,21 @@ const notificationPreferences = ref([
     id: 1,
     title: 'Absences et Retards',
     description: 'Notifications instantanées pour votre enfant',
-    sms: true,
+    app: true,
     email: true
   },
   {
     id: 2,
     title: 'Résultats Scolaires',
     description: 'Publication de notes et rapports',
-    sms: false,
+    app: false,
     email: true
   },
   {
     id: 3,
     title: 'Événements & Vie Scolaire',
     description: 'Réunions, fêtes et sorties scolaires',
-    sms: false,
+    app: false,
     email: true
   }
 ])
@@ -347,25 +404,78 @@ const toggleNotification = (prefId, type) => {
 }
 
 // Enfants rattachés
-const children = ref([
-  {
-    id: 1,
-    name: 'Lucas Dupont',
-    class: '4ème B',
-    initials: 'LD',
-    avatarColor: 'bg-blue-100 dark:bg-blue-900/30 text-primary'
-  },
-  {
-    id: 2,
-    name: 'Sophie Dupont',
-    class: 'CM2',
-    initials: 'SD',
-    avatarColor: 'bg-pink-100 dark:bg-pink-900/30 text-pink-600'
-  }
-])
+const children = ref([])
 
-onMounted(() => {
-    fetchData();
+// Fetch children for profile
+const fetchChildren = async () => {
+  try {
+    const res = await api.getChildren()
+    if (res.data.success) {
+      children.value = res.data.data.map(child => ({
+        id: child._id,
+        name: `${child.prenom} ${child.nom}`,
+        class: child.classe ? `${child.classe.niveau} ${child.classe.section}` : 'Sans classe',
+        initials: `${child.prenom[0]}${child.nom[0]}`.toUpperCase(),
+        avatarColor: child.prenom === 'Lucas' ? 'bg-blue-100 dark:bg-blue-900/30 text-primary' : 'bg-pink-100 dark:bg-pink-900/30 text-pink-600'
+      }))
+    }
+  } catch (error) {
+    console.error('Error fetching children for profile:', error)
+  }
+}
+
+const showAttachModal = ref(false)
+const searchQuery = ref('')
+const searchResults = ref([])
+const isSearching = ref(false)
+const isAddingChild = ref(false)
+
+const handleSearch = async () => {
+  if (searchQuery.value.length < 2) {
+    searchResults.value = []
+    return
+  }
+  
+  isSearching.value = true
+  try {
+    const res = await api.searchStudents(searchQuery.value)
+    if (res.data.success) {
+      searchResults.value = res.data.data
+    }
+  } catch (error) {
+    console.error('Search error:', error)
+  } finally {
+    isSearching.value = false
+  }
+}
+
+const handleAddChild = async (studentId) => {
+  isAddingChild.value = true
+  try {
+    const res = await api.addChild({ matricule: studentId })
+    if (res.data.success) {
+      alert('Enfant rattaché avec succès !')
+      showAttachModal.value = false
+      searchQuery.value = ''
+      searchResults.value = []
+      await fetchChildren()
+    }
+  } catch (error) {
+    alert(error.response?.data?.error || 'Erreur lors du rattachement')
+  } finally {
+    isAddingChild.value = false
+  }
+}
+
+const attachChild = () => {
+  showAttachModal.value = true
+}
+
+onMounted(async () => {
+    await Promise.all([
+        fetchData(),
+        fetchChildren()
+    ]);
     const link = document.createElement('link');
     link.href = 'https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap';
     link.rel = 'stylesheet';

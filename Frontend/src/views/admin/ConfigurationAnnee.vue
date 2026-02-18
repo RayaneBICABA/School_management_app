@@ -244,6 +244,64 @@
           </div>
         </section>
         
+        <!-- Section: Informations Établissement -->
+        <section class="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 overflow-hidden shadow-sm">
+          <div class="p-6 border-b border-slate-100 dark:border-slate-800">
+            <h2 class="text-slate-900 dark:text-white text-xl font-bold tracking-tight">Informations Établissement</h2>
+            <p class="text-slate-500 dark:text-slate-400 text-sm">Ces informations apparaissent sur l'en-tête de tous les bulletins générés.</p>
+          </div>
+          <div class="p-6 flex flex-col gap-6">
+            <div class="flex items-start gap-8">
+              <!-- Logo Upload -->
+              <div class="flex flex-col items-center gap-3">
+                <div class="size-32 rounded-xl border-2 border-dashed border-slate-200 dark:border-slate-700 flex items-center justify-center overflow-hidden bg-slate-50 dark:bg-slate-800">
+                  <img v-if="schoolConfig.logo" :src="`http://localhost:5000${schoolConfig.logo}`" class="max-w-full max-h-full object-contain" />
+                  <span v-else class="material-symbols-outlined text-4xl text-slate-300">image</span>
+                </div>
+                <input type="file" ref="logoInput" class="hidden" @change="handleLogoUpload" accept="image/*" />
+                <button @click="$refs.logoInput.click()" class="text-xs font-bold text-primary hover:underline">
+                  {{ schoolConfig.logo ? 'Changer le logo' : 'Ajouter un logo' }}
+                </button>
+              </div>
+
+              <!-- General Info -->
+              <div class="flex-1 grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div class="md:col-span-2">
+                  <label class="text-xs font-bold text-slate-500 uppercase tracking-widest mb-1 block">Nom de l'établissement</label>
+                  <input v-model="schoolConfig.schoolName" class="w-full bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 rounded-lg text-sm" type="text" placeholder="ex: LYCÉE WEND PUIRÉ DE SAABA" />
+                </div>
+                <div>
+                  <label class="text-xs font-bold text-slate-500 uppercase tracking-widest mb-1 block">Sigle / Nom court</label>
+                  <input v-model="schoolConfig.shortName" class="w-full bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 rounded-lg text-sm" type="text" placeholder="ex: LWS" />
+                </div>
+                <div>
+                  <label class="text-xs font-bold text-slate-500 uppercase tracking-widest mb-1 block">Slogan / Devise</label>
+                  <input v-model="schoolConfig.motto" class="w-full bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 rounded-lg text-sm" type="text" placeholder="ex: DISCIPLINE-TRAVAIL-SUCCES" />
+                </div>
+                <div>
+                  <label class="text-xs font-bold text-slate-500 uppercase tracking-widest mb-1 block">Téléphone</label>
+                  <input v-model="schoolConfig.phone" class="w-full bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 rounded-lg text-sm" type="text" placeholder="ex: 51 54 88 11" />
+                </div>
+                <div>
+                  <label class="text-xs font-bold text-slate-500 uppercase tracking-widest mb-1 block">Région (En-tête haut)</label>
+                  <input v-model="schoolConfig.region" class="w-full bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 rounded-lg text-sm" type="text" placeholder="ex: RÉGION CENTRE" />
+                </div>
+              </div>
+            </div>
+            
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 border-t border-slate-100 dark:border-slate-800 pt-6">
+               <div>
+                  <label class="text-xs font-bold text-slate-500 uppercase tracking-widest mb-1 block">Pays</label>
+                  <input v-model="schoolConfig.country" class="w-full bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 rounded-lg text-sm" type="text" />
+                </div>
+                <div class="md:col-span-2">
+                  <label class="text-xs font-bold text-slate-500 uppercase tracking-widest mb-1 block">Slogan Secondaire (Ex: La Patrie ou la Mort...)</label>
+                  <input v-model="schoolConfig.patrie" class="w-full bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 rounded-lg text-sm" type="text" />
+                </div>
+            </div>
+          </div>
+        </section>
+
         <!-- Help Alert -->
         <div class="bg-sky-50 dark:bg-sky-900/20 border border-sky-100 dark:border-sky-800 rounded-xl p-4 flex gap-4">
           <span class="material-symbols-outlined text-sky-600 dark:text-sky-400">info</span>
@@ -258,28 +316,42 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue';
+import { ref, computed, onMounted, watch } from 'vue';
 import api from '@/services/api';
+import { useAcademicYear } from '@/composables/useAcademicYear';
 
 const isSaving = ref(false);
 const selectedFiliere = ref('generale');
+const { refreshYear } = useAcademicYear();
+
+const schoolConfig = ref({
+    schoolName: '',
+    shortName: '',
+    motto: '',
+    phone: '',
+    region: '',
+    subRegion: 'RÉGION CENTRE',
+    country: 'BURKINA FASO',
+    patrie: 'La Patrie ou la Mort, nous Vaincrons',
+    logo: ''
+});
 
 const config = ref({
-    year: '2023-2024',
+    year: '2025-2026',
     filieres: {
         generale: {
             periodType: 'Trimestres',
             periods: [
-                { name: 'T1', start: '2023-09-04', end: '2023-12-22' },
-                { name: 'T2', start: '2024-01-08', end: '2024-03-29' },
-                { name: 'T3', start: '2024-04-15', end: '2024-07-05' }
+                { name: 'T1', start: '2025-09-04', end: '2025-12-22' },
+                { name: 'T2', start: '2026-01-08', end: '2026-03-29' },
+                { name: 'T3', start: '2026-04-15', end: '2026-07-05' }
             ]
         },
         technique: {
             periodType: 'Semestres',
             periods: [
-                { name: 'S1', start: '2023-09-04', end: '2024-01-26' },
-                { name: 'S2', start: '2024-02-05', end: '2024-06-28' },
+                { name: 'S1', start: '2025-09-04', end: '2026-01-26' },
+                { name: 'S2', start: '2026-02-05', end: '2026-06-28' },
                 { name: 'S3', start: '', end: '' } // Dummy for structure consistency if needed
             ]
         }
@@ -293,6 +365,141 @@ const config = ref({
         period3Locked: false
     }
 });
+
+// Watch for T1/S1 start date changes to update everything else
+watch(() => config.value.filieres.generale.periods[0].start, (newVal, oldVal) => {
+    if (!newVal || newVal === oldVal) return;
+    updateYearAndCascase('generale', newVal);
+});
+
+watch(() => config.value.filieres.technique.periods[0].start, (newVal, oldVal) => {
+    if (!newVal || newVal === oldVal) return;
+    updateYearAndCascase('technique', newVal);
+});
+
+// Watch for T1/S1 end date to shift the next period's start
+watch(() => config.value.filieres.generale.periods[0].end, (newVal) => {
+    if (!newVal) return;
+    suggestNextPeriodStart('generale', 0, newVal);
+});
+
+watch(() => config.value.filieres.generale.periods[1].end, (newVal) => {
+    if (!newVal) return;
+    suggestNextPeriodStart('generale', 1, newVal);
+});
+
+watch(() => config.value.filieres.technique.periods[0].end, (newVal) => {
+    if (!newVal) return;
+    suggestNextPeriodStart('technique', 0, newVal);
+});
+
+const suggestNextPeriodStart = (filiereKey, currentIdx, endDate) => {
+    const filConfig = config.value.filieres[filiereKey];
+    if (filConfig.periods[currentIdx + 1]) {
+        const date = new Date(endDate);
+        // Add ~17 days for Christmas/New Year breaks if it's Dec
+        if (date.getMonth() === 11) {
+            date.setDate(date.getDate() + 17);
+        } else {
+            date.setDate(date.getDate() + 7); // Default 1 week break
+        }
+        filConfig.periods[currentIdx + 1].start = date.toISOString().split('T')[0];
+    }
+}
+
+const updateYearAndCascase = (filiereKey, startDate) => {
+    const date = new Date(startDate);
+    const startYear = date.getFullYear();
+    const startMonth = date.getMonth();
+    
+    // 1. Update overall academic year string
+    // Academic year usually starts in Aug/Sept/Oct
+    if (startMonth >= 5) { // Jun-Dec
+        config.value.year = `${startYear}-${startYear + 1}`;
+    } else { // Jan-May
+        config.value.year = `${startYear - 1}-${startYear}`;
+    }
+
+    const baseYear = startMonth >= 5 ? startYear : startYear - 1;
+
+    // 2. Cascade years to other periods
+    const filConfig = config.value.filieres[filiereKey];
+    filConfig.periods.forEach((p, idx) => {
+        if (idx > 0) {
+            // Adjust start date year
+            if (p.start) {
+                const pDate = new Date(p.start);
+                // If month is Sep-Dec, same year as start. If Jan-Aug, next year.
+                pDate.setFullYear(pDate.getMonth() >= 8 ? baseYear : baseYear + 1);
+                p.start = pDate.toISOString().split('T')[0];
+            }
+        }
+        // Adjust end date year
+        if (p.end) {
+            const pEndDate = new Date(p.end);
+            pEndDate.setFullYear(pEndDate.getMonth() >= 8 ? baseYear : baseYear + 1);
+            p.end = pEndDate.toISOString().split('T')[0];
+        }
+    });
+
+    // 3. Update grade deadlines year
+    ['period1', 'period2', 'period3'].forEach((key) => {
+        if (config.value.gradeDeadlines[key]) {
+            const d = new Date(config.value.gradeDeadlines[key]);
+            d.setFullYear(d.getMonth() >= 8 ? baseYear : baseYear + 1);
+            config.value.gradeDeadlines[key] = d.toISOString().split('T')[0];
+        }
+    });
+};
+
+const fetchSchoolConfig = async () => {
+    try {
+        const res = await api.getSetting('school_config');
+        if (res.data.success && res.data.data) {
+            schoolConfig.value = {
+                ...schoolConfig.value,
+                ...res.data.data.value
+            };
+        }
+    } catch (error) {
+        if (error.response?.status !== 404) {
+            console.error('Erreur chargement school config:', error);
+        }
+    }
+};
+
+const handleLogoUpload = async (event) => {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    const base64 = await new Promise((resolve) => {
+        const r = new FileReader();
+        r.onload = (e) => resolve(e.target.result);
+        r.readAsDataURL(file);
+    });
+
+    try {
+        const token = localStorage.getItem('token');
+        const response = await fetch('http://localhost:5000/api/v1/settings/upload-logo', {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ image: base64 })
+        });
+        const data = await response.json();
+        if (data.success) {
+            schoolConfig.value.logo = data.data;
+            alert('Logo mis à jour !');
+        } else {
+            alert('Erreur upload: ' + data.error);
+        }
+    } catch (err) {
+        console.error(err);
+        alert('Erreur lors de l\'envoi du logo');
+    }
+};
 
 const currentFiliereConfig = computed(() => config.value.filieres[selectedFiliere.value]);
 
@@ -372,10 +579,18 @@ const saveConfiguration = async () => {
 
         console.log('💾 Sauvegarde de la configuration:', fullConfig);
         await api.updateSetting('academic_year_config', fullConfig);
+        
+        // Save school config
+        await api.updateSetting('school_config', schoolConfig.value);
+        
         alert('Configuration enregistrée avec succès !');
         
+        // Refresh global academic year state for sidebars
+        await refreshYear();
+
         // Recharger pour confirmer
         await fetchConfiguration();
+        await fetchSchoolConfig();
     } catch (error) {
         console.error('Erreur enregistrement:', error);
         alert('Erreur lors de l\'enregistrement: ' + (error.response?.data?.error || error.message));
@@ -386,6 +601,8 @@ const saveConfiguration = async () => {
 
 onMounted(() => {
   fetchConfiguration();
+  fetchSchoolConfig();
+  fetchSchoolConfig();
   
   // Add Material Symbols font
   const link = document.createElement('link');

@@ -72,14 +72,23 @@
               v-for="matiere in matieresAPlacer" 
               :key="matiere.id"
               :class="[
-                'p-3 rounded-r-lg cursor-grab hover:shadow-md transition-shadow border-l-4',
+                'group relative p-3 rounded-r-lg cursor-grab hover:shadow-md transition-shadow border-l-4',
                 getMatiereColorClass(matiere.couleur)
               ]"
               @dragstart="onDragStart($event, matiere)"
               draggable="true"
             >
-              <p :class="['text-xs font-bold', getMatiereTextColor(matiere.couleur)]">{{ matiere.nom }}</p>
-              <p :class="['text-[10px]', getMatiereSubTextColor(matiere.couleur)]">{{ matiere.professeur }} • {{ matiere.salle }}</p>
+              <div class="flex justify-between items-start">
+                  <p :class="['text-xs font-bold', getMatiereTextColor(matiere.couleur)]">{{ matiere.nom }}</p>
+                  <button 
+                    @click.stop="confirmDeleteMatiere(matiere)" 
+                    class="opacity-0 group-hover:opacity-100 transition-opacity p-1 rounded hover:bg-red-500/10 text-red-500 cursor-pointer -mt-1 -mr-1"
+                    title="Retirer la matière"
+                  >
+                     <span class="material-symbols-outlined text-[14px]">delete</span>
+                  </button>
+              </div>
+              <p :class="['text-[10px] mt-1', getMatiereSubTextColor(matiere.couleur)]">{{ matiere.professeur }} • {{ matiere.salle }}</p>
             </div>
             <div class="mt-2 border-t border-dashed border-slate-200 dark:border-slate-700 pt-3">
               <button 
@@ -612,37 +621,53 @@ const fetchGlobalData = async () => {
 }
 
 const deleteSlot = (id) => {
-    itemToDelete.value = id;
+    itemToDelete.value = { type: 'slot', id };
     confirmTitle.value = 'Supprimer ce créneau ?';
     confirmMessage.value = 'Voulez-vous vraiment retirer ce cours de l\'emploi du temps ?';
     showConfirmModal.value = true;
 }
 
-const onConfirmDelete = async () => {
-    const idToDelete = itemToDelete.value;
-    try {
-        await api.deleteSchedule(idToDelete);
-        
-        // Optimistic UI Update: Remove from local state immediately
-        for (const key in emploiDuTemps) {
-            if (emploiDuTemps[key].id === idToDelete) {
-                delete emploiDuTemps[key];
-            }
-        }
-        for (const key in globalEmploiDuTemps) {
-            if (globalEmploiDuTemps[key].id === idToDelete) {
-                delete globalEmploiDuTemps[key];
-            }
-        }
+const confirmDeleteMatiere = (matiere) => {
+    itemToDelete.value = { type: 'matiere', matiere };
+    confirmTitle.value = 'Retirer la matière ?';
+    confirmMessage.value = `Voulez-vous vraiment retirer la matière "${matiere.nom}" de la liste des matières de cette classe ?`;
+    showConfirmModal.value = true;
+}
 
-        if (activeTab.value === 'classe') await onClassChange();
-        else if (activeTab.value === 'professeur') await onProfChange();
-        else await fetchGlobalData();
-        
-        success('Cours supprimé');
+const onConfirmDelete = async () => {
+    const item = itemToDelete.value;
+    if (!item) return;
+
+    try {
+        if (item.type === 'slot') {
+            await api.deleteSchedule(item.id);
+            
+            // Optimistic UI Update: Remove from local state immediately
+            for (const key in emploiDuTemps) {
+                if (emploiDuTemps[key].id === item.id) {
+                    delete emploiDuTemps[key];
+                }
+            }
+            for (const key in globalEmploiDuTemps) {
+                if (globalEmploiDuTemps[key].id === item.id) {
+                    delete globalEmploiDuTemps[key];
+                }
+            }
+
+            if (activeTab.value === 'classe') await onClassChange();
+            else if (activeTab.value === 'professeur') await onProfChange();
+            else await fetchGlobalData();
+            
+            success('Cours supprimé');
+        } else if (item.type === 'matiere') {
+            await api.removeMatiereFromClasse(selectedClass.value, item.matiere.classeMatiereId);
+            await onClassChange();
+            success('Matière retirée avec succès');
+        }
         closeConfirmModal();
     } catch (err) {
-        error('Erreur suppression');
+        console.error('Erreur lors de la suppression', err);
+        error('Erreur lors de la suppression');
     }
 }
 

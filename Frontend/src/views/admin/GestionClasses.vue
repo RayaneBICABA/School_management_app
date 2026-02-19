@@ -1,4 +1,5 @@
 <template>
+<div>
   <div class="space-y-8">
     <!-- Breadcrumbs -->
     <nav class="flex items-center gap-2 text-sm">
@@ -396,6 +397,7 @@
       </form>
     </div>
   </div>
+</div>
 </template>
 
 <script setup>

@@ -6,7 +6,7 @@
       <div class="flex-grow pb-8 overflow-y-auto">
         <router-view v-slot="{ Component }">
           <transition name="page" mode="out-in">
-            <component :is="Component" />
+            <component :is="Component" :key="$route.fullPath" />
           </transition>
         </router-view>
       </div>

@@ -167,59 +167,202 @@ exports.importStudents = async (req, res, next) => {
             return `M${timestamp}${random}`;
         };
 
+        // Helper to parse date from Excel serial or string
+        const parseDate = (excelDate) => {
+            if (!excelDate) return undefined;
+            // If number (Excel serial date)
+            if (typeof excelDate === 'number') {
+                // Excel base date is Dec 30 1899
+                // JavaScript Date is milliseconds since Jan 1 1970
+                // Difference in days is 25569
+                // 86400000 ms per day
+                const date = new Date((excelDate - 25569) * 86400 * 1000);
+                return date;
+            }
+            // If string, try to parse
+            const date = new Date(excelDate);
+            return isNaN(date.getTime()) ? undefined : date;
+        };
+
+        // Helper to find key case-insensitive and robust
+        const findKey = (obj, partialKey) => {
+            const keys = Object.keys(obj);
+            // Normalize search terms: split by space, remove non-alphanumeric
+            const searchParts = partialKey.toLowerCase().split(/\s+/).map(p => p.replace(/[^a-z0-9]/g, ''));
+
+            return keys.find(k => {
+                const keyNorm = k.toLowerCase().replace(/[^a-z0-9]/g, '');
+                // Iterate search parts and check if they exist in key
+                return searchParts.every(part => keyNorm.includes(part));
+            });
+        };
+
         for (const student of students) {
-            // Updated validation: Only Nom and Prenom are strictly required now
-            if (!student.Nom || !student.Prenom) {
-                errors.push(`Ligne ignorée (Nom ou Prénom manquant): ${JSON.stringify(student)}`);
+            // Updated Column Names:
+            // "Matricule", "Nom et prenoms", "date de naissance", "lieu de naissance(optionel)", "classe redouble(optionel)", "Sexe(M ou F)", "statut"
+
+            // Debugging: Log keys of the student object to verify headers
+            // console.log("Student Keys:", Object.keys(student));
+
+            // 1. Dynamic Column Detection
+            let nom = "Inconnu";
+            let prenom = "Inconnu";
+
+            const keys = Object.keys(student);
+            const normalizedKeys = keys.map(k => ({
+                original: k,
+                norm: k.toLowerCase().replace(/[^a-z0-9]/g, '')
+            }));
+
+            // Strategy A: Look for explicit combined "Nom" AND "Prenom" in the same key
+            // Matches: "Nom et Prénoms", "Noms et Prenoms", "NomComple", "NomPrenom"
+            let fullNameKeyObj = normalizedKeys.find(k =>
+                (k.norm.includes('nom') && k.norm.includes('prenom')) ||
+                k.norm.includes('nomcomplet') ||
+                k.norm.includes('nometprenom')
+            );
+
+            let fullName = fullNameKeyObj ? student[fullNameKeyObj.original] : undefined;
+
+            if (fullName) {
+                // Split logic
+                const parts = String(fullName).trim().split(/\s+/);
+                if (parts.length > 0) {
+                    nom = parts[0];
+                    if (parts.length > 1) {
+                        prenom = parts.slice(1).join(" ");
+                    } else {
+                        prenom = ""; // Empty string if only one name, better than "Inconnu" for display
+                        // Or if user prefers, keep "Inconnu" but typically for "Jean", prenom is empty.
+                        // User script said "Jean Dupont" -> one col.
+                    }
+                }
+            } else {
+                // Strategy B: Separate Columns (Stricter Match)
+                // "Nom" should be "Nom" or "Noms" or "Last Name", but NOT inside "Prenoms"
+                // "Prenom" should be "Prenom" or "First Name"
+
+                const nomKeyObj = normalizedKeys.find(k =>
+                    k.norm === 'nom' || k.norm === 'noms' || k.norm === 'lastname' || k.norm === 'nomfamille'
+                );
+                const prenomKeyObj = normalizedKeys.find(k =>
+                    k.norm === 'prenom' || k.norm === 'prenoms' || k.norm === 'firstname' || k.norm === 'prnoms'
+                );
+
+                if (nomKeyObj) nom = student[nomKeyObj.original];
+                if (prenomKeyObj) prenom = student[prenomKeyObj.original];
+            }
+
+            // Heuristic for "Inconnu" fallback if loose match needed (e.g. "Eleve" as Name?)
+            // If we still have defaults, try the old loose findKey for "Nom" only as a last resort
+            if (nom === "Inconnu" && prenom === "Inconnu") {
+                const looseNom = findKey(student, "Nom");
+                if (looseNom && !looseNom.toLowerCase().includes('prenom')) {
+                    nom = student[looseNom];
+                    // If this column has spaces, maybe it was the full name?
+                    if (String(nom).trim().includes(' ')) {
+                        const p = String(nom).trim().split(/\s+/);
+                        nom = p[0];
+                        prenom = p.slice(1).join(" ");
+                    }
+                }
+            }
+
+            if ((!nom || nom === "Inconnu") && (!prenom || prenom === "Inconnu") && !fullName) {
+                errors.push(`Ligne ignorée (Nom/Prénom introuvable): ${JSON.stringify(student)}`);
                 continue;
             }
 
             try {
-                // 1. Handle Matricule
-                let matricule = student.Matricule;
+                // 2. Handle Matricule
+                let matriculeKey = findKey(student, "Matricule");
+                let matricule = matriculeKey ? student[matriculeKey] : undefined;
+
                 if (!matricule) {
                     matricule = generateMatricule();
                 } else {
-                    // Check if provided matricule already exists
+                    // Sanitize provided matricule
+                    matricule = String(matricule).trim().replace(/\s+/g, '');
                     const existingMatricule = await User.findOne({ matricule: matricule });
                     if (existingMatricule) {
-                        errors.push(`Matricule déjà existant: ${matricule} (${student.Nom} ${student.Prenom})`);
+                        errors.push(`Matricule déjà existant: ${matricule} (${nom} ${prenom})`);
                         continue;
                     }
                 }
 
-                // 2. Handle Email
-                let email = student.Email;
-                if (!email) {
-                    // Generate email based on matricule
-                    email = `${matricule}@eleve.school`.toLowerCase();
+                // 3. Handle Other Fields
+                const dateKey = findKey(student, "date de naissance") || findKey(student, "naissance");
+                const dateNaissance = parseDate(dateKey ? student[dateKey] : undefined);
+
+                const lieuKey = findKey(student, "lieu de naissance") || findKey(student, "lieu");
+                const lieuNaissance = lieuKey ? student[lieuKey] : undefined;
+
+                // Redouble handling
+                let isRedoublant = false;
+                const redoubleKey = findKey(student, "redouble") || findKey(student, "redoublant");
+                if (redoubleKey) {
+                    const val = String(student[redoubleKey]).toLowerCase().trim();
+                    if (['oui', 'yes', 'true', '1', 'redoublant', 'r'].includes(val)) {
+                        isRedoublant = true;
+                    }
                 }
+
+                // Sexe handling
+                let sexe = 'M'; // Default to M if unknown, strict schema requires enum? No, let's try to parse
+                const sexeKey = findKey(student, "sexe") || findKey(student, "genre");
+                if (sexeKey) {
+                    const s = String(student[sexeKey]).toUpperCase().trim();
+                    if (s.startsWith('M') || s === 'GARÇON') sexe = 'M';
+                    else if (s.startsWith('F')) sexe = 'F';
+                }
+
+                // Status handling
+                // 'status' field in User model is for account access (ACTIF, INACTIF, etc.)
+                // 'statutEleve' field is for the imported status (AFFECTE, NON AFFECTE, etc.)
+                let accountStatus = 'ACTIF'; // Default account status
+                let statutEleve = 'AFFECTE'; // Default student status
+
+                const statusKey = findKey(student, "statut") || findKey(student, "status");
+                if (statusKey) {
+                    const st = String(student[statusKey]).trim();
+                    statutEleve = st; // Save exact value from Excel to statutEleve
+
+                    // Map specific values to account status if needed, otherwise default to ACTIF
+                    const stUpper = st.toUpperCase();
+                    if (['INACTIF', 'ARCHIVE', 'PARTI', 'NON AFFECTE'].includes(stUpper)) {
+                        accountStatus = 'INACTIF';
+                    } else if (['BLOQUE', 'BANNED', 'EXCLU'].includes(stUpper)) {
+                        accountStatus = 'BLOQUE';
+                    }
+                }
+
+                // 4. Handle Email (Generate unique if missing)
+                // Sanitize matricule for email use (alphanumeric only)
+                const cleanMatricule = matricule.replace(/[^a-zA-Z0-9]/g, '').toLowerCase();
+                let email = `${cleanMatricule}@eleve.school`;
 
                 // Check duplicate email
-                const existingUser = await User.findOne({ email: email });
+                let existingUser = await User.findOne({ email: email });
                 if (existingUser) {
-                    // If email was auto-generated, try to append a random suffix to make it unique
-                    if (!student.Email) {
-                        const match = email.match(/^(.+)@/);
-                        const prefix = match ? match[1] : matricule;
-                        email = `${prefix}.${Math.floor(Math.random() * 1000)}@eleve.school`.toLowerCase();
-                    } else {
-                        errors.push(`Email déjà utilisé: ${email} (${student.Nom} ${student.Prenom})`);
-                        continue;
-                    }
+                    email = `${cleanMatricule}.${Math.floor(Math.random() * 1000)}@eleve.school`;
                 }
 
                 // Create User
                 const newUser = await User.create({
-                    nom: student.Nom,
-                    prenom: student.Prenom,
+                    nom: nom || "Inconnu",
+                    prenom: prenom || "Inconnu",
                     email: email,
                     matricule: matricule,
-                    telephone: student.Telephone || '',
+                    telephone: student[findKey(student, "Telephone")] || '',
                     role: 'ELEVE',
                     classe: classeId,
-                    password: 'password123', // Default password
-                    status: 'ACTIF'
+                    password: 'password123',
+                    status: accountStatus,
+                    statutEleve: statutEleve,
+                    sexe: sexe,
+                    isRedoublant: isRedoublant,
+                    dateNaissance: dateNaissance,
+                    lieuNaissance: lieuNaissance
                 });
 
                 createdUsers.push(newUser);
@@ -228,8 +371,14 @@ exports.importStudents = async (req, res, next) => {
                 await createBulletinsForStudent(newUser);
 
             } catch (err) {
-                console.error(`Error importing student ${student.Nom}:`, err);
-                errors.push(`Erreur pour ${student.Nom} ${student.Prenom}: ${err.message}`);
+                console.error(`Error importing student ${nom}:`, err);
+                // Better error message for validation failures
+                let errMsg = err.message;
+                if (err.name === 'ValidationError') {
+                    const parts = Object.values(err.errors).map(e => e.message);
+                    errMsg = parts.join(', ');
+                }
+                errors.push(`Erreur pour ${nom} ${prenom}: ${errMsg}`);
             }
         }
 

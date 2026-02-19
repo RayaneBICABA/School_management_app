@@ -30,9 +30,12 @@
             <thead class="bg-slate-50 dark:bg-slate-800/50">
               <tr>
                 <th class="px-6 py-4 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">Matricule</th>
-                <th class="px-6 py-4 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">Nom Complet</th>
-                <th class="px-6 py-4 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">Email</th>
-                <th class="px-6 py-4 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">Téléphone</th>
+                <th class="px-6 py-4 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">Nom et prénoms</th>
+                <th class="px-6 py-4 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">Date de naissance</th>
+                <th class="px-6 py-4 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">Lieu de naissance</th>
+                <th class="px-6 py-4 text-center text-xs font-bold text-slate-500 uppercase tracking-wider">Redoublant</th>
+                <th class="px-6 py-4 text-center text-xs font-bold text-slate-500 uppercase tracking-wider">Sexe</th>
+                <th class="px-6 py-4 text-center text-xs font-bold text-slate-500 uppercase tracking-wider">Statut</th>
                 <th class="px-6 py-4 text-center text-xs font-bold text-slate-500 uppercase tracking-wider">Actions</th>
               </tr>
             </thead>
@@ -47,16 +50,32 @@
                       <span class="text-primary font-bold text-sm">{{ getInitials(eleve) }}</span>
                     </div>
                     <div>
-                      <p class="text-sm font-medium text-[#0e141b] dark:text-white">{{ eleve.prenom }} {{ eleve.nom }}</p>
-                      <p v-if="eleve.email" class="text-xs text-slate-500">{{ eleve.email }}</p>
+                        <p class="text-sm font-bold text-[#0e141b] dark:text-white">{{ eleve.prenom }} {{ eleve.nom }}</p>
+                        <p v-if="eleve.email" class="text-xs text-slate-500">{{ eleve.email }}</p>
                     </div>
                   </div>
                 </td>
                 <td class="px-6 py-4 whitespace-nowrap">
-                  <span class="text-sm text-[#0e141b] dark:text-slate-300">{{ eleve.email || 'Non renseigné' }}</span>
+                   <span class="text-sm text-[#0e141b] dark:text-slate-200">{{ formatDate(eleve.dateNaissance) }}</span>
                 </td>
                 <td class="px-6 py-4 whitespace-nowrap">
-                  <span class="text-sm text-[#0e141b] dark:text-slate-300">{{ eleve.telephone || 'Non renseigné' }}</span>
+                   <span class="text-sm text-[#0e141b] dark:text-slate-200">{{ eleve.lieuNaissance || '-' }}</span>
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap text-center">
+                   <span v-if="eleve.isRedoublant" class="inline-flex items-center px-2 py-0.5 rounded text-xs font-bold bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400 border border-amber-200 dark:border-amber-800">
+                     Oui
+                   &lt;/span&gt;
+                   <span v-else class="text-slate-400 text-xs">Non</span>
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap text-center">
+                   <span v-if="eleve.sexe === 'M'" class="inline-flex items-center justify-center w-6 h-6 rounded-full bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400 text-xs font-bold" title="Masculin">M</span>
+                   <span v-else-if="eleve.sexe === 'F'" class="inline-flex items-center justify-center w-6 h-6 rounded-full bg-pink-100 text-pink-600 dark:bg-pink-900/30 dark:text-pink-400 text-xs font-bold" title="Féminin">F</span>
+                   <span v-else class="text-slate-400 text-xs">-</span>
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap text-center">
+                   <span :class="['px-2 py-1 rounded-full text-xs font-bold', getStatusClass(eleve.statutEleve || eleve.status)]">
+                      {{ eleve.statutEleve || eleve.status || 'ACTIF' }}
+                   </span>
                 </td>
                 <td class="px-6 py-4 whitespace-nowrap text-center">
                   <button 
@@ -64,7 +83,7 @@
                     class="inline-flex items-center gap-2 px-3 py-2 bg-primary text-white text-sm font-medium rounded-lg hover:bg-primary/90 transition-colors"
                   >
                     <span class="material-symbols-outlined text-sm">person</span>
-                    Voir la fiche
+                    Voir
                   </button>
                 </td>
               </tr>
@@ -107,6 +126,27 @@ const classe = ref(null)
 // Récupérer les initiales d'un élève
 const getInitials = (eleve) => {
   return `${eleve.prenom?.[0] || ''}${eleve.nom?.[0] || ''}`.toUpperCase()
+}
+
+const formatDate = (dateString) => {
+  if (!dateString) return '-'
+  return new Date(dateString).toLocaleDateString('fr-FR', {
+    day: '2-digit',
+    month: 'short',
+    year: 'numeric'
+  })
+}
+
+const getStatusClass = (status) => {
+  const map = {
+    'ACTIF': 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400',
+    'AFFECTE': 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400',
+    'INACTIF': 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400',
+    'NON AFFECTE': 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400',
+    'EN_ATTENTE': 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400',
+    'BLOQUE': 'bg-slate-100 text-slate-800 dark:bg-slate-700 dark:text-slate-300'
+  }
+  return map[status?.toUpperCase()] || 'bg-slate-100 text-slate-800 dark:bg-slate-700 dark:text-slate-300'
 }
 
 // Voir la fiche d'un élève

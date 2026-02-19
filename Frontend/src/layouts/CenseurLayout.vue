@@ -12,7 +12,9 @@
       <div class="flex-grow pb-8">
         <router-view v-slot="{ Component }">
           <transition name="page" mode="out-in">
-            <component :is="Component" :key="$route.fullPath" />
+            <div :key="$route.fullPath" class="w-full h-full">
+              <component :is="Component" />
+            </div>
           </transition>
         </router-view>
       </div>

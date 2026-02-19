@@ -62,41 +62,85 @@
                 </div>
 
                 <div v-else class="divide-y divide-slate-100 dark:divide-slate-800">
+                     <!-- Student Header (Conditional) -->
+                     <div v-if="currentType === 'eleves'" class="grid grid-cols-12 gap-4 px-6 py-3 border-b border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/20 text-xs font-bold text-slate-400 uppercase tracking-wider sticky top-0 z-10">
+                          <div class="col-span-1">Matricule</div>
+                          <div class="col-span-3">Nom et Prénoms</div>
+                          <div class="col-span-2">Né(e) le / à</div>
+                          <div class="col-span-1 text-center">Sexe</div>
+                          <div class="col-span-1 text-center">Redoublant</div>
+                          <div class="col-span-1 text-center">Classe</div>
+                          <div class="col-span-1 text-center">Statut</div>
+                          <div class="col-span-2 text-right">Actions</div>
+                     </div>
+
                     <div v-for="user in paginatedUsers" :key="user._id" class="grid grid-cols-12 gap-4 px-6 py-4 items-center hover:bg-slate-50/50 dark:hover:bg-slate-800/50 transition-colors group">
                         
-                        <!-- User Info -->
-                        <div class="col-span-4 flex items-center gap-3">
-                            <div :class="['size-10 rounded-full flex items-center justify-center font-bold text-sm shrink-0', getAvatarColor(user.role)]">
-                                {{ getInitials(user.nom, user.prenom) }}
-                            </div>
-                            <div class="min-w-0">
-                                <p class="text-sm font-bold text-slate-900 dark:text-white truncate">{{ user.prenom }} {{ user.nom }}</p>
-                                <p class="text-xs text-slate-500 truncate">{{ user.email }}</p>
-                                <p v-if="user.matricule" class="text-xs text-primary font-medium">Matricule: {{ user.matricule }}</p>
-                            </div>
-                        </div>
-
-                        <!-- Role & Context -->
-                        <div class="col-span-3">
-                             <div class="flex flex-col items-start gap-1">
-                                <span :class="['inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wide', getRoleBadgeClass(user.role)]">
-                                    {{ user.role }}
-                                </span>
-                                <span v-if="user.role === 'ELEVE' && user.classe" class="text-xs font-medium text-slate-600 dark:text-slate-400 flex items-center gap-1">
-                                    <span class="material-symbols-outlined text-[14px]">school</span>
-                                    {{ user.classe.niveau }} {{ user.classe.section }}
-                                </span>
+                         <!-- Student Rows -->
+                          <template v-if="currentType === 'eleves'">
+                             <div class="col-span-1 text-xs font-medium text-slate-900 dark:text-white truncate" :title="user.matricule">{{ user.matricule }}</div>
+                             <div class="col-span-3 flex items-center gap-3">
+                                 <div :class="['size-8 rounded-full flex items-center justify-center font-bold text-xs shrink-0', getAvatarColor(user.role)]">
+                                     {{ getInitials(user.nom, user.prenom) }}
+                                 </div>
+                                 <div class="min-w-0">
+                                     <p class="text-sm font-bold text-slate-900 dark:text-white truncate" :title="user.prenom + ' ' + user.nom">{{ user.prenom }} {{ user.nom }}</p>
+                                     <p v-if="user.email" class="text-xs text-slate-500 truncate">{{ user.email }}</p>
+                                 </div>
                              </div>
-                        </div>
+                             <div class="col-span-2 flex flex-col">
+                                 <span class="text-sm text-slate-900 dark:text-white">{{ formatDate(user.dateNaissance) }}</span>
+                                 <span class="text-xs text-slate-500">{{ user.lieuNaissance || '-' }}</span>
+                             </div>
+                             <div class="col-span-1 text-center">
+                                 <span v-if="user.sexe === 'M'" class="inline-flex items-center justify-center w-6 h-6 rounded-full bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400 text-xs font-bold">M</span>
+                                 <span v-else-if="user.sexe === 'F'" class="inline-flex items-center justify-center w-6 h-6 rounded-full bg-pink-100 text-pink-600 dark:bg-pink-900/30 dark:text-pink-400 text-xs font-bold">F</span>
+                                 <span v-else class="text-slate-400 text-xs">-</span>
+                             </div>
+                             <div class="col-span-1 text-center">
+                                  <span v-if="user.isRedoublant" class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400 border border-amber-200 dark:border-amber-800">Oui</span>
+                                  <span v-else class="text-slate-400 text-xs">Non</span>
+                             </div>
+                              <div class="col-span-1 text-center">
+                                 <span v-if="user.classe" class="text-xs font-medium text-slate-600 dark:text-slate-400">
+                                     {{ user.classe.niveau }} {{ user.classe.section }}
+                                 </span>
+                                 <span v-else class="text-xs text-slate-400 italic">-</span>
+                              </div>
+                              <div class="col-span-1 text-center">
+                                   <span :class="['inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wide', getStatusBadgeClass(user.statutEleve || user.status)]">
+                                     {{ user.statutEleve || user.status || 'ACTIF' }}
+                                 </span>
+                              </div>
+                          </template>
 
-                        <!-- Contact -->
-                        <div class="col-span-3 text-sm text-slate-600 dark:text-slate-400 flex flex-col">
-                            <span v-if="user.telephone" class="flex items-center gap-1.5">
-                                <span class="material-symbols-outlined text-[14px] text-slate-400">call</span>
-                                {{ user.telephone }}
-                            </span>
-                            <span v-else class="text-slate-400 italic text-xs">Non renseigné</span>
-                        </div>
+                         <!-- Standard Rows -->
+                        <template v-else>
+                            <div class="col-span-4 flex items-center gap-3">
+                                <div :class="['size-10 rounded-full flex items-center justify-center font-bold text-sm shrink-0', getAvatarColor(user.role)]">
+                                    {{ getInitials(user.nom, user.prenom) }}
+                                </div>
+                                <div class="min-w-0">
+                                    <p class="text-sm font-bold text-slate-900 dark:text-white truncate">{{ user.prenom }} {{ user.nom }}</p>
+                                    <p class="text-xs text-slate-500 truncate">{{ user.email }}</p>
+                                    <p v-if="user.matricule" class="text-xs text-primary font-medium">Matricule: {{ user.matricule }}</p>
+                                </div>
+                            </div>
+                            <div class="col-span-3">
+                                 <div class="flex flex-col items-start gap-1">
+                                    <span :class="['inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wide', getRoleBadgeClass(user.role)]">
+                                        {{ user.role }}
+                                    </span>
+                                 </div>
+                            </div>
+                            <div class="col-span-3 text-sm text-slate-600 dark:text-slate-400 flex flex-col">
+                                <span v-if="user.telephone" class="flex items-center gap-1.5">
+                                    <span class="material-symbols-outlined text-[14px] text-slate-400">call</span>
+                                    {{ user.telephone }}
+                                </span>
+                                <span v-else class="text-slate-400 italic text-xs">Non renseigné</span>
+                            </div>
+                        </template>
 
                         <!-- Actions -->
                         <div class="col-span-2 flex justify-end gap-2 opacity-100 sm:opacity-0 group-hover:opacity-100 transition-opacity">
@@ -347,6 +391,27 @@ const getAvatarColor = (role) => {
 
 const getInitials = (nom, prenom) => {
   return `${prenom?.charAt(0) || ''}${nom?.charAt(0) || ''}`.toUpperCase()
+}
+
+const formatDate = (dateString) => {
+  if (!dateString) return '-'
+  return new Date(dateString).toLocaleDateString('fr-FR', {
+    day: '2-digit',
+    month: 'short',
+    year: 'numeric'
+  })
+}
+
+const getStatusBadgeClass = (status) => {
+  const map = {
+    'ACTIF': 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400',
+    'AFFECTE': 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400', 
+    'INACTIF': 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400',
+    'NON AFFECTE': 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400',
+    'EN_ATTENTE': 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400',
+    'BLOQUE': 'bg-slate-100 text-slate-800 dark:bg-slate-700 dark:text-slate-300'
+  }
+  return map[status?.toUpperCase()] || 'bg-slate-100 text-slate-800 dark:bg-slate-700 dark:text-slate-300'
 }
 
 const openEditModal = (user) => {

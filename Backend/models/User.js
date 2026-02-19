@@ -16,7 +16,7 @@ const UserSchema = new mongoose.Schema({
         required: [true, "L'email est requis"],
         unique: true,
         match: [
-            /^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/,
+            /^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,})+$/,
             'Veuillez ajouter un email valide'
         ]
     },
@@ -27,6 +27,14 @@ const UserSchema = new mongoose.Schema({
     },
     telephone: {
         type: String
+    },
+    sexe: {
+        type: String,
+        enum: ['M', 'F']
+    },
+    isRedoublant: {
+        type: Boolean,
+        default: false
     },
     // Personal information
     dateNaissance: {
@@ -95,6 +103,10 @@ const UserSchema = new mongoose.Schema({
         type: String,
         enum: ['ACTIF', 'INACTIF', 'EN_ATTENTE', 'BLOQUE'],
         default: 'EN_ATTENTE'
+    },
+    statutEleve: {
+        type: String, // e.g., 'AFFECTE', 'NON AFFECTE', 'TRANSFERE', etc. from Excel
+        default: 'AFFECTE'
     },
     photo: {
         type: String,

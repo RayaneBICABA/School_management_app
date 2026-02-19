@@ -174,8 +174,8 @@
             
             <div class="p-4 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg mb-6">
               <p class="text-sm text-amber-700 dark:text-amber-300">
-                <span class="font-bold">📋 Instructions :</span> Votre fichier doit contenir les colonnes suivantes : <span class="font-bold">Nom, Prenom</span> (Email, Matricule et Telephone sont optionnels). <br>
-                <span class="text-xs italic mt-1 block">Si Email/Matricule sont vides, ils seront générés automatiquement.</span>
+                <span class="font-bold">📋 Instructions :</span> Votre fichier doit contenir les colonnes suivantes : <span class="font-bold">"Matricule", "Nom et prenoms", "Date de naissance", "Lieu de naissance", "Classe redouble", "Sexe", "Statut"</span>. <br>
+                <span class="text-xs italic mt-1 block">La colonne "Nom et prenoms" sera scindée automatiquement. Email et Matricule sont générés si vides.</span>
               </p>
             </div>
 

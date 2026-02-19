@@ -1,0 +1,35 @@
+name: Deploy School App
+
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@v0.1.10
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            cd /root
+            # 1. Vérifier si le dossier existe, sinon cloner
+            if [ ! -d "School_management_app" ]; then
+              git clone https://github.com/${{ github.repository }}.git
+            fi
+            
+            # 2. Entrer dans le dossier et récupérer les derniers changements
+            cd School_management_app
+            git pull origin main
+            
+            # 3. Relancer les conteneurs (Build + Recreate)
+            docker compose up -d --build
+            
+            # 4. Nettoyage des vieilles images pour ne pas saturer le disque du VPS
+            docker image prune -f

@@ -7,8 +7,10 @@ const fileUpload = require('express-fileupload');
 const connectDB = require('./config/db');
 const path = require('path');
 
-// Load env vars/
-dotenv.config();
+// Load env vars
+dotenv.config({ path: path.join(__dirname, '.env') });
+
+console.log('DEBUG: Encoded MONGO_URI:', process.env.MONGO_URI);
 
 // Connect to database
 connectDB();
@@ -20,8 +22,8 @@ app.use(express.json({ limit: '10mb' })); // Increased limit for base64 images
 app.use(express.urlencoded({ limit: '10mb', extended: true }));
 app.use(cors({
     origin: [
-        'http://localhost:3000', 
-        'http://localhost:3001', 
+        'http://localhost:3000',
+        'http://localhost:3001',
         'https://unica.them4trix.org' // AJOUTE TON DOMAINE ICI
     ],
     credentials: true

@@ -42,7 +42,7 @@
                     <input v-model="searchQuery" class="block w-full bg-slate-50 dark:bg-slate-800 border-none rounded-lg py-2 pl-9 pr-4 text-sm text-slate-900 dark:text-white placeholder:text-slate-400 focus:ring-2 focus:ring-primary/20" placeholder="Rechercher..." type="text"/>
                 </div>
 
-                <router-link :to="getAddUserLink" class="flex items-center justify-center gap-2 px-5 h-10 bg-primary text-white rounded-lg font-bold shadow-md shadow-primary/20 hover:bg-primary/90 transition-all text-sm">
+                <router-link :to="getAddUserLink" class="btn-organic flex items-center justify-center gap-2 px-5 h-10 bg-primary text-white rounded-lg font-bold shadow-md shadow-primary/20 hover:bg-primary/90 text-sm">
                   <span class="material-symbols-outlined text-[18px]">person_add</span>
                   <span>Ajouter</span>
                 </router-link>
@@ -73,7 +73,12 @@
                 </div>
 
                 <div v-else class="divide-y divide-slate-100 dark:divide-slate-800">
-                    <div v-for="user in paginatedUsers" :key="user._id" class="grid grid-cols-12 gap-4 px-6 py-4 items-center hover:bg-slate-50/50 dark:hover:bg-slate-800/50 transition-colors group">
+                    <div 
+                      v-for="(user, index) in paginatedUsers" 
+                      :key="user._id" 
+                      class="grid grid-cols-12 gap-4 px-6 py-4 items-center hover:bg-slate-50/50 dark:hover:bg-slate-800/50 transition-colors group animate-slide-up"
+                      :style="{ animationDelay: `${Math.min(index, 15) * 50}ms` }"
+                    >
                         
                         <!-- User Info -->
                         <div class="col-span-4 flex items-center gap-3">
@@ -136,6 +141,7 @@
     </main>
 
   <!-- Edit User Modal -->
+  <Transition name="scale">
   <div v-if="showEditModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
     <div class="bg-white dark:bg-slate-900 w-full max-w-[640px] rounded-xl shadow-2xl flex flex-col max-h-[90vh] overflow-hidden">
       <!-- Modal Header -->
@@ -220,6 +226,7 @@
       </div>
     </div>
   </div>
+  </Transition>
   </div>
 </template>
 

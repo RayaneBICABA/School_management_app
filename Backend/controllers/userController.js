@@ -132,14 +132,25 @@ exports.deleteUser = async (req, res, next) => {
 // @access  Private/Admin/Censeur
 exports.importStudents = async (req, res, next) => {
     try {
-        if (!req.file) {
+        console.log('DEBUG: Import Request Body:', req.body);
+        console.log('DEBUG: Import Request Files Keys:', req.files ? Object.keys(req.files) : 'No files');
+
+        if (!req.files || !req.files.file) {
+            console.log('ERROR: File missing in request');
             return res.status(400).json({ success: false, error: 'Veuillez uploader un fichier Excel' });
         }
 
-        const workbook = xlsx.read(req.file.buffer, { type: 'buffer' });
-        const sheetName = workbook.SheetNames[0];
-        const sheet = workbook.Sheets[sheetName];
-        const students = xlsx.utils.sheet_to_json(sheet);
+        let students = [];
+        try {
+            // express-fileupload provides .data buffer
+            const workbook = xlsx.read(req.files.file.data, { type: 'buffer' });
+            const sheetName = workbook.SheetNames[0];
+            const sheet = workbook.Sheets[sheetName];
+            students = xlsx.utils.sheet_to_json(sheet);
+        } catch (parseError) {
+            console.error('Error parsing Excel file:', parseError);
+            return res.status(400).json({ success: false, error: 'Le fichier Excel est corrompu ou illisible.' });
+        }
 
         if (!students || students.length === 0) {
             return res.status(400).json({ success: false, error: 'Le fichier est vide ou mal formaté' });
@@ -149,26 +160,61 @@ exports.importStudents = async (req, res, next) => {
         const createdUsers = [];
         const errors = [];
 
+        // Helper to generate a random matricule if missing
+        const generateMatricule = () => {
+            const timestamp = Date.now().toString().slice(-6);
+            const random = Math.floor(Math.random() * 1000).toString().padStart(3, '0');
+            return `M${timestamp}${random}`;
+        };
+
         for (const student of students) {
-            // Basic validation
-            if (!student.Nom || !student.Prenom || !student.Email) {
-                errors.push(`Ligne ignorée (Données manquantes): ${JSON.stringify(student)}`);
+            // Updated validation: Only Nom and Prenom are strictly required now
+            if (!student.Nom || !student.Prenom) {
+                errors.push(`Ligne ignorée (Nom ou Prénom manquant): ${JSON.stringify(student)}`);
                 continue;
             }
 
             try {
+                // 1. Handle Matricule
+                let matricule = student.Matricule;
+                if (!matricule) {
+                    matricule = generateMatricule();
+                } else {
+                    // Check if provided matricule already exists
+                    const existingMatricule = await User.findOne({ matricule: matricule });
+                    if (existingMatricule) {
+                        errors.push(`Matricule déjà existant: ${matricule} (${student.Nom} ${student.Prenom})`);
+                        continue;
+                    }
+                }
+
+                // 2. Handle Email
+                let email = student.Email;
+                if (!email) {
+                    // Generate email based on matricule
+                    email = `${matricule}@eleve.school`.toLowerCase();
+                }
+
                 // Check duplicate email
-                const existingUser = await User.findOne({ email: student.Email });
+                const existingUser = await User.findOne({ email: email });
                 if (existingUser) {
-                    errors.push(`Email déjà utilisé: ${student.Email}`);
-                    continue;
+                    // If email was auto-generated, try to append a random suffix to make it unique
+                    if (!student.Email) {
+                        const match = email.match(/^(.+)@/);
+                        const prefix = match ? match[1] : matricule;
+                        email = `${prefix}.${Math.floor(Math.random() * 1000)}@eleve.school`.toLowerCase();
+                    } else {
+                        errors.push(`Email déjà utilisé: ${email} (${student.Nom} ${student.Prenom})`);
+                        continue;
+                    }
                 }
 
                 // Create User
                 const newUser = await User.create({
                     nom: student.Nom,
                     prenom: student.Prenom,
-                    email: student.Email,
+                    email: email,
+                    matricule: matricule,
                     telephone: student.Telephone || '',
                     role: 'ELEVE',
                     classe: classeId,
@@ -180,8 +226,10 @@ exports.importStudents = async (req, res, next) => {
 
                 // Auto-create bulletins for imported students
                 await createBulletinsForStudent(newUser);
+
             } catch (err) {
-                errors.push(`Erreur pour ${student.Email}: ${err.message}`);
+                console.error(`Error importing student ${student.Nom}:`, err);
+                errors.push(`Erreur pour ${student.Nom} ${student.Prenom}: ${err.message}`);
             }
         }
 
@@ -189,11 +237,13 @@ exports.importStudents = async (req, res, next) => {
             success: true,
             count: createdUsers.length,
             errors: errors.length > 0 ? errors : undefined,
-            message: `${createdUsers.length} élèves importés avec succès.`
+            message: `${createdUsers.length} élèves importés avec succès.${errors.length > 0 ? ' Certaines lignes ont été ignorées.' : ''}`
         });
 
     } catch (err) {
-        next(err);
+        console.error('Global Import Error:', err);
+        // Do not call next(err) to avoid crashing the server if possible, send a 500 response instead
+        res.status(500).json({ success: false, error: 'Une erreur interne est survenue lors de l\'importation.' });
     }
 };
 

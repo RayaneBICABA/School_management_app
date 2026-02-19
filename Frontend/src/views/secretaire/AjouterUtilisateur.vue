@@ -50,7 +50,7 @@
           <section>
             <h3 class="text-lg font-semibold mb-4 flex items-center gap-2">
               <span class="material-symbols-outlined text-primary">lock</span>
-              Mot de passe & Matricule (Optionnel)
+              Mot de passe & Matricule
             </h3>
             <div class="p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg mb-4">
               <p class="text-sm text-blue-700 dark:text-blue-300">
@@ -64,7 +64,7 @@
                 <p class="text-xs text-slate-500 dark:text-slate-400">Utilisé comme mot de passe par défaut si fourni</p>
               </div>
               <div class="flex flex-col gap-2">
-                <label class="text-sm font-medium text-[#0e141b] dark:text-slate-200">Mot de passe personnalisé (optionnel)</label>
+                <label class="text-sm font-medium text-[#0e141b] dark:text-slate-200">Mot de passe personnalisé</label>
                 <div class="relative">
                   <span class="material-symbols-outlined absolute left-3 top-3 text-slate-400 text-xl">lock</span>
                   <input v-model="form.password" class="form-input w-full rounded-lg border-[#d0dbe7] dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-[#0e141b] dark:text-white focus:border-primary focus:ring-primary h-12 pl-11 pr-4 text-base transition-all" placeholder="Laisser vide pour génération auto" type="password"/>

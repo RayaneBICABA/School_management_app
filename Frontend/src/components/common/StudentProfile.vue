@@ -21,7 +21,7 @@
         </div>
 
         <!-- Student Header Profile -->
-        <div class="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-6 shadow-sm mb-6">
+        <div class="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-6 shadow-sm mb-6 animate-slide-up">
           <div class="flex flex-col md:flex-row md:items-center justify-between gap-6">
             <div class="flex gap-6 items-center">
               <div class="relative group">
@@ -54,11 +54,11 @@
               </div>
             </div>
             <div class="flex flex-wrap gap-3">
-              <button @click="exportProfile" class="px-4 py-2 bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-white text-sm font-bold rounded-lg flex items-center gap-2 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors">
+              <button @click="exportProfile" class="btn-organic px-4 py-2 bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-white text-sm font-bold rounded-lg flex items-center gap-2 hover:bg-slate-200 dark:hover:bg-slate-700">
                 <span class="material-symbols-outlined text-sm">download</span>
                 Exporter
               </button>
-              <button v-if="showContactButton" @click="contactParents" class="px-4 py-2 bg-primary text-white text-sm font-bold rounded-lg flex items-center gap-2 shadow-sm hover:bg-blue-600 transition-colors">
+              <button v-if="showContactButton" @click="contactParents" class="btn-organic px-4 py-2 bg-primary text-white text-sm font-bold rounded-lg flex items-center gap-2 shadow-sm hover:bg-blue-600">
                 <span class="material-symbols-outlined text-sm">send</span>
                 Contacter
               </button>
@@ -67,7 +67,7 @@
         </div>
 
         <!-- Profile Navigation -->
-        <div class="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden mb-6">
+        <div class="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden mb-6 animate-slide-up delay-100">
           <div class="flex border-b border-slate-200 dark:border-slate-800 px-6 bg-slate-50/50 dark:bg-slate-800/20">
             <button 
               @click="activeSection = 'infos'"
@@ -90,7 +90,7 @@
         </div>
 
         <!-- Other Tabs Navigation -->
-        <div v-if="visibleTabs.length > 0" class="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden">
+        <div v-if="visibleTabs.length > 0" class="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden animate-slide-up delay-200">
           <div class="flex border-b border-slate-200 dark:border-slate-800 px-6 bg-slate-50/50 dark:bg-slate-800/20">
             <button 
               v-for="tab in visibleTabs" 
@@ -126,7 +126,7 @@
         </div>
 
         <!-- Other Tabs Content -->
-        <div v-if="visibleTabs.length > 0" class="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden">
+        <div v-if="visibleTabs.length > 0" class="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden animate-slide-up delay-300">
           <div class="p-6">
             <!-- Discipline Tab -->
             <StudentDisciplineTab 

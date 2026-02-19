@@ -133,7 +133,7 @@ export default {
     importStudents(formData) {
         return api.post('/users/import', formData, {
             headers: {
-                'Content-Type': 'multipart/form-data'
+                'Content-Type': undefined
             }
         });
     },
@@ -279,7 +279,7 @@ export default {
     importGrades(formData) {
         return api.post('/grades/import', formData, {
             headers: {
-                'Content-Type': 'multipart/form-data'
+                'Content-Type': undefined
             }
         });
     },
@@ -576,7 +576,7 @@ export default {
     },
     importNoteColumnExcel(id, formData) {
         return api.post(`/note-columns/${id}/import`, formData, {
-            headers: { 'Content-Type': 'multipart/form-data' }
+            headers: { 'Content-Type': undefined }
         });
     },
 

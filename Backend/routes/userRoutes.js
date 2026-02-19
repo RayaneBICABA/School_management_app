@@ -8,11 +8,6 @@ const {
     importStudents,
     bulkCreateStudents
 } = require('../controllers/userController');
-const multer = require('multer');
-
-// Configure multer for memory storage
-const storage = multer.memoryStorage();
-const upload = multer({ storage: storage });
 
 // Merge params to allow re-routing from other routers if needed
 const router = express.Router({ mergeParams: true });
@@ -27,7 +22,8 @@ router
     .get(authorize('ADMIN', 'CPE', 'PROVISEUR', 'CENSEUR', 'PROFESSEUR', 'SECRETAIRE'), getUsers)
     .post(authorize('ADMIN', 'PROVISEUR', 'CENSEUR', 'SECRETAIRE'), createUser);
 
-router.post('/import', authorize('ADMIN'), upload.single('file'), importStudents);
+// Removed multer middleware - relying on global express-fileupload
+router.post('/import', authorize('ADMIN'), importStudents);
 router.post('/bulk-students', authorize('PROVISEUR', 'ADMIN'), bulkCreateStudents);
 
 router

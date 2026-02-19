@@ -4,8 +4,7 @@ const ClasseSchema = new mongoose.Schema({
     niveau: {
         type: String,
         required: [true, 'Le niveau est requis'],
-        trim: true,
-        enum: ['6ème', '5ème', '4ème', '3ème', '2nde', '1ère', 'Terminale', 'CP', 'CE1', 'CE2', 'CM1', 'CM2']
+        trim: true
     },
     serie: {
         type: String,

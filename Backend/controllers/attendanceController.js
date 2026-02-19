@@ -14,7 +14,7 @@ exports.getStudentsByClass = async (req, res, next) => {
         const students = await User.find({
             classe: req.params.classeId,
             role: 'ELEVE'
-        }).select('nom prenom email photo status matricule');
+        }).select('nom prenom email photo status matricule dateNaissance lieuNaissance isRedoublant sexe statutEleve telephone');
 
         res.status(200).json({
             success: true,

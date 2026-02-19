@@ -207,6 +207,7 @@ const routes = [
       { path: 'classes/:id/eleve/:eleveId', name: 'CenseurFicheEleveClasse', component: CenseurClassesFicheEleve },
       { path: 'eleve/:eleveId', name: 'CenseurFicheEleve', component: CenseurFicheEleve },
       { path: 'professeurs', name: 'CenseurProfesseurs', component: CenseurProfesseurs },
+      { path: 'ajouter-utilisateur', name: 'CenseurAjouterUtilisateur', component: () => import('@/views/admin/AjouterUtilisateur.vue') },
       { path: 'notifications', name: 'CenseurNotifications', component: () => import('@/views/common/GlobalNotifications.vue') },
       { path: 'master-sheet', name: 'CenseurMasterSheet', component: () => import('@/views/common/MasterGradeSheet.vue') },
       { path: 'profil', name: 'CenseurProfil', component: CenseurProfil }
@@ -241,6 +242,7 @@ const routes = [
       { path: 'nouvelle-evaluation', name: 'ProviseurNouvelleEvaluation', component: () => import('@/views/proviseur/NouvelleEvaluation.vue') },
       { path: 'affectation-eleves', name: 'ProviseurAffectationEleves', component: () => import('@/views/proviseur/AffectationEleves.vue') },
       { path: 'utilisateurs', name: 'ProviseurUtilisateurs', component: () => import('@/views/proviseur/GestionUtilisateurs.vue') },
+      { path: 'ajouter-utilisateur', name: 'ProviseurAjouterUtilisateur', component: () => import('@/views/admin/AjouterUtilisateur.vue') },
       { path: 'classes', name: 'ProviseurClasses', component: () => import('@/views/proviseur/GestionClasses.vue') },
       { path: 'classes/:id/eleves', name: 'ProviseurListeElevesClasse', component: () => import('@/views/proviseur/classes/ListeElevesClasse.vue') },
       { path: 'classes/:id/eleve/:eleveId', name: 'ProviseurFicheEleve', component: () => import('@/views/proviseur/classes/FicheEleve.vue') },

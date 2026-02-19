@@ -3,15 +3,34 @@
     <div class="max-w-7xl mx-auto">
       <!-- Header -->
       <div class="mb-8">
-        <div class="flex items-center gap-3 mb-2">
-          <button @click="$router.go(-1)" class="flex items-center gap-2 px-3 py-2 text-slate-600 dark:text-slate-400 hover:text-primary dark:hover:text-primary hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors font-medium">
-            <span class="material-symbols-outlined">arrow_back</span>
-            <span>Retour aux classes</span>
-          </button>
-          <h1 class="text-3xl font-black text-[#0e141b] dark:text-white">Liste des Élèves</h1>
+        <div class="flex flex-wrap items-center justify-between gap-4 mb-2">
+          <div class="flex items-center gap-3">
+            <button @click="$router.go(-1)" class="flex items-center gap-2 px-3 py-2 text-slate-600 dark:text-slate-400 hover:text-primary dark:hover:text-primary hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors font-medium">
+              <span class="material-symbols-outlined">arrow_back</span>
+              <span class="hidden sm:inline">Retour aux classes</span>
+            </button>
+            <h1 class="text-3xl font-black text-[#0e141b] dark:text-white">Liste des Élèves</h1>
+          </div>
+          <div class="flex items-center gap-4 flex-1 justify-end">
+            <div class="relative w-full max-w-md">
+              <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">search</span>
+              <input 
+                v-model="searchQuery"
+                type="text" 
+                placeholder="Rechercher un élève..."
+                class="w-full pl-10 pr-4 h-11 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all shadow-sm"
+              />
+            </div>
+            <router-link :to="`/proviseur/ajouter-utilisateur?role=ELEVE&classe=${classeId}`" class="btn-organic flex items-center justify-center gap-2 px-5 h-11 bg-primary text-white rounded-lg font-bold shadow-md shadow-primary/20 hover:bg-primary/90 text-sm whitespace-nowrap">
+              <span class="material-symbols-outlined text-[18px]">person_add</span>
+              <span>Ajouter un élève</span>
+            </router-link>
+          </div>
         </div>
         <p class="text-[#4e7397] dark:text-slate-400 ml-14" v-if="classe">
-          {{ classe.niveau }} {{ classe.section }} - {{ eleves.length }} élève(s)
+          {{ classe.niveau }} {{ classe.section }} - 
+          <span v-if="searchQuery" class="font-bold text-primary">{{ filteredEleves.length }} trouvé(s)</span>
+          <span v-else>{{ eleves.length }} élève(s)</span>
         </p>
       </div>
 
@@ -33,6 +52,7 @@
                 <th class="px-6 py-4 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">Nom et prénoms</th>
                 <th class="px-6 py-4 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">Date de naissance</th>
                 <th class="px-6 py-4 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">Lieu de naissance</th>
+                <th class="px-6 py-4 text-center text-xs font-bold text-slate-500 uppercase tracking-wider">Contact</th>
                 <th class="px-6 py-4 text-center text-xs font-bold text-slate-500 uppercase tracking-wider">Redoublant</th>
                 <th class="px-6 py-4 text-center text-xs font-bold text-slate-500 uppercase tracking-wider">Sexe</th>
                 <th class="px-6 py-4 text-center text-xs font-bold text-slate-500 uppercase tracking-wider">Statut</th>
@@ -40,7 +60,7 @@
               </tr>
             </thead>
             <tbody class="divide-y divide-slate-200 dark:divide-slate-800">
-              <tr v-for="eleve in eleves" :key="eleve._id" class="hover:bg-slate-50 dark:hover:bg-slate-800/30 transition-colors">
+              <tr v-for="eleve in filteredEleves" :key="eleve._id" class="hover:bg-slate-50 dark:hover:bg-slate-800/30 transition-colors">
                 <td class="px-6 py-4 whitespace-nowrap">
                   <span class="text-sm font-medium text-[#0e141b] dark:text-white">{{ eleve.matricule }}</span>
                 </td>
@@ -62,9 +82,16 @@
                    <span class="text-sm text-[#0e141b] dark:text-slate-200">{{ eleve.lieuNaissance || '-' }}</span>
                 </td>
                 <td class="px-6 py-4 whitespace-nowrap text-center">
+                   <div v-if="eleve.telephone" class="flex items-center justify-center gap-1 text-[#0e141b] dark:text-slate-200">
+                      <span class="material-symbols-outlined text-[16px] text-slate-400">call</span>
+                      <span class="text-sm">{{ eleve.telephone }}</span>
+                   </div>
+                   <span v-else class="text-slate-400 text-xs italic">Non renseigné</span>
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap text-center">
                    <span v-if="eleve.isRedoublant" class="inline-flex items-center px-2 py-0.5 rounded text-xs font-bold bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400 border border-amber-200 dark:border-amber-800">
                      Oui
-                   &lt;/span&gt;
+                   </span>
                    <span v-else class="text-slate-400 text-xs">Non</span>
                 </td>
                 <td class="px-6 py-4 whitespace-nowrap text-center">
@@ -111,7 +138,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import api from '@/services/api'
 
@@ -122,6 +149,17 @@ const classeId = route.params.id
 const isLoading = ref(true)
 const eleves = ref([])
 const classe = ref(null)
+const searchQuery = ref('')
+
+const filteredEleves = computed(() => {
+  if (!searchQuery.value) return eleves.value;
+  const q = searchQuery.value.toLowerCase();
+  return eleves.value.filter(e => 
+    e.nom.toLowerCase().includes(q) || 
+    e.prenom.toLowerCase().includes(q) ||
+    e.matricule.toLowerCase().includes(q)
+  );
+});
 
 // Récupérer les initiales d'un élève
 const getInitials = (eleve) => {

@@ -13,13 +13,24 @@
         <h1 class="text-4xl font-black tracking-tight text-[#0e141b] dark:text-white">Gestion des Utilisateurs</h1>
         <p class="text-[#4e7397] dark:text-slate-400 text-base">Gérez les censeurs et professeurs de l'établissement.</p>
       </div>
-      <button 
-        @click="openCreateModal"
-        class="flex items-center gap-2 rounded-lg h-10 px-4 bg-primary text-white font-bold text-sm hover:bg-primary/90 transition-colors shadow-lg shadow-primary/20"
-      >
-        <span class="material-symbols-outlined text-lg">add</span>
-        Nouvel Utilisateur
-      </button>
+      <div class="flex items-center gap-4">
+        <div class="relative">
+          <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">search</span>
+          <input 
+            v-model="searchQuery"
+            type="text" 
+            placeholder="Rechercher (Nom, Email, Tel)..."
+            class="pl-10 pr-4 h-10 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-sm focus:ring-primary focus:border-primary w-64 transition-all shadow-sm"
+          />
+        </div>
+        <button 
+          @click="openCreateModal"
+          class="flex items-center gap-2 rounded-lg h-10 px-4 bg-primary text-white font-bold text-sm hover:bg-primary/90 transition-colors shadow-lg shadow-primary/20"
+        >
+          <span class="material-symbols-outlined text-lg">add</span>
+          Nouveau
+        </button>
+      </div>
     </div>
 
     <!-- Role Tabs -->
@@ -254,6 +265,7 @@ const isLoading = ref(false)
 const isSaving = ref(false)
 const editingUser = ref(null)
 const activeRole = ref('PROFESSEUR')
+const searchQuery = ref('')
 
 // Delete Modal State
 const showDeleteModal = ref(false)
@@ -270,7 +282,15 @@ const form = reactive({
 })
 
 const currentUsers = computed(() => {
-  return activeRole.value === 'PROFESSEUR' ? professeurs.value : censeurs.value
+  const users = activeRole.value === 'PROFESSEUR' ? professeurs.value : censeurs.value
+  if (!searchQuery.value) return users
+  const q = searchQuery.value.toLowerCase()
+  return users.filter(u => 
+    u.nom.toLowerCase().includes(q) || 
+    u.prenom.toLowerCase().includes(q) ||
+    u.email.toLowerCase().includes(q) ||
+    (u.telephone && u.telephone.toLowerCase().includes(q))
+  )
 })
 
 const fetchUsers = async () => {

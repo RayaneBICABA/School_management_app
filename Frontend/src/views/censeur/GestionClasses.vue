@@ -14,10 +14,21 @@
         <h1 class="text-4xl font-black tracking-tight text-[#0e141b] dark:text-white">Filières et Classes</h1>
         <p class="text-[#4e7397] dark:text-slate-400 text-base">Gérez les départements académiques et leurs classes respectives.</p>
       </div>
-      <button class="flex items-center gap-2 rounded-lg h-10 px-4 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 font-bold text-sm hover:bg-slate-50 dark:hover:bg-slate-750 transition-colors">
-        <span class="material-symbols-outlined text-lg">download</span>
-        Exporter la liste
-      </button>
+      <div class="flex items-center gap-4">
+        <div class="relative">
+          <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">search</span>
+          <input 
+            v-model="searchQuery"
+            type="text" 
+            placeholder="Rechercher une classe, salle..."
+            class="pl-10 pr-4 h-10 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-sm focus:ring-primary focus:border-primary w-64 transition-all"
+          />
+        </div>
+        <button class="flex items-center gap-2 rounded-lg h-10 px-4 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 font-bold text-sm hover:bg-slate-50 dark:hover:bg-slate-750 transition-colors">
+          <span class="material-symbols-outlined text-lg">download</span>
+          Exporter
+        </button>
+      </div>
     </div>
 
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -53,7 +64,7 @@
               </thead>
               <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
                 <tr 
-                  v-for="classe in filieres.Generale" 
+                  v-for="classe in filteredGenerale" 
                   :key="classe.id"
                   @click="voirEleves(classe)"
                   class="hover:bg-slate-50 dark:hover:bg-slate-800/30 transition-colors cursor-pointer"
@@ -118,7 +129,7 @@
               </thead>
               <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
                 <tr 
-                  v-for="classe in filieres.Technique" 
+                  v-for="classe in filteredTechnique" 
                   :key="classe.id"
                   @click="voirEleves(classe)"
                   class="hover:bg-slate-50 dark:hover:bg-slate-800/30 transition-colors cursor-pointer"
@@ -407,6 +418,28 @@ const filieres = reactive({
 })
 
 const isLoading = ref(false)
+const searchQuery = ref('')
+
+const filteredGenerale = computed(() => {
+  if (!searchQuery.value) return filieres.Generale;
+  const q = searchQuery.value.toLowerCase();
+  return filieres.Generale.filter(c => 
+    c.nom.toLowerCase().includes(q) || 
+    c.niveau.toLowerCase().includes(q) ||
+    c.salle.toLowerCase().includes(q)
+  );
+});
+
+const filteredTechnique = computed(() => {
+  if (!searchQuery.value) return filieres.Technique;
+  const q = searchQuery.value.toLowerCase();
+  return filieres.Technique.filter(c => 
+    c.nom.toLowerCase().includes(q) || 
+    (c.specialite && c.specialite.toLowerCase().includes(q)) ||
+    c.salle.toLowerCase().includes(q)
+  );
+});
+
 
 // Formulaire
 const form = reactive({
@@ -549,6 +582,7 @@ const handleSubmit = async () => {
     const payload = {
       section: form.nom,
       niveau: form.filiere === 'Technique' ? 'Terminale' : niveauMap[form.niveau] || form.niveau,
+      filiere: form.filiere === 'Generale' ? 'Générale' : 'Technique',
       serie: form.filiere === 'Generale' ? 'Général' : form.specialite,
       capacite: form.capaciteMax,
       salle: form.salle,

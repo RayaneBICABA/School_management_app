@@ -14,10 +14,21 @@
         <h1 class="text-4xl font-black tracking-tight text-[#0e141b] dark:text-white">Filières et Classes</h1>
         <p class="text-[#4e7397] dark:text-slate-400 text-base">Gérez les départements académiques et leurs classes respectives.</p>
       </div>
-      <button class="flex items-center gap-2 rounded-lg h-10 px-4 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 font-bold text-sm hover:bg-slate-50 dark:hover:bg-slate-750 transition-colors">
-        <span class="material-symbols-outlined text-lg">download</span>
-        Exporter la liste
-      </button>
+      <div class="flex items-center gap-4">
+        <div class="relative">
+          <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">search</span>
+          <input 
+            v-model="searchQuery"
+            type="text" 
+            placeholder="Rechercher une classe..."
+            class="pl-10 pr-4 h-10 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-sm focus:ring-primary focus:border-primary w-64 transition-all"
+          />
+        </div>
+        <button class="flex items-center gap-2 rounded-lg h-10 px-4 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 font-bold text-sm hover:bg-slate-50 dark:hover:bg-slate-750 transition-colors">
+          <span class="material-symbols-outlined text-lg">download</span>
+          Exporter
+        </button>
+      </div>
     </div>
 
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -53,7 +64,7 @@
               </thead>
               <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
                 <tr 
-                  v-for="classe in filieres.Generale" 
+                  v-for="classe in filteredGenerale" 
                   :key="classe.id"
                   @click="voirEleves(classe)"
                   class="hover:bg-slate-50 dark:hover:bg-slate-800/30 transition-colors cursor-pointer"
@@ -123,7 +134,7 @@
               </thead>
               <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
                 <tr 
-                  v-for="classe in filieres.Technique" 
+                  v-for="classe in filteredTechnique" 
                   :key="classe.id"
                   @click="voirEleves(classe)"
                   class="hover:bg-slate-50 dark:hover:bg-slate-800/30 transition-colors cursor-pointer"
@@ -200,38 +211,65 @@
               </select>
             </div>
             <div class="flex flex-col gap-1.5">
-              <label class="text-sm font-semibold text-[#0e141b] dark:text-slate-200">
-                Niveau d'étude
-              </label>
+              <div class="flex items-center justify-between">
+                <label class="text-sm font-semibold text-[#0e141b] dark:text-slate-200">
+                  Niveau d'étude
+                </label>
+                <button 
+                  type="button" 
+                  @click="isCustomNiveau = !isCustomNiveau; form.niveau = ''" 
+                  class="text-xs text-primary font-bold hover:underline"
+                >
+                  {{ isCustomNiveau ? 'Choisir existant' : '+ Nouveau' }}
+                </button>
+              </div>
+
+              <input 
+                v-if="isCustomNiveau"
+                v-model="form.niveau"
+                class="w-full bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 rounded-lg text-sm focus:ring-primary focus:border-primary h-10 px-3 text-[#0e141b] dark:text-white"
+                placeholder="ex: Terminal G"
+                required
+              />
               <select 
+                v-else
                 v-model="form.niveau"
                 class="w-full bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 rounded-lg text-sm focus:ring-primary focus:border-primary h-10 px-3 text-[#0e141b] dark:text-white"
                 required
               >
                 <option value="">Sélectionner un niveau</option>
-                <option v-if="form.filiere === 'Generale'" value="Sixième">Sixième</option>
-                <option v-if="form.filiere === 'Generale'" value="Cinquième">Cinquième</option>
-                <option v-if="form.filiere === 'Generale'" value="Quatrième">Quatrième</option>
-                <option v-if="form.filiere === 'Generale'" value="Troisième">Troisième</option>
-                <option value="Seconde">Seconde</option>
-                <option value="Première">Première</option>
-                <option value="Terminale">Terminale</option>
+                <option v-for="niv in allNiveaux" :key="niv" :value="niv">{{ niv }}</option>
               </select>
             </div>
-            <div class="flex flex-col gap-1.5">
-              <label class="text-sm font-semibold text-[#0e141b] dark:text-slate-200">
-                {{ form.filiere === 'Technique' ? 'Spécialité' : 'Autre' }}
-              </label>
-              <select 
-                v-if="form.filiere === 'Technique'"
+            <div class="flex flex-col gap-1.5" v-if="form.filiere === 'Technique'">
+              <div class="flex items-center justify-between">
+                <label class="text-sm font-semibold text-[#0e141b] dark:text-slate-200">
+                  Spécialité
+                </label>
+                <button 
+                  type="button" 
+                  @click="isCustomSpecialite = !isCustomSpecialite; form.specialite = ''" 
+                  class="text-xs text-primary font-bold hover:underline"
+                >
+                  {{ isCustomSpecialite ? 'Choisir existante' : '+ Nouvelle' }}
+                </button>
+              </div>
+
+              <input 
+                v-if="isCustomSpecialite"
                 v-model="form.specialite"
                 class="w-full bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 rounded-lg text-sm focus:ring-primary focus:border-primary h-10 px-3 text-[#0e141b] dark:text-white"
-                :required="form.filiere === 'Technique'"
+                placeholder="ex: Électronique"
+                required
+              />
+              <select 
+                v-else
+                v-model="form.specialite"
+                class="w-full bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 rounded-lg text-sm focus:ring-primary focus:border-primary h-10 px-3 text-[#0e141b] dark:text-white"
+                required
               >
                 <option value="">Sélectionner une spécialité</option>
-                <option value="Ingénierie">Ingénierie</option>
-                <option value="Gestion">Gestion</option>
-                <option value="Commerce">Commerce</option>
+                <option v-for="spec in allSpecialites" :key="spec" :value="spec">{{ spec }}</option>
               </select>
             </div>
             <div class="grid grid-cols-2 gap-4">
@@ -437,6 +475,46 @@ const courseForm = reactive({
   newNom: ''
 })
 
+const isCustomNiveau = ref(false)
+const isCustomSpecialite = ref(false)
+const searchQuery = ref('')
+
+const dynamicNiveaux = ref([])
+const dynamicSpecialites = ref([])
+
+const filteredGenerale = computed(() => {
+  if (!searchQuery.value) return filieres.Generale
+  const q = searchQuery.value.toLowerCase()
+  return filieres.Generale.filter(c => 
+    c.nom.toLowerCase().includes(q) || 
+    c.niveau.toLowerCase().includes(q) ||
+    c.salle.toLowerCase().includes(q)
+  )
+})
+
+const filteredTechnique = computed(() => {
+  if (!searchQuery.value) return filieres.Technique
+  const q = searchQuery.value.toLowerCase()
+  return filieres.Technique.filter(c => 
+    c.nom.toLowerCase().includes(q) || 
+    c.niveau.toLowerCase().includes(q) ||
+    c.specialite.toLowerCase().includes(q) ||
+    c.salle.toLowerCase().includes(q)
+  )
+})
+
+const allNiveaux = computed(() => {
+  const defaults = ['Sixième', 'Cinquième', 'Quatrième', 'Troisième', 'Seconde', 'Première', 'Terminale']
+  const combined = [...new Set([...defaults, ...dynamicNiveaux.value])]
+  return combined.sort()
+})
+
+const allSpecialites = computed(() => {
+  const defaults = ['Ingénierie', 'Gestion', 'Commerce']
+  const combined = [...new Set([...defaults, ...dynamicSpecialites.value])]
+  return combined.sort()
+})
+
 const matieresDisponibles = computed(() => {
   if (!availableMatieres.value) return []
   return availableMatieres.value.filter(m => 
@@ -458,48 +536,38 @@ const fetchClasses = async () => {
     // Process classes and fetch student counts
     for (const cls of classes) {
       try {
-        // Fetch students for this class to get real effectif
         const studentsResponse = await api.getStudentsByClass(cls._id)
         const studentsCount = studentsResponse.data?.data?.length || 0
         
-        // Map API fields to UI fields correctly
-        const uiClass = {
-          id: cls._id,
-          nom: cls.section || cls.nom, // Use section as display name (e.g. "6ème A")
-          niveau: cls.niveau,
-          salle: cls.salle || 'N/A',
-          capaciteMax: cls.capacite || 35,
-          effectif: studentsCount, // Real student count from API
-          specialite: cls.serie || '' // Use serie for technical classes
-        }
-        
-        // Correctly classify by serie field
-        if (cls.serie === 'Général' || cls.serie === 'Générale') {
-           filieres.Generale.push(uiClass)
-        } else {
-           filieres.Technique.push(uiClass)
-        }
-      } catch (studentError) {
-        console.warn(`Erreur chargement effectifs pour la classe ${cls._id}:`, studentError)
-        // Fallback to 0 if student count fails
         const uiClass = {
           id: cls._id,
           nom: cls.section || cls.nom,
           niveau: cls.niveau,
           salle: cls.salle || 'N/A',
           capaciteMax: cls.capacite || 35,
-          effectif: 0,
+          effectif: studentsCount,
           specialite: cls.serie || ''
         }
         
-        if (cls.serie === 'Général' || cls.serie === 'Générale') {
+        if (cls.filiere === 'Générale') {
            filieres.Generale.push(uiClass)
         } else {
            filieres.Technique.push(uiClass)
         }
+      } catch (err) {
+        filieres.Generale.push({ id: cls._id, nom: cls.section, niveau: cls.niveau, salle: cls.salle, effectif: 0, capaciteMax: 35 })
       }
     }
 
+    // Extract dynamic levels and specialties
+    const levels = new Set()
+    const specialties = new Set()
+    classes.forEach(cls => {
+      if (cls.niveau) levels.add(cls.niveau)
+      if (cls.serie && cls.serie !== 'Général' && cls.serie !== 'Générale') specialties.add(cls.serie)
+    })
+    dynamicNiveaux.value = Array.from(levels)
+    dynamicSpecialites.value = Array.from(specialties)
   } catch (err) {
     console.error('Erreur chargement classes:', err)
   } finally {
@@ -538,6 +606,13 @@ const editClass = async (classe) => {
   form.capaciteMax = classe.capacite || 35
   form.salle = classe.salle || ''
   
+  // Detect if level or specialty is custom
+  const standardNiveaux = ['Sixième', 'Cinquième', 'Quatrième', 'Troisième', 'Seconde', 'Première', 'Terminale', '6ème', '5ème', '4ème', '3ème', '2nde', '1ère']
+  const standardSpecialites = ['Ingénierie', 'Gestion', 'Commerce']
+  
+  isCustomNiveau.value = !standardNiveaux.includes(classe.niveau)
+  isCustomSpecialite.value = classe.specialite && !standardSpecialites.includes(classe.specialite)
+
   // Load courses for this class
   await fetchClasseCourses(classe.id)
 }
@@ -569,6 +644,8 @@ const resetForm = () => {
   form.specialite = ''
   form.capaciteMax = 35
   form.salle = ''
+  isCustomNiveau.value = false
+  isCustomSpecialite.value = false
 }
 
 const handleSubmit = async () => {
@@ -586,11 +663,12 @@ const handleSubmit = async () => {
     
     const payload = {
       section: form.nom,
-      niveau: niveauMap[form.niveau] || form.niveau,
+      niveau: isCustomNiveau.value ? form.niveau : (niveauMap[form.niveau] || form.niveau),
+      filiere: form.filiere === 'Generale' ? 'Générale' : 'Technique',
       serie: form.filiere === 'Generale' ? 'Général' : form.specialite,
       capacite: form.capaciteMax,
       salle: form.salle,
-      anneeScolaire: '2023-2024'
+      anneeScolaire: '2025-2026' // Updated to match previous task seeding
     }
 
     if (editingClass.value) {

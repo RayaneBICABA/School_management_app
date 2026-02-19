@@ -3,12 +3,21 @@
     <div class="max-w-7xl mx-auto">
       <!-- Header -->
       <div class="mb-8">
-        <div class="flex items-center gap-3 mb-2">
-          <button @click="$router.go(-1)" class="flex items-center gap-2 px-3 py-2 text-slate-600 dark:text-slate-400 hover:text-primary dark:hover:text-primary hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors font-medium">
-            <span class="material-symbols-outlined">arrow_back</span>
-            <span>Retour aux classes</span>
-          </button>
-          <h1 class="text-3xl font-black text-[#0e141b] dark:text-white">Liste des Élèves</h1>
+        <div class="flex flex-wrap items-center justify-between gap-4 mb-2">
+          <div class="flex items-center gap-3">
+            <button @click="$router.go(-1)" class="flex items-center gap-2 px-3 py-2 text-slate-600 dark:text-slate-400 hover:text-primary dark:hover:text-primary hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors font-medium">
+              <span class="material-symbols-outlined">arrow_back</span>
+              <span class="hidden sm:inline">Retour aux classes</span>
+            </button>
+            <h1 class="text-3xl font-black text-[#0e141b] dark:text-white">Liste des Élèves</h1>
+          </div>
+          <div class="flex items-center gap-4 flex-1 justify-end">
+            <!-- Ajout du bouton -->
+            <router-link :to="`/censeur/ajouter-utilisateur?role=ELEVE&classe=${classeId}`" class="btn-organic flex items-center justify-center gap-2 px-5 h-11 bg-primary text-white rounded-lg font-bold shadow-md shadow-primary/20 hover:bg-primary/90 text-sm whitespace-nowrap">
+              <span class="material-symbols-outlined text-[18px]">person_add</span>
+              <span>Ajouter un élève</span>
+            </router-link>
+          </div>
         </div>
         <p class="text-[#4e7397] dark:text-slate-400 ml-14" v-if="classe">
           {{ classe.niveau }} {{ classe.section }} - {{ eleves.length }} élève(s)
@@ -30,14 +39,18 @@
             <thead class="bg-slate-50 dark:bg-slate-800/50">
               <tr>
                 <th class="px-6 py-4 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">Matricule</th>
-                <th class="px-6 py-4 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">Nom Complet</th>
-                <th class="px-6 py-4 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">Email</th>
-                <th class="px-6 py-4 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">Téléphone</th>
+                <th class="px-6 py-4 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">Nom et prénoms</th>
+                <th class="px-6 py-4 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">Date de naissance</th>
+                <th class="px-6 py-4 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">Lieu de naissance</th>
+                <th class="px-6 py-4 text-center text-xs font-bold text-slate-500 uppercase tracking-wider">Contact</th>
+                <th class="px-6 py-4 text-center text-xs font-bold text-slate-500 uppercase tracking-wider">Redoublant</th>
+                <th class="px-6 py-4 text-center text-xs font-bold text-slate-500 uppercase tracking-wider">Sexe</th>
+                <th class="px-6 py-4 text-center text-xs font-bold text-slate-500 uppercase tracking-wider">Statut</th>
                 <th class="px-6 py-4 text-center text-xs font-bold text-slate-500 uppercase tracking-wider">Actions</th>
               </tr>
             </thead>
             <tbody class="divide-y divide-slate-200 dark:divide-slate-800">
-              <tr v-for="eleve in eleves" :key="eleve.id" class="hover:bg-slate-50 dark:hover:bg-slate-800/30 transition-colors">
+              <tr v-for="eleve in eleves" :key="eleve._id || eleve.id" class="hover:bg-slate-50 dark:hover:bg-slate-800/30 transition-colors">
                 <td class="px-6 py-4 whitespace-nowrap">
                   <span class="text-sm font-medium text-[#0e141b] dark:text-white">{{ eleve.matricule }}</span>
                 </td>
@@ -47,24 +60,47 @@
                       <span class="text-primary font-bold text-sm">{{ getInitials(eleve) }}</span>
                     </div>
                     <div>
-                      <p class="text-sm font-medium text-[#0e141b] dark:text-white">{{ eleve.prenom }} {{ eleve.nom }}</p>
-                      <p class="text-xs text-slate-500">{{ eleve.classe?.niveau }} {{ eleve.classe?.section }}</p>
+                        <p class="text-sm font-bold text-[#0e141b] dark:text-white">{{ eleve.prenom }} {{ eleve.nom }}</p>
+                        <p v-if="eleve.email" class="text-xs text-slate-500">{{ eleve.email }}</p>
                     </div>
                   </div>
                 </td>
                 <td class="px-6 py-4 whitespace-nowrap">
-                  <span class="text-sm text-[#0e141b] dark:text-slate-300">{{ eleve.email || 'N/A' }}</span>
+                   <span class="text-sm text-[#0e141b] dark:text-slate-200">{{ formatDate(eleve.dateNaissance) }}</span>
                 </td>
                 <td class="px-6 py-4 whitespace-nowrap">
-                  <span class="text-sm text-[#0e141b] dark:text-slate-300">{{ eleve.telephone || 'N/A' }}</span>
+                   <span class="text-sm text-[#0e141b] dark:text-slate-200">{{ eleve.lieuNaissance || '-' }}</span>
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap text-center">
+                   <div v-if="eleve.telephone" class="flex items-center justify-center gap-1 text-[#0e141b] dark:text-slate-200">
+                      <span class="material-symbols-outlined text-[16px] text-slate-400">call</span>
+                      <span class="text-sm">{{ eleve.telephone }}</span>
+                   </div>
+                   <span v-else class="text-slate-400 text-xs italic">Non renseigné</span>
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap text-center">
+                   <span v-if="eleve.isRedoublant" class="inline-flex items-center px-2 py-0.5 rounded text-xs font-bold bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400 border border-amber-200 dark:border-amber-800">
+                     Oui
+                   </span>
+                   <span v-else class="text-slate-400 text-xs">Non</span>
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap text-center">
+                   <span v-if="eleve.sexe === 'M'" class="inline-flex items-center justify-center w-6 h-6 rounded-full bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400 text-xs font-bold" title="Masculin">M</span>
+                   <span v-else-if="eleve.sexe === 'F'" class="inline-flex items-center justify-center w-6 h-6 rounded-full bg-pink-100 text-pink-600 dark:bg-pink-900/30 dark:text-pink-400 text-xs font-bold" title="Féminin">F</span>
+                   <span v-else class="text-slate-400 text-xs">-</span>
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap text-center">
+                   <span :class="['px-2 py-1 rounded-full text-xs font-bold', getStatusClass(eleve.statutEleve || eleve.status)]">
+                      {{ eleve.statutEleve || eleve.status || 'ACTIF' }}
+                   </span>
                 </td>
                 <td class="px-6 py-4 whitespace-nowrap text-center">
                   <button 
                     @click="voirFicheEleve(eleve)"
-                    class="inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded-md text-primary bg-primary/10 hover:bg-primary/20 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary transition-colors"
+                    class="inline-flex items-center gap-2 px-3 py-2 bg-primary text-white text-sm font-medium rounded-lg hover:bg-primary/90 transition-colors"
                   >
-                    <span class="material-symbols-outlined text-sm mr-1">visibility</span>
-                    Voir la fiche
+                    <span class="material-symbols-outlined text-sm">person</span>
+                    Voir
                   </button>
                 </td>
               </tr>
@@ -103,7 +139,29 @@ const getInitials = (eleve) => {
 
 // Voir la fiche d'un élève
 const voirFicheEleve = (eleve) => {
-  router.push(`/censeur/classes/${classeId}/eleve/${eleve.id}`)
+  const finalId = eleve._id || eleve.id
+  router.push(`/censeur/classes/${classeId}/eleve/${finalId}`)
+}
+
+const formatDate = (dateString) => {
+  if (!dateString) return '-'
+  return new Date(dateString).toLocaleDateString('fr-FR', {
+    day: '2-digit',
+    month: 'short',
+    year: 'numeric'
+  })
+}
+
+const getStatusClass = (status) => {
+  const map = {
+    'ACTIF': 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400',
+    'AFFECTE': 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400',
+    'INACTIF': 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400',
+    'NON AFFECTE': 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400',
+    'EN_ATTENTE': 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400',
+    'BLOQUE': 'bg-slate-100 text-slate-800 dark:bg-slate-700 dark:text-slate-300'
+  }
+  return map[status?.toUpperCase()] || 'bg-slate-100 text-slate-800 dark:bg-slate-700 dark:text-slate-300'
 }
 
 // Générer un matricule unique

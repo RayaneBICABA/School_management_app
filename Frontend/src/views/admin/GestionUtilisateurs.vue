@@ -56,7 +56,17 @@
       <div class="max-w-[1600px] mx-auto h-full flex flex-col bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden">
             
             <!-- Table Header -->
-            <div class="grid grid-cols-12 gap-4 px-6 py-3 border-b border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/20 text-xs font-bold text-slate-400 uppercase tracking-wider">
+            <div v-if="currentType === 'eleves'" class="grid grid-cols-12 gap-4 px-6 py-3 border-b border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/20 text-xs font-bold text-slate-400 uppercase tracking-wider">
+                 <div class="col-span-1">Matricule</div>
+                 <div class="col-span-3">Nom et Prénoms</div>
+                 <div class="col-span-2">Né(e) le / à</div>
+                 <div class="col-span-1 text-center">Sexe</div>
+                 <div class="col-span-1 text-center">Redoublant</div>
+                 <div class="col-span-1 text-center">Classe</div>
+                 <div class="col-span-1 text-center">Statut</div>
+                 <div class="col-span-2 text-right">Actions</div>
+            </div>
+            <div v-else class="grid grid-cols-12 gap-4 px-6 py-3 border-b border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/20 text-xs font-bold text-slate-400 uppercase tracking-wider">
                 <div class="col-span-4">Utilisateur</div>
                 <div class="col-span-3">Rôle</div>
                 <div class="col-span-3">Contact</div>
@@ -73,17 +83,6 @@
                 </div>
 
                 <div v-else class="divide-y divide-slate-100 dark:divide-slate-800">
-                    <!-- Student Header (Conditional) -->
-                    <div v-if="currentType === 'eleves'" class="grid grid-cols-12 gap-4 px-6 py-3 border-b border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/20 text-xs font-bold text-slate-400 uppercase tracking-wider sticky top-0 z-10">
-                         <div class="col-span-1">Matricule</div>
-                         <div class="col-span-3">Nom et Prénoms</div>
-                         <div class="col-span-2">Né(e) le / à</div>
-                         <div class="col-span-1 text-center">Sexe</div>
-                         <div class="col-span-1 text-center">Redoublant</div>
-                         <div class="col-span-1 text-center">Classe</div>
-                         <div class="col-span-1 text-center">Statut</div>
-                         <div class="col-span-2 text-right">Actions</div>
-                    </div>
 
                     <div 
                       v-for="(user, index) in paginatedUsers" 
@@ -338,7 +337,8 @@ const filteredUsers = computed(() => {
     filtered = filtered.filter(u => 
       u?.nom?.toLowerCase().includes(query) ||
       u?.prenom?.toLowerCase().includes(query) ||
-      u?.email?.toLowerCase().includes(query)
+      u?.email?.toLowerCase().includes(query) ||
+      u?.matricule?.toLowerCase().includes(query)
     )
   }
 

@@ -9,9 +9,9 @@
           <h2 class="text-2xl font-bold tracking-tight text-[#0e141b] dark:text-white">Ajouter un Utilisateur</h2>
           <p class="text-[#4e7397] dark:text-slate-400 text-sm mt-1">Créez un nouveau profil pour votre établissement scolaire</p>
         </div>
-        <router-link to="/admin/utilisateurs" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors">
+        <button @click="$router.back()" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors">
           <span class="material-symbols-outlined">close</span>
-        </router-link>
+        </button>
       </div>
       <!-- Tabs Navigation (Only for ELEVE) -->
       <div v-if="form.role === 'ELEVE'" class="flex border-b border-slate-100 dark:border-slate-800">
@@ -226,9 +226,9 @@
       
       <!-- Modal Footer -->
       <div class="px-6 py-5 border-t border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/50 flex justify-end gap-3">
-        <router-link to="/admin/utilisateurs" class="px-6 py-2.5 rounded-lg font-bold text-sm text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors">
+        <button @click="$router.back()" class="px-6 py-2.5 rounded-lg font-bold text-sm text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors">
           Annuler
-        </router-link>
+        </button>
         
         <!-- Submit manual -->
         <button v-if="activeTab === 'manual'" @click="handleSubmit" :disabled="isLoading" class="px-6 py-2.5 rounded-lg bg-primary text-white font-bold text-sm hover:bg-primary/90 shadow-lg shadow-primary/20 transition-all flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed">
@@ -424,6 +424,10 @@ onMounted(() => {
           form.value.role = route.query.role
           if (route.query.role === 'ELEVE') {
               activeTab.value = 'manual'
+              if (route.query.classe) {
+                  form.value.classe = route.query.classe
+                  importForm.value.classe = route.query.classe
+              }
           }
       }
   }

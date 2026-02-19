@@ -14,13 +14,24 @@
         <h1 class="text-4xl font-black tracking-tight text-[#0e141b] dark:text-white">Gestion des Professeurs</h1>
         <p class="text-[#4e7397] dark:text-slate-400 text-base">Créez, modifiez et gérez les professeurs de l'établissement.</p>
       </div>
-      <button 
-        @click="openCreateModal"
-        class="flex items-center gap-2 rounded-lg h-10 px-4 bg-primary text-white font-bold text-sm hover:bg-primary/90 transition-colors shadow-lg shadow-primary/20"
-      >
-        <span class="material-symbols-outlined text-lg">add</span>
-        Nouveau Professeur
-      </button>
+      <div class="flex items-center gap-4">
+        <div class="relative">
+          <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">search</span>
+          <input 
+            v-model="searchQuery"
+            type="text" 
+            placeholder="Rechercher un professeur..."
+            class="pl-10 pr-4 h-10 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-sm focus:ring-primary focus:border-primary w-64 transition-all"
+          />
+        </div>
+        <button 
+          @click="openCreateModal"
+          class="flex items-center gap-2 rounded-lg h-10 px-4 bg-primary text-white font-bold text-sm hover:bg-primary/90 transition-colors shadow-lg shadow-primary/20"
+        >
+          <span class="material-symbols-outlined text-lg">add</span>
+          Nouveau
+        </button>
+      </div>
     </div>
 
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -55,7 +66,7 @@
               </thead>
               <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
                 <tr 
-                  v-for="prof in professeurs" 
+                  v-for="prof in filteredProfesseurs" 
                   :key="prof._id"
                   class="hover:bg-slate-50 dark:hover:bg-slate-800/30 transition-colors"
                 >
@@ -204,6 +215,18 @@ const classes = ref([])
 const isLoading = ref(false)
 const isSaving = ref(false)
 const editingProfesseur = ref(null)
+const searchQuery = ref('')
+
+const filteredProfesseurs = computed(() => {
+  if (!searchQuery.value) return professeurs.value
+  const q = searchQuery.value.toLowerCase()
+  return professeurs.value.filter(p => 
+    p.nom.toLowerCase().includes(q) || 
+    p.prenom.toLowerCase().includes(q) ||
+    p.email.toLowerCase().includes(q) ||
+    p.telephone?.toLowerCase().includes(q)
+  )
+})
 
 const form = reactive({
   prenom: '',

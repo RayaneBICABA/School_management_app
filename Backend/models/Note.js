@@ -72,6 +72,10 @@ const NoteSchema = new mongoose.Schema({
         type: String,
         maxlength: 500
     },
+    saisieParAdmin: {
+        type: Boolean,
+        default: false
+    },
     anneeScolaire: {
         type: String,
         required: [true, 'L\'année scolaire est requise'],

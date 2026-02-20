@@ -14,9 +14,32 @@ const Setting = require('../models/Setting');
 exports.createNotes = asyncHandler(async (req, res, next) => {
     const { eleve, matiere, classe, periode, notes, appreciation } = req.body;
 
-    // Vérifier que l'utilisateur est professeur
-    if (req.user.role !== 'PROFESSEUR') {
-        return next(new ErrorResponse('Seuls les professeurs peuvent saisir des notes', 403));
+    // Vérifier que l'utilisateur est professeur OU admin
+    const isAdmin = req.user.role === 'ADMIN';
+    if (req.user.role !== 'PROFESSEUR' && !isAdmin) {
+        return next(new ErrorResponse('Seuls les professeurs et administrateurs peuvent saisir des notes', 403));
+    }
+
+    // Déterminer le professeur auteur de la note
+    let professeurId = req.user.id;
+    if (isAdmin) {
+        if (req.body.professeurId) {
+            // Un prof spécifique a été fourni par l'admin (délégation explicite)
+            const profDoc = await User.findById(req.body.professeurId);
+            if (!profDoc || profDoc.role !== 'PROFESSEUR') {
+                return next(new ErrorResponse('Professeur non trouvé', 404));
+            }
+            professeurId = req.body.professeurId;
+        } else if (classe && matiere) {
+            // Pas de prof désigné : chercher le prof officiel de cette matière dans la classe
+            const ClasseMatiere = require('../models/ClasseMatiere');
+            const affectation = await ClasseMatiere.findOne({ classe, matiere }).select('professeur');
+            if (affectation && affectation.professeur) {
+                // Utiliser le prof officiel de la matière → son nom apparaîra sur le bulletin
+                professeurId = affectation.professeur;
+            }
+            // Sinon fallback sur l'admin (pas de prof affecté pour cette matière)
+        }
     }
 
     // Vérifier que la matière existe
@@ -24,9 +47,6 @@ exports.createNotes = asyncHandler(async (req, res, next) => {
     if (!matiereDoc) {
         return next(new ErrorResponse('Matière non trouvée', 404));
     }
-
-    // Note: La vérification de l'affectation professeur-matière-classe 
-    // est gérée par le modèle ClasseMatiere, pas par Matiere.professeur
 
     // Vérifier que l'élève existe et est bien un élève
     const eleveDoc = await User.findById(eleve);
@@ -46,17 +66,41 @@ exports.createNotes = asyncHandler(async (req, res, next) => {
         return next(new ErrorResponse('Des notes existent déjà pour cet élève dans cette matière et période', 400));
     }
 
+    // Calculer la moyenne si c'est un admin (validation directe)
+    let moyenne = undefined;
+    if (isAdmin && notes && notes.length > 0) {
+        let totalPoints = 0;
+        let totalCoef = 0;
+        notes.forEach(n => {
+            const coef = n.coefficient || 1;
+            totalPoints += n.valeur * coef;
+            totalCoef += coef;
+        });
+        moyenne = totalCoef > 0 ? totalPoints / totalCoef : 0;
+    }
+
     // Créer la note
-    const note = await Note.create({
+    const noteData = {
         eleve,
         matiere,
         classe,
-        professeur: req.user.id,
+        professeur: professeurId,
         periode,
         notes,
         appreciation,
         anneeScolaire: req.body.anneeScolaire || '2025-2026'
-    });
+    };
+
+    // Si c'est un admin, valider directement
+    if (isAdmin) {
+        noteData.statut = 'VALIDEE';
+        noteData.validePar = req.user.id;
+        noteData.dateValidation = Date.now();
+        noteData.saisieParAdmin = true;
+        noteData.moyenne = moyenne;
+    }
+
+    const note = await Note.create(noteData);
 
     await note.populate(['eleve', 'matiere', 'classe', 'professeur']);
 

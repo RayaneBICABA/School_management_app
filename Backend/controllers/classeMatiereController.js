@@ -6,8 +6,12 @@ const Matiere = require('../models/Matiere');
 // @access  Private/Admin
 exports.getAllClasseMatieres = async (req, res) => {
     try {
-        const classeMatieres = await ClasseMatiere.find()
-            .populate('classe', 'niveau section serie')
+        // Filtre optionnel par professeur
+        const filter = {};
+        if (req.query.professeur) filter.professeur = req.query.professeur;
+
+        const classeMatieres = await ClasseMatiere.find(filter)
+            .populate('classe', 'niveau section serie filiere')
             .populate('matiere', 'nom code')
             .populate('professeur', 'nom prenom');
 

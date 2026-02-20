@@ -19,6 +19,7 @@ import AdminAffecterProfesseur from '@/views/admin/AffecterProfesseur.vue'
 import AdminGestionVacances from '@/views/admin/GestionVacances.vue'
 import AdminClotureAdministrative from '@/views/admin/ClotureAdministrative.vue'
 import AdminNotes from '@/views/admin/GestionNotes.vue'
+import AdminSaisieNotesDelegation from '@/views/admin/SaisieNotesDelegation.vue'
 import AdminConfig from '@/views/admin/ConfigurationAnnee.vue'
 import AdminDroits from '@/views/admin/DroitsAcces.vue'
 import AdminProfil from '@/views/admin/Profil.vue'
@@ -129,6 +130,7 @@ const routes = [
       { path: 'cloture-administrative', name: 'AdminClotureAdministrative', component: AdminClotureAdministrative },
       { path: 'notes', name: 'AdminNotes', component: AdminNotes },
       { path: 'notes/detail', name: 'AdminDetailNotesMatiere', component: AdminDetailNotesMatiere },
+      { path: 'notes/delegation', name: 'AdminSaisieNotesDelegation', component: AdminSaisieNotesDelegation },
       { path: 'configuration', name: 'AdminConfig', component: AdminConfig },
       { path: 'droits', name: 'AdminDroits', component: AdminDroits },
       { path: 'notifications', name: 'AdminNotifications', component: () => import('@/views/common/GlobalNotifications.vue') },

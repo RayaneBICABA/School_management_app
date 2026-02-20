@@ -252,6 +252,9 @@ export default {
     getAllGlobalClasseMatieres() {
         return api.get('/classe-matieres/all');
     },
+    getProfesseurAffectations(professeurId) {
+        return api.get('/classe-matieres/all', { params: { professeur: professeurId } });
+    },
     getMyClasses() {
         return api.get('/classe-matieres/my-classes');
     },

@@ -24,6 +24,14 @@
             </div>
           </div>
         </div>
+        <!-- Bouton Saisie déléguée -->
+        <router-link
+          to="/admin/notes/delegation"
+          class="flex items-center gap-2 px-4 py-2 bg-primary text-white text-sm font-bold rounded-lg hover:bg-primary/90 transition-colors"
+        >
+          <span class="material-symbols-outlined text-[18px]">edit_note</span>
+          Saisir pour un prof
+        </router-link>
       </header>
       
       <!-- Page Content -->

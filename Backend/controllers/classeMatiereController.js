@@ -156,7 +156,7 @@ exports.removeMatiereFromClasse = async (req, res) => {
 exports.getMyClasses = async (req, res) => {
     try {
         const classeMatieres = await ClasseMatiere.find({ professeur: req.user.id })
-            .populate('classe', 'niveau section')
+            .populate('classe', 'niveau section serie filiere anneeScolaire')
             .populate('matiere', 'nom code');
 
         // Filter orphans

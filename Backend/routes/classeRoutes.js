@@ -4,10 +4,15 @@ const {
     getClasse,
     createClasse,
     updateClasse,
-    deleteClasse
+    deleteClasse,
+    renameNiveau,
+    deleteNiveau,
+    renameSpecialite,
+    deleteSpecialite
 } = require('../controllers/classeController');
 
 const router = express.Router();
+
 
 const { protect, authorize } = require('../middleware/auth');
 
@@ -22,6 +27,12 @@ router
     .route('/')
     .get(getClasses)
     .post(authorize('ADMIN', 'PROVISEUR', 'CENSEUR', 'SECRETAIRE'), createClasse);
+
+// Routes pour la gestion en lot des niveaux et spécialités
+router.put('/niveaux', authorize('ADMIN'), renameNiveau);
+router.delete('/niveaux/:name', authorize('ADMIN'), deleteNiveau);
+router.put('/specialites', authorize('ADMIN'), renameSpecialite);
+router.delete('/specialites/:name', authorize('ADMIN'), deleteSpecialite);
 
 router
     .route('/:id')

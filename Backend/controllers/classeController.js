@@ -116,9 +116,101 @@ exports.deleteClasse = async (req, res, next) => {
             return res.status(404).json({ success: false, error: 'Classe non trouvée' });
         }
 
+        res.status(200).json({ success: true, data: {} });
+    } catch (err) {
+        res.status(400).json({ success: false, error: err.message });
+    }
+};
+
+// @desc    Rename a niveau (bulk update)
+// @route   PUT /api/v1/classes/niveaux
+// @access  Private/Admin
+exports.renameNiveau = async (req, res, next) => {
+    try {
+        const { oldName, newName } = req.body;
+        if (!oldName || !newName) {
+            return res.status(400).json({ success: false, error: 'Veuillez fournir l\'ancien et le nouveau nom' });
+        }
+
+        const result = await Classe.updateMany(
+            { niveau: oldName },
+            { $set: { niveau: newName } }
+        );
+
         res.status(200).json({
             success: true,
-            data: {}
+            message: `${result.modifiedCount} classe(s) mise(s) à jour`,
+            data: result
+        });
+    } catch (err) {
+        res.status(500).json({ success: false, error: err.message });
+    }
+};
+
+// @desc    Delete a niveau (remove from classes, bulk update)
+// @route   DELETE /api/v1/classes/niveaux/:name
+// @access  Private/Admin
+exports.deleteNiveau = async (req, res, next) => {
+    try {
+        const name = req.params.name;
+
+        // Option douce: retire le niveau (ou met par défaut) au lieu de supprimer la classe
+        const result = await Classe.updateMany(
+            { niveau: name },
+            { $unset: { niveau: "" } } // Ou set à une chaîne vide
+        );
+
+        res.status(200).json({
+            success: true,
+            message: `Le niveau ${name} a été retiré de ${result.modifiedCount} classe(s)`,
+            data: result
+        });
+    } catch (err) {
+        res.status(500).json({ success: false, error: err.message });
+    }
+};
+
+// @desc    Rename a specialite (bulk update)
+// @route   PUT /api/v1/classes/specialites
+// @access  Private/Admin
+exports.renameSpecialite = async (req, res, next) => {
+    try {
+        const { oldName, newName } = req.body;
+        if (!oldName || !newName) {
+            return res.status(400).json({ success: false, error: 'Veuillez fournir l\'ancien et le nouveau nom' });
+        }
+
+        const result = await Classe.updateMany(
+            { serie: oldName },
+            { $set: { serie: newName } }
+        );
+
+        res.status(200).json({
+            success: true,
+            message: `${result.modifiedCount} classe(s) mise(s) à jour`,
+            data: result
+        });
+    } catch (err) {
+        res.status(500).json({ success: false, error: err.message });
+    }
+};
+
+// @desc    Delete a specialite (remove from classes, bulk update)
+// @route   DELETE /api/v1/classes/specialites/:name
+// @access  Private/Admin
+exports.deleteSpecialite = async (req, res, next) => {
+    try {
+        const name = req.params.name;
+
+        const result = await Classe.updateMany(
+            { serie: name },
+            { $unset: { serie: "" } }
+        );
+
+        res.status(200).json({
+            success: true,
+            message: `La spécialité ${name} a été retirée de ${result.modifiedCount} classe(s)`,
+            data: result
         });
     } catch (err) {
         res.status(500).json({ success: false, error: err.message });

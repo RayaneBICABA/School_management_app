@@ -212,8 +212,16 @@
             </div>
             <div class="flex flex-col gap-1.5">
               <div class="flex items-center justify-between">
-                <label class="text-sm font-semibold text-[#0e141b] dark:text-slate-200">
+                <label class="text-sm font-semibold text-[#0e141b] dark:text-slate-200 flex items-center gap-2">
                   Niveau d'étude
+                  <button 
+                    type="button" 
+                    @click="openManageModal('niveaux')" 
+                    class="text-slate-400 hover:text-primary transition-colors focus:outline-none"
+                    title="Gérer les niveaux"
+                  >
+                    <span class="material-symbols-outlined text-sm">settings</span>
+                  </button>
                 </label>
                 <button 
                   type="button" 
@@ -243,8 +251,16 @@
             </div>
             <div class="flex flex-col gap-1.5" v-if="form.filiere === 'Technique'">
               <div class="flex items-center justify-between">
-                <label class="text-sm font-semibold text-[#0e141b] dark:text-slate-200">
+                <label class="text-sm font-semibold text-[#0e141b] dark:text-slate-200 flex items-center gap-2">
                   Spécialité
+                  <button 
+                    type="button" 
+                    @click="openManageModal('specialites')" 
+                    class="text-slate-400 hover:text-primary transition-colors focus:outline-none"
+                    title="Gérer les spécialités"
+                  >
+                    <span class="material-symbols-outlined text-sm">settings</span>
+                  </button>
                 </label>
                 <button 
                   type="button" 
@@ -435,6 +451,87 @@
       </form>
     </div>
   </div>
+
+  <!-- Manage Niveaux/Specialites Modal -->
+  <div v-if="showManageModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
+    <div class="bg-white dark:bg-slate-900 w-full max-w-md rounded-xl shadow-2xl flex flex-col max-h-[90vh]">
+      <div class="px-6 py-5 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center shrink-0">
+        <h3 class="text-xl font-bold text-[#0e141b] dark:text-white">Gérer les listes</h3>
+        <button @click="showManageModal = false" class="text-slate-400 hover:text-slate-600 transition-colors">
+          <span class="material-symbols-outlined">close</span>
+        </button>
+      </div>
+      
+      <!-- Tabs -->
+      <div class="flex border-b border-slate-100 dark:border-slate-800 shrink-0">
+        <button 
+          @click="manageTab = 'niveaux'"
+          :class="['flex-1 py-3 text-sm font-bold border-b-2 transition-colors', manageTab === 'niveaux' ? 'border-primary text-primary' : 'border-transparent text-slate-500 hover:text-slate-700 dark:text-slate-400']"
+        >
+          Niveaux d'étude
+        </button>
+        <button 
+          @click="manageTab = 'specialites'"
+          :class="['flex-1 py-3 text-sm font-bold border-b-2 transition-colors', manageTab === 'specialites' ? 'border-primary text-primary' : 'border-transparent text-slate-500 hover:text-slate-700 dark:text-slate-400']"
+        >
+          Spécialités
+        </button>
+      </div>
+
+      <div class="p-4 overflow-y-auto flex-1">
+        <!-- List View -->
+        <ul class="space-y-2">
+          <li 
+            v-for="item in (manageTab === 'niveaux' ? allNiveaux : allSpecialites)" 
+            :key="item"
+            class="flex items-center justify-between p-3 bg-slate-50 dark:bg-slate-800/50 rounded-lg border border-slate-200 dark:border-slate-700"
+          >
+            <!-- Edit Mode -->
+            <div v-if="editingItem.oldName === item" class="flex-1 flex gap-2">
+              <input 
+                v-model="editingItem.newName" 
+                class="flex-1 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 rounded text-sm px-2 py-1"
+                @keyup.enter="saveEditItem"
+                @keyup.esc="cancelEditItem"
+                autoFocus
+              />
+              <button @click="saveEditItem" class="text-green-500 hover:text-green-600 p-1">
+                <span class="material-symbols-outlined text-sm">check</span>
+              </button>
+              <button @click="cancelEditItem" class="text-slate-400 hover:text-red-500 p-1">
+                <span class="material-symbols-outlined text-sm">close</span>
+              </button>
+            </div>
+            
+            <!-- Read Mode -->
+            <template v-else>
+              <span class="font-medium text-sm text-[#0e141b] dark:text-white">{{ item }}</span>
+              <div class="flex items-center gap-1">
+                <button 
+                  @click="startEditItem(item)" 
+                  class="p-1.5 text-slate-400 hover:text-primary transition-colors rounded-md hover:bg-slate-100 dark:hover:bg-slate-800"
+                  title="Renommer pour toutes les classes"
+                >
+                  <span class="material-symbols-outlined text-sm">edit</span>
+                </button>
+                <button 
+                  @click="confirmDeleteItem(item)" 
+                  class="p-1.5 text-slate-400 hover:text-red-500 transition-colors rounded-md hover:bg-slate-100 dark:hover:bg-slate-800"
+                  title="Retirer de toutes les classes"
+                >
+                  <span class="material-symbols-outlined text-sm">delete</span>
+                </button>
+              </div>
+            </template>
+          </li>
+        </ul>
+        
+        <div v-if="(manageTab === 'niveaux' ? allNiveaux.length : allSpecialites.length) === 0" class="text-center py-6 text-sm text-slate-500">
+          Aucun élément trouvé.
+        </div>
+      </div>
+    </div>
+  </div>
 </div>
 </template>
 
@@ -482,6 +579,11 @@ const searchQuery = ref('')
 const dynamicNiveaux = ref([])
 const dynamicSpecialites = ref([])
 
+// Manage Modal variables
+const showManageModal = ref(false)
+const manageTab = ref('niveaux')
+const editingItem = reactive({ oldName: '', newName: '' })
+
 const filteredGenerale = computed(() => {
   if (!searchQuery.value) return filieres.Generale
   const q = searchQuery.value.toLowerCase()
@@ -522,7 +624,6 @@ const matieresDisponibles = computed(() => {
   )
 })
 
-// Charger les classes
 const fetchClasses = async () => {
   isLoading.value = true
   try {
@@ -533,8 +634,15 @@ const fetchClasses = async () => {
     filieres.Generale = []
     filieres.Technique = []
 
+    // Extraction des niveaux et spécialités
+    const levels = new Set()
+    const specialties = new Set()
+
     // Process classes and fetch student counts
     for (const cls of classes) {
+      if (cls.niveau) levels.add(cls.niveau)
+      if (cls.serie && cls.serie !== 'Général' && cls.serie !== 'Générale') specialties.add(cls.serie)
+
       try {
         const studentsResponse = await api.getStudentsByClass(cls._id)
         const studentsCount = studentsResponse.data?.data?.length || 0
@@ -559,13 +667,6 @@ const fetchClasses = async () => {
       }
     }
 
-    // Extract dynamic levels and specialties
-    const levels = new Set()
-    const specialties = new Set()
-    classes.forEach(cls => {
-      if (cls.niveau) levels.add(cls.niveau)
-      if (cls.serie && cls.serie !== 'Général' && cls.serie !== 'Générale') specialties.add(cls.serie)
-    })
     dynamicNiveaux.value = Array.from(levels)
     dynamicSpecialites.value = Array.from(specialties)
   } catch (err) {
@@ -576,7 +677,59 @@ const fetchClasses = async () => {
 }
 
 
-// Fonctions
+// Fonctions pour le Modal de gestion
+const openManageModal = (tab) => {
+  manageTab.value = tab
+  showManageModal.value = true
+  cancelEditItem()
+}
+
+const startEditItem = (name) => {
+  editingItem.oldName = name
+  editingItem.newName = name
+}
+
+const cancelEditItem = () => {
+  editingItem.oldName = ''
+  editingItem.newName = ''
+}
+
+const saveEditItem = async () => {
+  if (!editingItem.newName.trim() || editingItem.newName === editingItem.oldName) {
+    cancelEditItem()
+    return
+  }
+  
+  try {
+    if (manageTab.value === 'niveaux') {
+      await api.renameNiveau({ oldName: editingItem.oldName, newName: editingItem.newName })
+    } else {
+      await api.renameSpecialite({ oldName: editingItem.oldName, newName: editingItem.newName })
+    }
+    await fetchClasses()
+    cancelEditItem()
+  } catch (err) {
+    console.error('Erreur de renommage', err)
+    alert('Une erreur est survenue lors de la modification.')
+  }
+}
+
+const confirmDeleteItem = async (name) => {
+  if (confirm(`Êtes-vous sûr de vouloir retirer "${name}" de toutes les classes associées ? Les classes ne seront pas supprimées.`)) {
+    try {
+      if (manageTab.value === 'niveaux') {
+        await api.deleteNiveau(name)
+      } else {
+        await api.deleteSpecialite(name)
+      }
+      await fetchClasses()
+    } catch (err) {
+      console.error('Erreur de suppression', err)
+      alert('Une erreur est survenue lors de la suppression.')
+    }
+  }
+}
+
 const getEffectifColor = (effectif, capaciteMax) => {
   const percentage = (effectif / capaciteMax) * 100
   if (percentage >= 100) return 'bg-orange-500'

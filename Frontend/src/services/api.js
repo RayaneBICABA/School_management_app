@@ -215,6 +215,18 @@ export default {
     deleteClasse(id) {
         return api.delete(`/classes/${id}`);
     },
+    renameNiveau(data) {
+        return api.put('/classes/niveaux', data);
+    },
+    deleteNiveau(name) {
+        return api.delete(`/classes/niveaux/${encodeURIComponent(name)}`);
+    },
+    renameSpecialite(data) {
+        return api.put('/classes/specialites', data);
+    },
+    deleteSpecialite(name) {
+        return api.delete(`/classes/specialites/${encodeURIComponent(name)}`);
+    },
 
     // Matieres
     getMatieres() {

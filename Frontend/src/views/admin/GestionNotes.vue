@@ -185,7 +185,7 @@ const fetchData = async () => {
   try {
     const [classesRes, gradesRes, assignmentsRes] = await Promise.all([
       api.getClasses(),
-      api.getGrades(),
+      api.getNotes(),
       api.getAllGlobalClasseMatieres()
     ]);
     console.log('Classes Response:', classesRes);
@@ -261,18 +261,27 @@ const selectedClassSubjects = computed(() => {
     // 2. Map to display objects with stats
     return classAssignments.map(assignment => {
         // Get all grades for this class & subject AND selected period
-        const subjectGrades = grades.value.filter(g => 
-            (g.classe?._id === selectedClassId.value || g.classe === selectedClassId.value) && 
-            (g.matiere?._id === assignment.matiere?._id || g.matiere === assignment.matiere?._id) &&
-            g.periode === selectedPeriod.value
-        );
-        // Count evaluations correctly for the Grade model (flat structure)
+        const subjectGrades = grades.value.filter(g => {
+            const gradeClasseId = g.classe?._id?.toString() || g.classe?.toString();
+            const assignClasseId = assignment.classe?._id?.toString() || assignment.classe?.toString();
+            const gradeMatiereId = g.matiere?._id?.toString() || g.matiere?.toString();
+            const assignMatiereId = assignment.matiere?._id?.toString() || assignment.matiere?.toString();
+
+            return (gradeClasseId === assignClasseId) && (gradeMatiereId === assignMatiereId) && (g.periode === selectedPeriod.value);
+        });
+        // Count evaluations correctly for the Grade model (nested notes structure)
         // We find the unique types of evaluations across all students for this subject
-        const distinctTypes = new Set(subjectGrades.map(g => g.type));
+        const distinctTypes = new Set();
+        subjectGrades.forEach(g => {
+            if (g.notes && Array.isArray(g.notes)) {
+                g.notes.forEach(note => distinctTypes.add(note.type));
+            }
+        });
         const evalCount = distinctTypes.size;
+        console.log(`[EvalCount Debug] class: ${assignment.classe?.niveau || assignment.classe}, matiere: ${assignment.matiere?.nom || assignment.matiere}, subjectGrades size: ${subjectGrades.length}, distinct types: ${Array.from(distinctTypes)}, count: ${evalCount}`);
         
-        // Validation status: usually defined as at least 2 evaluations AND validated by the Censeur
-        const isCenseurValidated = subjectGrades.some(g => g.statut === 'VALIDE');
+        // Validation status: defined as at least 1 evaluation AND validated by the Censeur
+        const isCenseurValidated = subjectGrades.some(g => g.statut === 'VALIDEE');
         
         return {
             ...assignment,
@@ -302,14 +311,22 @@ const fullClasses = computed(() => {
         if (classAssignments.length === 0) return false;
         
         const allSubjectsValidated = classAssignments.every(assignment => {
-             const subjectGrades = grades.value.filter(g => 
-                (g.classe?._id === cls._id || g.classe === cls._id) && 
-                (g.matiere?._id === assignment.matiere?._id || g.matiere === assignment.matiere?._id) &&
-                g.periode === selectedPeriod.value // Only check for current period
-            );
-            const distinctTypes = new Set(subjectGrades.map(g => g.type));
+             const subjectGrades = grades.value.filter(g => {
+                const gradeClasseId = g.classe?._id?.toString() || g.classe?.toString();
+                const assignClasseId = cls._id?.toString();
+                const gradeMatiereId = g.matiere?._id?.toString() || g.matiere?.toString();
+                const assignMatiereId = assignment.matiere?._id?.toString() || assignment.matiere?.toString();
+
+                return (gradeClasseId === assignClasseId) && (gradeMatiereId === assignMatiereId) && (g.periode === selectedPeriod.value);
+            });
+            const distinctTypes = new Set();
+            subjectGrades.forEach(g => {
+                if (g.notes && Array.isArray(g.notes)) {
+                    g.notes.forEach(note => distinctTypes.add(note.type));
+                }
+            });
             const evalCount = distinctTypes.size;
-            const isValidated = subjectGrades.some(g => g.statut === 'VALIDE');
+            const isValidated = subjectGrades.some(g => g.statut === 'VALIDEE');
             return evalCount >= 1 && isValidated;
         });
         

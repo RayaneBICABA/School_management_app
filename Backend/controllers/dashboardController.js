@@ -646,15 +646,25 @@ exports.getSuiviAvancementCenseur = async (req, res, next) => {
         const allEleves = await User.find({ role: 'ELEVE', status: 'ACTIF' }).select('classe');
         const allCMs = await ClasseMatiere.find().populate('professeur', 'nom prenom').populate('matiere', 'nom');
 
-        // Count notes per class/matiere for the period
+        // Count individual notes per class/matiere for the period by unwinding the notes array
         const notesAggr = await Note.aggregate([
             { $match: { periode: selectedPeriod, anneeScolaire: currentYear } },
-            { $group: { _id: { classe: "$classe", matiere: "$matiere" }, count: { $sum: 1 } } }
+            { $unwind: "$notes" },
+            {
+                $group: {
+                    _id: { classe: "$classe", matiere: "$matiere" },
+                    count: { $sum: 1 }, // Total individual notes (student * eval)
+                    evalTypes: { $addToSet: "$notes.type" }
+                }
+            }
         ]);
 
         const noteMap = new Map();
         notesAggr.forEach(n => {
-            noteMap.set(`${n._id.classe}-${n._id.matiere}`, n.count);
+            noteMap.set(`${n._id.classe}-${n._id.matiere}`, {
+                count: n.count,
+                evalCount: n.evalTypes.length
+            });
         });
 
         // 2b. Fetch dispensations for the period
@@ -700,17 +710,20 @@ exports.getSuiviAvancementCenseur = async (req, res, next) => {
             const totalMatieres = classCMs.length;
 
             classCMs.forEach(cm => {
-                const notesCount = noteMap.get(`${classe._id}-${cm.matiere._id}`) || 0;
+                const noteData = noteMap.get(`${classe._id}-${cm.matiere._id}`) || { count: 0, evalCount: 0 };
+                const notesCount = noteData.count;
+                const evalCount = noteData.evalCount;
 
                 // Calculer le nombre d'élèves dispensés pour cette classe/matière
                 const dispensationsCount = classEleves.filter(e =>
                     dispensationMap.has(`${e._id}-${cm.matiere._id}`)
                 ).length;
 
-                const expectedNotesForMatiere = Math.max(0, classElevesCount - dispensationsCount);
-                const isComplete = expectedNotesForMatiere > 0
-                    ? notesCount >= expectedNotesForMatiere
-                    : true; // Si tous dispensés, c'est complet
+                // On attend au moins 1 évaluation par matière pour qu'elle soit considérée comme "Saisie"
+                const TARGET_EVALS = 1;
+                const expectedNotesForMatiere = Math.max(0, (classElevesCount - dispensationsCount) * TARGET_EVALS);
+
+                const isComplete = evalCount >= TARGET_EVALS;
 
                 classNotesSaisies += notesCount;
                 classTotalExpected += expectedNotesForMatiere;

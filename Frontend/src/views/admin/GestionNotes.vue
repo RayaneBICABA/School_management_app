@@ -120,8 +120,9 @@
                       </span>
                     </td>
                     <td class="px-6 py-4 text-right">
-                       <button @click="voirDetails(subject)" class="p-2 text-slate-400 hover:text-primary transition-colors rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800">
-                          <span class="material-symbols-outlined icon-sm">visibility</span>
+                       <button @click="voirDetails(subject)" class="flex items-center justify-center gap-1.5 px-4 py-2 bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-primary/10 hover:text-primary transition-all rounded-lg border border-slate-200 dark:border-slate-700 font-bold group">
+                          <span class="material-symbols-outlined text-[18px]">visibility</span>
+                          <span>Détails</span>
                        </button>
                     </td>
                   </tr>
@@ -265,19 +266,18 @@ const selectedClassSubjects = computed(() => {
             (g.matiere?._id === assignment.matiere?._id || g.matiere === assignment.matiere?._id) &&
             g.periode === selectedPeriod.value
         );
+        // Count evaluations correctly for the Grade model (flat structure)
+        // We find the unique types of evaluations across all students for this subject
+        const distinctTypes = new Set(subjectGrades.map(g => g.type));
+        const evalCount = distinctTypes.size;
         
-        // Count evaluations
-        const maxGradesPerStudent = subjectGrades.reduce((max, g) => {
-            return g.notes && g.notes.length > max ? g.notes.length : max;
-        }, 0);
-        
-        // Check Validation
-        const isCenseurValidated = subjectGrades.some(g => g.statut === 'VALIDEE');
+        // Validation status: usually defined as at least 2 evaluations AND validated by the Censeur
+        const isCenseurValidated = subjectGrades.some(g => g.statut === 'VALIDE');
         
         return {
             ...assignment,
-            evalCount: maxGradesPerStudent,
-            isValidated: maxGradesPerStudent >= 2 && isCenseurValidated
+            evalCount: evalCount,
+            isValidated: evalCount >= 1 && isCenseurValidated
         };
     });
 });
@@ -304,11 +304,13 @@ const fullClasses = computed(() => {
         const allSubjectsValidated = classAssignments.every(assignment => {
              const subjectGrades = grades.value.filter(g => 
                 (g.classe?._id === cls._id || g.classe === cls._id) && 
-                (g.matiere?._id === assignment.matiere?._id || g.matiere === assignment.matiere?._id)
+                (g.matiere?._id === assignment.matiere?._id || g.matiere === assignment.matiere?._id) &&
+                g.periode === selectedPeriod.value // Only check for current period
             );
-            const maxGrades = subjectGrades.reduce((max, g) => g.notes ? Math.max(max, g.notes.length) : max, 0);
-            const isValidated = subjectGrades.some(g => g.statut === 'VALIDEE');
-            return maxGrades >= 2 && isValidated;
+            const distinctTypes = new Set(subjectGrades.map(g => g.type));
+            const evalCount = distinctTypes.size;
+            const isValidated = subjectGrades.some(g => g.statut === 'VALIDE');
+            return evalCount >= 1 && isValidated;
         });
         
         return allSubjectsValidated;

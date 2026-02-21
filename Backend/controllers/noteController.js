@@ -54,12 +54,16 @@ exports.createNotes = asyncHandler(async (req, res, next) => {
         return next(new ErrorResponse('Élève non trouvé', 404));
     }
 
+    // Get current academic year from settings
+    const academicSetting = await Setting.findOne({ key: 'academic_year_config' });
+    const currentYear = academicSetting ? (academicSetting.value.year || academicSetting.value.academicYear) : '2025-2026';
+
     // Vérifier qu'il n'existe pas déjà une note pour cet élève/matière/période
     const existingNote = await Note.findOne({
         eleve,
         matiere,
         periode,
-        anneeScolaire: req.body.anneeScolaire || '2025-2026'
+        anneeScolaire: req.body.anneeScolaire || currentYear
     });
 
     if (existingNote) {
@@ -88,7 +92,7 @@ exports.createNotes = asyncHandler(async (req, res, next) => {
         periode,
         notes,
         appreciation,
-        anneeScolaire: req.body.anneeScolaire || '2025-2026'
+        anneeScolaire: req.body.anneeScolaire || currentYear
     };
 
     // Si c'est un admin, valider directement
@@ -406,7 +410,12 @@ exports.getMasterSheetData = asyncHandler(async (req, res, next) => {
         return next(new ErrorResponse('La période est requise', 400));
     }
 
-    const year = anneeScolaire || '2025-2026';
+    // Get current academic year from settings if not provided
+    let year = anneeScolaire;
+    if (!year) {
+        const academicSetting = await Setting.findOne({ key: 'academic_year_config' });
+        year = academicSetting ? (academicSetting.value.year || academicSetting.value.academicYear) : '2025-2026';
+    }
 
     // 1. Récupérer la classe
     const classe = await Classe.findById(classeId);
@@ -420,7 +429,20 @@ exports.getMasterSheetData = asyncHandler(async (req, res, next) => {
     // 3. Récupérer toutes les matières de la classe via ClasseMatiere
     const ClasseMatiere = mongoose.model('ClasseMatiere');
     const matieresDocs = await ClasseMatiere.find({ classe: classeId }).populate('matiere');
-    const matieres = matieresDocs.map(cm => cm.matiere).sort((a, b) => a.nom.localeCompare(b.nom));
+    let matieres = matieresDocs.map(cm => cm.matiere).sort((a, b) => a.nom.localeCompare(b.nom));
+
+    // Pour les filières techniques, exclure les matières sans notes validées dans la période
+    if (classe.filiere === 'Technique') {
+        const matieresWithNotes = await Note.distinct('matiere', {
+            classe: classeId,
+            periode,
+            anneeScolaire: year,
+            statut: 'VALIDEE'
+        });
+        matieres = matieres.filter(m =>
+            matieresWithNotes.some(mw => mw.toString() === m._id.toString())
+        );
+    }
 
     // 4. Récupérer toutes les notes VALIDÉES pour cette classe/période/année
     const allNotes = await Note.find({
@@ -518,7 +540,12 @@ exports.getMasterSheetPDF = asyncHandler(async (req, res, next) => {
         return next(new ErrorResponse('La période est requise', 400));
     }
 
-    const year = anneeScolaire || '2025-2026';
+    // Get current academic year from settings if not provided
+    let year = anneeScolaire;
+    if (!year) {
+        const academicSetting = await Setting.findOne({ key: 'academic_year_config' });
+        year = academicSetting ? (academicSetting.value.year || academicSetting.value.academicYear) : '2025-2026';
+    }
     const schoolSetting = await Setting.findOne({ key: 'school_config' });
     const schoolConfig = schoolSetting ? schoolSetting.value : {};
 
@@ -541,7 +568,20 @@ exports.getMasterSheetPDF = asyncHandler(async (req, res, next) => {
         if (eleves.length === 0) continue;
 
         const matieresDocs = await ClasseMatiere.find({ classe: classe._id }).populate('matiere');
-        const matieres = matieresDocs.map(cm => cm.matiere).sort((a, b) => a.nom.localeCompare(b.nom));
+        let matieres = matieresDocs.map(cm => cm.matiere).sort((a, b) => a.nom.localeCompare(b.nom));
+
+        // Pour les filières techniques, exclure les matières sans notes validées dans la période
+        if (classe.filiere === 'Technique') {
+            const matieresWithNotes = await Note.distinct('matiere', {
+                classe: classe._id,
+                periode,
+                anneeScolaire: year,
+                statut: 'VALIDEE'
+            });
+            matieres = matieres.filter(m =>
+                matieresWithNotes.some(mw => mw.toString() === m._id.toString())
+            );
+        }
 
         const allNotes = await Note.find({
             classe: classe._id,

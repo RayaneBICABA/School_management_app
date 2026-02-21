@@ -764,8 +764,21 @@ exports.getValidationPageStats = asyncHandler(async (req, res, next) => {
 
     for (const classe of classes) {
         // Find assigned subjects for this class
-        const matieres = await ClasseMatiere.find({ classe: classe._id });
-        const matiereIds = matieres.map(m => m.matiere);
+        const matieresDocs = await ClasseMatiere.find({ classe: classe._id });
+        let matiereIds = matieresDocs.map(m => m.matiere);
+
+        // Pour les filières techniques, exclure les matières sans notes validées dans la période
+        if (classe.filiere === 'Technique' && matiereIds.length > 0) {
+            const matieresWithNotes = await Note.distinct('matiere', {
+                classe: classe._id,
+                periode: selectedPeriod,
+                anneeScolaire: currentYear,
+                statut: 'VALIDEE'
+            });
+            matiereIds = matiereIds.filter(id =>
+                matieresWithNotes.some(mw => mw.toString() === id.toString())
+            );
+        }
 
         if (matiereIds.length === 0) {
             // No subjects, not ready

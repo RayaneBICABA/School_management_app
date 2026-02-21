@@ -630,7 +630,10 @@ exports.getSuiviAvancementCenseur = async (req, res, next) => {
     try {
         const { periode, niveau, statut } = req.query;
         const selectedPeriod = periode || 'Trimestre 1';
-        const currentYear = '2025-2026';
+
+        // Get current academic year from settings
+        const academicSetting = await Setting.findOne({ key: 'academic_year_config' });
+        const currentYear = academicSetting ? (academicSetting.value.year || academicSetting.value.academicYear) : '2025-2026';
 
         // 1. Get all classes
         let classesQuery = {};
@@ -663,7 +666,20 @@ exports.getSuiviAvancementCenseur = async (req, res, next) => {
 
         for (const classe of classes) {
             const classElevesCount = allEleves.filter(e => e.classe && e.classe.toString() === classe._id.toString()).length;
-            const classCMs = allCMs.filter(cm => cm.classe.toString() === classe._id.toString());
+            let classCMs = allCMs.filter(cm => cm.classe.toString() === classe._id.toString());
+
+            // Pour les filières techniques, exclure les matières sans notes validées dans la période
+            if (classe.filiere === 'Technique' && classCMs.length > 0) {
+                const matieresWithNotes = await Note.distinct('matiere', {
+                    classe: classe._id,
+                    periode: selectedPeriod,
+                    anneeScolaire: currentYear,
+                    statut: 'VALIDEE'
+                });
+                classCMs = classCMs.filter(cm =>
+                    matieresWithNotes.some(mw => mw.toString() === cm.matiere._id.toString())
+                );
+            }
 
             let matieresSaisiesCount = 0;
             const totalMatieres = classCMs.length;

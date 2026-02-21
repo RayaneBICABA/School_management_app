@@ -16,7 +16,7 @@ const {
 
 const router = express.Router();
 
-const { protect } = require('../middleware/auth');
+const { protect, authorize } = require('../middleware/auth');
 const { checkGradeDeadline } = require('../middleware/checkGradeDeadline');
 
 // Routes publiques (nécessitent authentification)
@@ -35,6 +35,7 @@ router.route('/:id')
     .put(checkGradeDeadline, updateNote)
     .delete(deleteNote);
 
+router.post('/unblock', authorize('ADMIN', 'CENSEUR'), unblockNotes);
 router.post('/:id/validate', validateNote);
 router.post('/:id/reject', rejectNote);
 router.post('/:id/submit', checkGradeDeadline, submitNote);

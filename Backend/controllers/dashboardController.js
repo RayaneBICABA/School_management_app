@@ -6,10 +6,8 @@ const Classe = require('../models/Classe');
 const Matiere = require('../models/Matiere');
 const Bulletin = require('../models/Bulletin');
 const Attendance = require('../models/Attendance');
+const Setting = require('../models/Setting');
 
-// @desc    Get Proviseur Dashboard Stats
-// @route   GET /api/v1/dashboard/proviseur
-// @access  Private/Proviseur
 // @desc    Get Proviseur Dashboard Stats
 // @route   GET /api/v1/dashboard/proviseur
 // @access  Private/Proviseur
@@ -18,13 +16,26 @@ exports.getProviseurStats = async (req, res, next) => {
         const { trimestre } = req.query;
         const selectedPeriod = trimestre || 'Trimestre 1'; // Default
 
-        // 1. Taux de réussite global (Average of all grades >= 10)
-        // Filter by period if possible, though Grade model might just use 'periode' string
-        const gradeQuery = { periode: selectedPeriod };
-        const grades = await Grade.find(gradeQuery);
-        const totalGrades = grades.length;
-        const passingGrades = grades.filter(g => g.valeur >= 10).length;
-        const tauxReussite = totalGrades > 0 ? ((passingGrades / totalGrades) * 100).toFixed(1) : 0;
+        // Get current academic year from settings
+        const academicSetting = await Setting.findOne({ key: 'academic_year_config' });
+        const currentYear = academicSetting ? (academicSetting.value.year || academicSetting.value.academicYear) : '2023-2024';
+
+        // 1. Taux de réussite global (Average of all note values >= 10)
+        // Note schema has notes array with valeur. We aggregate across all notes.
+        const notes = await Note.find({ periode: selectedPeriod, anneeScolaire: currentYear, statut: 'VALIDEE' });
+        let totalVal = 0;
+        let countVal = 0;
+        let passingVal = 0;
+
+        notes.forEach(n => {
+            n.notes.forEach(ng => {
+                totalVal += ng.valeur;
+                countVal++;
+                if (ng.valeur >= 10) passingVal++;
+            });
+        });
+
+        const tauxReussite = countVal > 0 ? ((passingVal / countVal) * 100).toFixed(1) : 0;
 
         // 2. Saisie des notes
         // Count of professors who have validated at least 3 grades during the current trimester
@@ -47,9 +58,9 @@ exports.getProviseurStats = async (req, res, next) => {
         // Alternative: Iterate professors, find their ClasseMatieres, count grades for those classes/matieres.
         // This is heavy but accurate.
 
-        // Let's try an aggregation to map Classe+Matiere -> Count of grades
-        const gradesCounts = await Grade.aggregate([
-            { $match: { periode: selectedPeriod } },
+        // Let's try an aggregation to map Classe+Matiere -> Count of evaluations (batches) that are VALIDATED
+        const notesCounts = await Note.aggregate([
+            { $match: { periode: selectedPeriod, anneeScolaire: currentYear, statut: 'VALIDEE' } },
             { $group: { _id: { classe: "$classe", matiere: "$matiere" }, count: { $sum: 1 } } }
         ]);
 
@@ -378,6 +389,10 @@ exports.getSuiviActiviteStats = async (req, res, next) => {
         // Default to Trimestre 1 if not provided, or handle "Semestre" parsing
         const selectedPeriod = periode || 'Trimestre 1';
 
+        // Get current academic year from settings
+        const academicSetting = await Setting.findOne({ key: 'academic_year_config' });
+        const currentYear = academicSetting ? (academicSetting.value.year || academicSetting.value.academicYear) : '2023-2024';
+
         // Determine filiere based on period name
         let targetFiliere = 'Générale'; // Default
         if (selectedPeriod.toLowerCase().includes('semestre')) {
@@ -412,15 +427,15 @@ exports.getSuiviActiviteStats = async (req, res, next) => {
         // Since Grade doesn't have professor, we must iterate CMs or do complex aggregation.
         // Let's iterate CMs.
 
-        // Pre-fetch grades for this period
-        const gradesCounts = await Grade.aggregate([
-            { $match: { periode: selectedPeriod, classe: { $in: relevantClassIds } } },
+        // Pre-fetch notes counts (VALIDATED batches) for this period
+        const notesAggr = await Note.aggregate([
+            { $match: { periode: selectedPeriod, anneeScolaire: currentYear, classe: { $in: relevantClassIds }, statut: 'VALIDEE' } },
             { $group: { _id: { classe: "$classe", matiere: "$matiere" }, count: { $sum: 1 } } }
         ]);
 
-        const cmGradeMap = new Map();
-        gradesCounts.forEach(g => {
-            cmGradeMap.set(`${g._id.classe}-${g._id.matiere}`, g.count);
+        const cmNoteMap = new Map();
+        notesAggr.forEach(n => {
+            cmNoteMap.set(`${n._id.classe}-${n._id.matiere}`, n.count);
         });
 
         // Pre-fetch Future evaluations
@@ -457,9 +472,9 @@ exports.getSuiviActiviteStats = async (req, res, next) => {
             profData.matieres.add(cm.matiere ? cm.matiere.nom : 'N/A');
             profData.classes.add(`${cm.classe.niveau} ${cm.classe.section}`); // e.g., Tle A
 
-            // Grades count for this specific CM
-            const gradesKey = `${cm.classe._id}-${cm.matiere._id}`;
-            profData.totalGrades += (cmGradeMap.get(gradesKey) || 0);
+            // Notes count for this specific CM (Batch count)
+            const notesKey = `${cm.classe._id}-${cm.matiere._id}`;
+            profData.totalGrades += (cmNoteMap.get(notesKey) || 0);
         }
 
         // Format Result
@@ -633,7 +648,7 @@ exports.getSuiviAvancementCenseur = async (req, res, next) => {
 
         // Get current academic year from settings
         const academicSetting = await Setting.findOne({ key: 'academic_year_config' });
-        const currentYear = academicSetting ? (academicSetting.value.year || academicSetting.value.academicYear) : '2025-2026';
+        const currentYear = academicSetting ? (academicSetting.value.year || academicSetting.value.academicYear) : '2023-2024';
 
         // 1. Get all classes
         let classesQuery = {};

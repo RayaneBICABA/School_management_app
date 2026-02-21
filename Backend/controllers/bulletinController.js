@@ -102,13 +102,17 @@ exports.generateBulletin = asyncHandler(async (req, res, next) => {
         return next(new ErrorResponse('Un bulletin existe déjà pour cet élève et cette période', 400));
     }
 
+    // Get current academic year from settings
+    const academicSetting = await Setting.findOne({ key: 'academic_year_config' });
+    const currentYear = academicSetting ? (academicSetting.value.year || academicSetting.value.academicYear) : '2023-2024';
+
     // Récupérer toutes les notes validées de l'élève pour cette période
     const notesDocs = await Note.find({
         eleve,
         classe,
         periode,
         statut: 'VALIDEE',
-        anneeScolaire: anneeScolaire || '2025-2026'
+        anneeScolaire: anneeScolaire || currentYear
     }).populate('matiere');
 
     if (notesDocs.length === 0) {
@@ -235,13 +239,17 @@ exports.generateBulletinsClasse = asyncHandler(async (req, res, next) => {
                 continue;
             }
 
+            // Get current academic year from settings
+            const academicSetting = await Setting.findOne({ key: 'academic_year_config' });
+            const currentYear = academicSetting ? (academicSetting.value.year || academicSetting.value.academicYear) : '2023-2024';
+
             // Récupérer les notes validées
             const notesDocs = await Note.find({
                 eleve: eleve._id,
                 classe,
                 periode,
                 statut: 'VALIDEE',
-                anneeScolaire: anneeScolaire || '2025-2026'
+                anneeScolaire: anneeScolaire || currentYear
             }).populate('matiere');
 
             // Récupérer les dispensations de l'élève
@@ -315,7 +323,9 @@ exports.generateBulletinsClasse = asyncHandler(async (req, res, next) => {
 
     // Calculer les rangs et statistiques de classe pour tous les bulletins générés
     if (bulletinsGeneres.length > 0) {
-        await updateClassStats(classe, periode, anneeScolaire || '2025-2026');
+        const academicSetting = await Setting.findOne({ key: 'academic_year_config' });
+        const currentYear = academicSetting ? (academicSetting.value.year || academicSetting.value.academicYear) : '2023-2024';
+        await updateClassStats(classe, periode, anneeScolaire || currentYear);
     }
 
     res.status(201).json({

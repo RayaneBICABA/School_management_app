@@ -43,6 +43,12 @@
           </div>
           
           <div class="flex items-center gap-3">
+            <template v-if="hasDraftNotes">
+              <button @click="handleBulkSubmit" :disabled="isUnblocking" class="flex items-center gap-2 px-5 py-2.5 bg-primary text-white font-bold rounded-lg hover:bg-blue-600 shadow-md transition-colors disabled:opacity-50">
+                <span class="material-symbols-outlined text-[20px]">send</span>
+                <span>Soumettre tout le lot</span>
+              </button>
+            </template>
             <template v-if="hasPendingNotes">
               <button @click="handleBulkValidate" :disabled="isUnblocking" class="flex items-center gap-2 px-5 py-2.5 bg-green-600 text-white font-bold rounded-lg hover:bg-green-700 shadow-md transition-colors disabled:opacity-50">
                 <span class="material-symbols-outlined text-[20px]">done_all</span>
@@ -206,6 +212,26 @@ const hasValidatedNotes = computed(() => {
 const hasPendingNotes = computed(() => {
   return notes.value.some(n => n.statut === 'EN_ATTENTE');
 });
+
+const hasDraftNotes = computed(() => {
+  return notes.value.some(n => n.statut === 'BROUILLON' || n.statut === 'REJETEE');
+});
+
+const handleBulkSubmit = async () => {
+    if (!confirm(`Soumettre toutes les notes en brouillon pour ${info.value.matiereNom} ?`)) return;
+    try {
+        await api.submitNotesBulk({
+            classe: classeId,
+            matiere: matiereId,
+            periode: periode
+        });
+        success('Notes soumises avec succès');
+        await loadNotes();
+    } catch (err) {
+        console.error('Erreur soumission:', err);
+        showError('Erreur lors de la soumission du lot');
+    }
+};
 
 const handleBulkValidate = async () => {
   if (!confirm(`Valider toutes les notes en attente pour ${info.value.matiereNom} ?`)) return;

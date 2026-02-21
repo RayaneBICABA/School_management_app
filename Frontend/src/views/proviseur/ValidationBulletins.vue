@@ -15,11 +15,11 @@
         <div class="mb-8">
           <div class="flex items-center justify-between mb-6">
             <div>
-              <h1 class="text-3xl font-black text-[#0e141b] dark:text-white mb-2">Validation des Bulletins</h1>
-              <div class="flex items-center gap-2 text-sm text-[#4e7397] dark:text-slate-400">
-                <span class="material-symbols-outlined text-lg">calendar_today</span>
-                <p class="text-base font-normal">Trimestre 1, Année Scolaire 2025-2026</p>
-              </div>
+                <h1 class="text-3xl font-black text-[#0e141b] dark:text-white mb-2">Validation des Bulletins</h1>
+                <div class="flex items-center gap-2 text-sm text-[#4e7397] dark:text-slate-400">
+                  <span class="material-symbols-outlined text-lg">calendar_today</span>
+                  <p class="text-base font-normal">Session Actuelle, Année Scolaire {{ academicYear }}</p>
+                </div>
             </div>
             <div class="flex gap-3">
               <!-- Removed Aide button -->
@@ -127,9 +127,11 @@ import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import api from '@/services/api'
 import { useToast } from '@/composables/useToast'
+import { useAcademicYear } from '@/composables/useAcademicYear'
 
 const router = useRouter()
 const { success, error: showError } = useToast()
+const { academicYear } = useAcademicYear()
 
 const stats = ref({
   classesPretes: '0/0'

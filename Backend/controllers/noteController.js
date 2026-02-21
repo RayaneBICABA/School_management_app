@@ -344,9 +344,12 @@ exports.submitNote = asyncHandler(async (req, res, next) => {
         return next(new ErrorResponse('Note non trouvée', 404));
     }
 
-    // Vérifier que c'est le professeur qui a créé la note
-    if (note.professeur.toString() !== req.user.id) {
-        return next(new ErrorResponse('Non autorisé', 403));
+    // Vérifier que c'est le professeur qui a créé la note (ou un administrateur/censeur/proviseur)
+    const canSubmit = note.professeur.toString() === req.user.id ||
+        ['ADMIN', 'CENSEUR', 'PROVISEUR'].includes(req.user.role);
+
+    if (!canSubmit) {
+        return next(new ErrorResponse('Non autorisé à soumettre cette note', 403));
     }
 
     // Vérifier qu'il y a au moins une note
@@ -377,15 +380,21 @@ exports.submitNotesBulk = asyncHandler(async (req, res, next) => {
         return next(new ErrorResponse('Veuillez fournir la classe, la matière et la période', 400));
     }
 
+    // Filter logic
+    let filter = {
+        classe,
+        matiere,
+        periode,
+        statut: { $in: ['BROUILLON', 'REJETEE'] }
+    };
+
+    // Si c'est un professeur, il ne peut soumettre que ses propres notes
+    if (req.user.role === 'PROFESSEUR') {
+        filter.professeur = req.user.id;
+    }
+
     // Mettre à jour toutes les notes correspondantes de BROUILLON ou REJETEE à EN_ATTENTE
-    const result = await Note.updateMany(
-        {
-            classe,
-            matiere,
-            periode,
-            professeur: req.user.id,
-            statut: { $in: ['BROUILLON', 'REJETEE'] }
-        },
+    const result = await Note.updateMany(filter,
         {
             $set: {
                 statut: 'EN_ATTENTE',

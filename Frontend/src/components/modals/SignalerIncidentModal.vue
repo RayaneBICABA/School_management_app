@@ -45,7 +45,7 @@
                   @click="selectStudent(s)"
                   class="w-full text-left px-4 py-2 hover:bg-slate-50 dark:hover:bg-slate-700 flex flex-col border-b border-slate-100 dark:border-slate-700 last:border-0"
                 >
-                  <span class="text-sm font-bold">{{ s.prenom }} {{ s.nom }}</span>
+                  <span class="text-sm font-bold">{{ s.nom }} {{ s.prenom }}</span>
                   <span class="text-[10px] text-slate-500">{{ s.classe?.niveau }} {{ s.classe?.section }}</span>
                 </button>
               </div>
@@ -53,10 +53,10 @@
               <div v-if="selectedStudent" class="mt-2 flex items-center justify-between p-2.5 bg-primary/5 dark:bg-primary/10 border border-primary/20 rounded-lg">
                 <div class="flex items-center gap-2">
                   <div class="size-8 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold text-xs">
-                    {{ selectedStudent.prenom[0] }}{{ selectedStudent.nom[0] }}
+                    {{ selectedStudent.nom[0] }}{{ selectedStudent.prenom[0] }}
                   </div>
                   <div class="flex flex-col">
-                    <span class="text-xs font-bold">{{ selectedStudent.prenom }} {{ selectedStudent.nom }}</span>
+                    <span class="text-xs font-bold">{{ selectedStudent.nom }} {{ selectedStudent.prenom }}</span>
                     <span class="text-[10px] text-slate-500">{{ selectedStudent.classe?.niveau }} {{ selectedStudent.classe?.section }}</span>
                   </div>
                 </div>
@@ -174,7 +174,7 @@ const searchStudents = async () => {
 const selectStudent = (student) => {
   selectedStudent.value = student
   form.value.eleve = student._id
-  studentSearch.value = `${student.prenom} ${student.nom}`
+  studentSearch.value = `${student.nom} ${student.prenom}`
   searchResults.value = []
 }
 

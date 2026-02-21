@@ -3,7 +3,7 @@
     <!-- Page Heading -->
     <div class="flex flex-wrap justify-between items-end gap-4 mb-8">
       <div class="flex flex-col gap-1">
-        <h2 class="text-3xl font-black tracking-tight text-slate-900 dark:text-white">Bonjour, {{ user?.prenom || 'Professeur' }} {{ user?.nom || '' }} !</h2>
+        <h2 class="text-3xl font-black tracking-tight text-slate-900 dark:text-white">Bonjour, {{ user?.nom || '' }} {{ user?.prenom || 'Professeur' }} !</h2>
         <p class="text-slate-500 dark:text-slate-400">Voici l'aperçu de votre journée du {{ formatDate(new Date()) }}</p>
       </div>
     </div>

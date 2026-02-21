@@ -5,7 +5,7 @@
         <div class="bg-primary size-10 rounded-lg flex items-center justify-center text-white">
           <span class="material-symbols-outlined">school</span>
         </div>
-        <h1 class="text-lg font-bold">EduParent</h1>
+        <h1 class="text-lg font-bold">Unica</h1>
       </div>
       <nav class="flex flex-col gap-1.5 flex-grow">
         <router-link to="/parent" 

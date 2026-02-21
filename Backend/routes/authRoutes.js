@@ -1,5 +1,5 @@
 const express = require('express');
-const { register, login, getMe, updateDetails, updatePassword, uploadPhoto } = require('../controllers/authController');
+const { register, login, getMe, updateDetails, updatePassword, uploadPhoto, clearHistory } = require('../controllers/authController');
 const { protect } = require('../middleware/auth');
 const upload = require('../middleware/upload');
 
@@ -20,6 +20,9 @@ router.put('/updatedetails', protect, updateDetails);
 // Update password
 router.put('/updatepassword', protect, updatePassword);
 
+// Clear connection history
+router.delete('/history', protect, clearHistory);
+
 // Upload photo - PUT (original with multer)
 router.put('/photo', protect, upload.single('photo'), uploadPhoto);
 
@@ -32,13 +35,13 @@ router.post('/photo-manual', protect, async (req, res) => {
         console.log('📸 [photo-manual] Starting manual upload...');
         console.log('📸 [photo-manual] User ID:', req.user?._id);
         console.log('📸 [photo-manual] Content-Type:', req.headers['content-type']);
-        
+
         // Get raw data
         let rawData = '';
         req.on('data', chunk => {
             rawData += chunk;
         });
-        
+
         req.on('end', async () => {
             try {
                 // Simple approach: look for base64 image data
@@ -46,25 +49,25 @@ router.post('/photo-manual', protect, async (req, res) => {
                 if (base64Match) {
                     const base64Data = base64Match[1];
                     const buffer = Buffer.from(base64Data, 'base64');
-                    
+
                     console.log('📸 [photo-manual] Base64 image found, size:', buffer.length);
-                    
+
                     // Generate filename
                     const timestamp = Date.now();
                     const filename = `user-${req.user._id}-${timestamp}.jpg`;
                     const uploadPath = `uploads/profile/${filename}`;
-                    
+
                     // Save file
                     const fs = require('fs').promises;
                     await fs.writeFile(uploadPath, buffer);
-                    
+
                     const photoUrl = `/uploads/profile/${filename}`;
                     console.log('✅ [photo-manual] File saved:', photoUrl);
-                    
+
                     // Update user
                     const User = require('../models/User');
                     await User.findByIdAndUpdate(req.user._id, { photo: photoUrl });
-                    
+
                     res.json({
                         success: true,
                         data: photoUrl
@@ -84,7 +87,7 @@ router.post('/photo-manual', protect, async (req, res) => {
                 });
             }
         });
-        
+
     } catch (err) {
         console.error('❌ [photo-manual] Error:', err);
         res.status(500).json({

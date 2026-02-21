@@ -6,7 +6,7 @@
           <div class="size-8 bg-primary rounded-lg flex items-center justify-center text-white">
             <span class="material-symbols-outlined">school</span>
           </div>
-          <h1 class="text-lg font-bold tracking-tight">EduManager</h1>
+          <h1 class="text-lg font-bold tracking-tight">Unica</h1>
         </div>
 
         <nav class="flex flex-col gap-1.5 flex-grow">

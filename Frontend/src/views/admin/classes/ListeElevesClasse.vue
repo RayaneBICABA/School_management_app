@@ -69,7 +69,7 @@
                       <span class="text-primary font-bold text-sm">{{ getInitials(eleve) }}</span>
                     </div>
                     <div>
-                        <p class="text-sm font-bold text-[#0e141b] dark:text-white">{{ eleve.prenom }} {{ eleve.nom }}</p>
+                        <p class="text-sm font-bold text-[#0e141b] dark:text-white">{{ eleve.nom }} {{ eleve.prenom }}</p>
                         <p v-if="eleve.email" class="text-xs text-slate-500">{{ eleve.email }}</p>
                     </div>
                   </div>
@@ -162,7 +162,7 @@ const filteredEleves = computed(() => {
 
 // Récupérer les initiales d'un élève
 const getInitials = (eleve) => {
-  return `${eleve.prenom?.[0] || ''}${eleve.nom?.[0] || ''}`.toUpperCase()
+  return `${eleve.nom?.[0] || ''}${eleve.prenom?.[0] || ''}`.toUpperCase()
 }
 
 const formatDate = (dateString) => {

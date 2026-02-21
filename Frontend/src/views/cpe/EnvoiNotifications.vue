@@ -127,7 +127,13 @@
               <span class="material-symbols-outlined text-primary">history</span>
               Historique récent
             </h3>
-            <button @click="viewAllHistory" class="text-xs font-bold text-primary hover:underline">Voir tout</button>
+            <div class="flex items-center gap-3">
+              <button @click="clearHistory" class="text-xs font-bold text-slate-500 hover:text-red-500 transition-colors flex items-center gap-1" title="Vider l'historique d'envoi">
+                <span class="material-symbols-outlined text-sm">delete_sweep</span>
+                Vider
+              </button>
+              <button @click="viewAllHistory" class="text-xs font-bold text-primary hover:underline">Voir tout</button>
+            </div>
           </div>
           <div class="p-2 overflow-y-auto max-h-[800px]">
             <div v-if="notificationHistory.length === 0" class="p-8 text-center text-slate-400">
@@ -324,6 +330,26 @@ const sendMessage = async () => {
 
 const viewAllHistory = () => {
   console.log('Voir tout l\'historique')
+}
+
+const clearHistory = async () => {
+  if (!confirm('Êtes-vous sûr de vouloir vider votre historique d\'envoi ? Cette action est irréversible pour vous, mais les destinataires conserveront leurs notifications.')) {
+    return
+  }
+
+  try {
+    isLoading.value = true
+    const res = await api.clearNotificationHistory()
+    if (res.data.success) {
+      alert('Historique d\'envoi vidé avec succès.')
+      await fetchData() // Refresh history
+    }
+  } catch (error) {
+    console.error('Erreur lors du vidage de l\'historique:', error)
+    alert('Erreur lors du vidage de l\'historique.')
+  } finally {
+    isLoading.value = false
+  }
 }
 </script>
 

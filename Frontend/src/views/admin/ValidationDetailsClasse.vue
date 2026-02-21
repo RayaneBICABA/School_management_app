@@ -199,7 +199,7 @@ const fetchClasseDetails = async () => {
     classeInfo.value = {
       nom: classeData.section || classeData.nom || `Classe ${classeId}`,
       totalEleves: 0,
-      profPrincipal: classeData.profPrincipal ? `${classeData.profPrincipal.prenom} ${classeData.profPrincipal.nom}` : 'Non assigné',
+      profPrincipal: classeData.profPrincipal ? `${classeData.profPrincipal.nom} ${classeData.profPrincipal.prenom}` : 'Non assigné',
       niveau: classeData.niveau || '',
       section: classeData.section || '',
       serie: classeData.serie || ''
@@ -213,9 +213,9 @@ const fetchClasseDetails = async () => {
       bulletinId: b._id,
       rang: parseInt(b.rang) || index + 1,
       rangText: b.rang === '1' ? '1er' : `${b.rang}e`,
-      nom: `${b.eleve.prenom} ${b.eleve.nom}`,
+      nom: `${b.eleve.nom} ${b.eleve.prenom}`,
       matricule: b.eleve.matricule || 'N/A',
-      initials: `${b.eleve.prenom?.[0] || ''}${b.eleve.nom?.[0] || ''}`.toUpperCase(),
+      initials: `${b.eleve.nom?.[0] || ''}${b.eleve.prenom?.[0] || ''}`.toUpperCase(),
       moyenne: (b.moyenneGenerale || 0).toFixed(2),
       appreciation: b.appreciationGenerale || ''
     }));
@@ -228,9 +228,9 @@ const fetchClasseDetails = async () => {
             bulletinId: null,
             rang: '-',
             rangText: '-',
-            nom: `${student.prenom || ''} ${student.nom || ''}`.trim(),
+            nom: `${student.nom || ''} ${student.prenom || ''}`.trim(),
             matricule: student.matricule || 'N/A',
-            initials: `${student.prenom?.[0] || ''}${student.nom?.[0] || ''}`.toUpperCase(),
+            initials: `${student.nom?.[0] || ''}${student.prenom?.[0] || ''}`.toUpperCase(),
             moyenne: '0.00',
             appreciation: ''
          }));

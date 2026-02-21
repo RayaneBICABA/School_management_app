@@ -6,7 +6,7 @@
         <div class="size-8 bg-primary rounded-lg flex items-center justify-center text-white">
           <span class="material-symbols-outlined">school</span>
         </div>
-        <p class="text-sm font-semibold text-slate-700 dark:text-slate-200 mt-1">Année Scolaire {{ academicYear }}</p>
+        <h1 class="text-lg font-bold tracking-tight">Unica</h1>
       </div>
 
       <!-- Navigation Links -->

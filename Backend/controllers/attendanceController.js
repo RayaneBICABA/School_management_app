@@ -379,7 +379,7 @@ exports.recalculatePointDeductions = async (studentId, classeId, periodParam, da
             dateQuery = { $gte: new Date(y, 3, 1), $lte: new Date(y, 6, 31) }; // Apr - Jul
         }
 
-        // Count hours of UNJUSTIFIED absences grouped by subject
+        // Count total cumulative hours of UNJUSTIFIED absences across all subjects
         const stats = await Attendance.aggregate([
             {
                 $match: {
@@ -391,23 +391,20 @@ exports.recalculatePointDeductions = async (studentId, classeId, periodParam, da
             },
             {
                 $group: {
-                    _id: '$matiere',
+                    _id: null, // Regroupement global
                     totalHours: { $sum: '$heures' }
                 }
             }
         ]);
 
         let globalDeduction = 0;
-        const subjectDeductions = {};
 
-        stats.forEach(subjectStat => {
-            if (subjectStat._id) {
-                // Rule: -0.5 points per 4 hours of unjustified absence PER subject
-                const subjectDeduction = Math.floor(subjectStat.totalHours / 4) * 0.5;
-                globalDeduction += subjectDeduction;
-                subjectDeductions[subjectStat._id.toString()] = subjectDeduction;
+        if (stats.length > 0 && stats[0].totalHours) {
+            // Rule: Flat -0.5 points IF total cumulative unjustified absence > 5 hours
+            if (stats[0].totalHours > 5) {
+                globalDeduction = 0.5;
             }
-        });
+        }
 
         // Update the bulletin
         const bulletin = await Bulletin.findOne({
@@ -421,11 +418,10 @@ exports.recalculatePointDeductions = async (studentId, classeId, periodParam, da
             // 1. Update global retraitPoints
             bulletin.retraitPoints = globalDeduction;
 
-            // 2. Optionally update subject-level retraitPoints for transparency
+            // 2. Remove subject-level retraitPoints since the rule is global now
             if (bulletin.notes && bulletin.notes.length > 0) {
                 bulletin.notes.forEach(note => {
-                    const matiereId = note.matiere.toString();
-                    note.retraitPoints = subjectDeductions[matiereId] || 0;
+                    note.retraitPoints = 0;
                 });
             }
 

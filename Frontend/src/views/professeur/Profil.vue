@@ -27,7 +27,7 @@
           </button>
         </div>
         <div class="flex flex-col text-center md:text-left flex-grow">
-          <p class="text-[#0e141b] dark:text-white text-[24px] font-bold leading-tight tracking-[-0.015em]">{{ user.prenom }} {{ user.nom }}</p>
+          <h2 class="text-[#0e141b] dark:text-white text-3xl font-bold tracking-tight">{{ user.nom }} {{ user.prenom }}</h2>
           <p class="text-slate-500 dark:text-slate-400 text-base font-medium">{{ user.role }}</p>
           <p class="text-slate-400 dark:text-slate-500 text-sm font-normal">Identifiant: {{ user._id.substring(0,8) }}</p>
         </div>
@@ -104,9 +104,13 @@
       </section>
 
       <!-- History -->
-      <section class="bg-white dark:bg-[#1a2632] rounded-xl border border-slate-200 dark:border-slate-800 overflow-hidden">
+    <section class="bg-white dark:bg-[#1a2632] rounded-xl border border-slate-200 dark:border-slate-800 overflow-hidden">
         <div class="px-6 py-4 border-b border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/30 flex justify-between items-center">
           <h2 class="text-[#0e141b] dark:text-white text-lg font-bold">Historique de connexion</h2>
+          <button @click="clearHistory" class="text-xs font-bold text-slate-500 hover:text-red-500 transition-colors flex items-center gap-1" title="Vider l'historique de connexion" v-if="user?.lastLogins?.length > 1">
+            <span class="material-symbols-outlined text-sm">delete_sweep</span>
+            Vider
+          </button>
         </div>
         <div class="p-6">
           <div class="space-y-4">
@@ -139,7 +143,7 @@
 
 <script setup>
 import { ref, onMounted, computed } from 'vue';
-import api from '@/services/api';
+import api, { BASE_ASSET_URL } from '@/services/api';
 
 const user = ref(null);
 const isUpdating = ref(false);
@@ -158,11 +162,10 @@ const getPhotoUrl = (photoPath) => {
     if (photoPath.startsWith('http') || photoPath.startsWith('data:')) {
         return photoPath;
     }
-    const baseUrl = import.meta.env.VITE_API_URL ? import.meta.env.VITE_API_URL.replace('/api/v1', '') : 'http://localhost:5000';
     if (photoPath.startsWith('/uploads')) {
-        return `${baseUrl}${photoPath}`;
+        return `${BASE_ASSET_URL}${photoPath}`;
     }
-    return `${baseUrl}/uploads/${photoPath}`;
+    return `${BASE_ASSET_URL}/uploads/${photoPath}`;
 };
 
 const handlePhotoUpload = async (event) => {
@@ -304,6 +307,23 @@ const parseUserAgent = (ua) => {
     if (ua.includes('Safari')) return 'Safari';
     if (ua.includes('Edge')) return 'Edge';
     return 'Navigateur Web';
+};
+
+const clearHistory = async () => {
+    if (!confirm('Êtes-vous sûr de vouloir vider l\'historique de vos connexions ? (La session actuelle sera conservée)')) {
+        return;
+    }
+
+    try {
+        const res = await api.clearConnectionHistory();
+        if (res.data.success) {
+            user.value.lastLogins = res.data.data;
+            alert('Historique des connexions vidé avec succès.');
+        }
+    } catch (error) {
+        console.error('Erreur lors du vidage de l\'historique:', error);
+        alert('Erreur lors du vidage de l\'historique.');
+    }
 };
 
 onMounted(() => {

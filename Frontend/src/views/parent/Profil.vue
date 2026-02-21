@@ -16,7 +16,7 @@
             <div class="absolute -bottom-2 -right-2 w-8 h-8 rounded-full bg-green-500 border-4 border-white dark:border-slate-900"></div>
           </div>
           <div>
-            <h1 class="text-2xl md:text-3xl font-black text-slate-900 dark:text-white tracking-tight">{{ user.prenom }} {{ user.nom }}</h1>
+            <h1 class="text-2xl md:text-3xl font-black text-slate-900 dark:text-white tracking-tight">{{ user.nom }} {{ user.prenom }}</h1>
             <p class="text-slate-500 font-medium">Parent d'élève • {{ user.role }}</p>
             <div class="flex items-center gap-3 mt-2">
               <span class="px-2 py-1 bg-primary/10 text-primary text-[10px] font-bold rounded-lg tracking-wider uppercase">ID: {{ user._id.substring(0,8).toUpperCase() }}</span>
@@ -46,12 +46,12 @@
 
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div class="space-y-2">
-                <label class="text-sm font-bold text-slate-500 ml-1">Prénom</label>
-                <input v-model="user.prenom" type="text" class="w-full px-4 py-3 rounded-xl border-slate-200 dark:border-slate-700 dark:bg-slate-800 focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all font-medium"/>
-              </div>
-              <div class="space-y-2">
                 <label class="text-sm font-bold text-slate-500 ml-1">Nom</label>
                 <input v-model="user.nom" type="text" class="w-full px-4 py-3 rounded-xl border-slate-200 dark:border-slate-700 dark:bg-slate-800 focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all font-medium"/>
+              </div>
+              <div class="space-y-2">
+                <label class="text-sm font-bold text-slate-500 ml-1">Prénom</label>
+                <input v-model="user.prenom" type="text" class="w-full px-4 py-3 rounded-xl border-slate-200 dark:border-slate-700 dark:bg-slate-800 focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all font-medium"/>
               </div>
               <div class="space-y-2">
                 <label class="text-sm font-bold text-slate-500 ml-1">E-mail</label>
@@ -99,11 +99,17 @@
 
           <!-- Login History -->
           <div class="bg-white dark:bg-slate-900 rounded-3xl p-6 md:p-8 border border-slate-100 dark:border-slate-800 shadow-sm">
-            <div class="flex items-center gap-3 mb-8">
-              <div class="w-10 h-10 rounded-xl bg-orange-50 dark:bg-orange-900/20 flex items-center justify-center">
-                <span class="material-symbols-outlined text-orange-500">history</span>
+            <div class="flex items-center justify-between mb-8">
+              <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-xl bg-orange-50 dark:bg-orange-900/20 flex items-center justify-center">
+                  <span class="material-symbols-outlined text-orange-500">history</span>
+                </div>
+                <h2 class="text-xl font-bold">Dernières connexions</h2>
               </div>
-              <h2 class="text-xl font-bold">Dernières connexions</h2>
+              <button @click="clearHistory" class="text-xs font-bold text-slate-500 hover:text-red-500 transition-colors flex items-center gap-1" title="Vider l'historique de connexion" v-if="user?.lastLogins?.length > 1">
+                <span class="material-symbols-outlined text-sm">delete_sweep</span>
+                Vider
+              </button>
             </div>
 
             <div class="space-y-4">
@@ -219,11 +225,11 @@
               <div class="w-12 h-12 rounded-xl border-2 border-white dark:border-slate-700 bg-slate-200 dark:bg-slate-700 overflow-hidden">
                 <img v-if="student.photo && student.photo !== 'no-photo.jpg'" :src="`/uploads/${student.photo}`" class="w-full h-full object-cover"/>
                 <div v-else class="w-full h-full flex items-center justify-center bg-primary/10 text-primary font-bold">
-                  {{ student.prenom[0] }}{{ student.nom[0] }}
+                  {{ student.nom[0] }}{{ student.prenom[0] }}
                 </div>
               </div>
               <div>
-                <p class="font-bold text-sm">{{ student.prenom }} {{ student.nom }}</p>
+                <p class="font-bold text-sm">{{ student.nom }} {{ student.prenom }}</p>
                 <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">{{ student.matricule }} • {{ student.classe?.niveau }} {{ student.classe?.section }}</p>
               </div>
             </div>
@@ -371,6 +377,23 @@ const parseUserAgent = (ua) => {
     return 'Navigateur Web';
 };
 
+const clearHistory = async () => {
+    if (!confirm('Êtes-vous sûr de vouloir vider l\'historique de vos connexions ? (La session actuelle sera conservée)')) {
+        return;
+    }
+
+    try {
+        const res = await api.clearConnectionHistory();
+        if (res.data.success) {
+            user.value.lastLogins = res.data.data;
+            alert('Historique des connexions vidé avec succès.');
+        }
+    } catch (error) {
+        console.error('Erreur lors du vidage de l\'historique:', error);
+        alert('Erreur lors du vidage de l\'historique.');
+    }
+};
+
 // Préférences de notification
 const notificationPreferences = ref([
   {
@@ -413,9 +436,9 @@ const fetchChildren = async () => {
     if (res.data.success) {
       children.value = res.data.data.map(child => ({
         id: child._id,
-        name: `${child.prenom} ${child.nom}`,
+        name: `${child.nom} ${child.prenom}`,
         class: child.classe ? `${child.classe.niveau} ${child.classe.section}` : 'Sans classe',
-        initials: `${child.prenom[0]}${child.nom[0]}`.toUpperCase(),
+        initials: `${child.nom[0]}${child.prenom[0]}`.toUpperCase(),
         avatarColor: child.prenom === 'Lucas' ? 'bg-blue-100 dark:bg-blue-900/30 text-primary' : 'bg-pink-100 dark:bg-pink-900/30 text-pink-600'
       }))
     }

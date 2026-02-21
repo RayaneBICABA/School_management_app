@@ -263,8 +263,8 @@ const fetchData = async () => {
       .filter(s => !s.classe)
       .map(s => ({
         id: s._id,
-        nom: `${s.prenom} ${s.nom}`,
-        initials: `${s.prenom[0]}${s.nom[0]}`.toUpperCase(),
+        nom: `${s.nom} ${s.prenom}`,
+        initials: `${s.nom[0]}${s.prenom[0]}`.toUpperCase(),
         niveau: 'Non défini',
         filiere: 'Non défini',
         statut: 'Nouveau',

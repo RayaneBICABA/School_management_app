@@ -94,7 +94,7 @@
                   class="hover:bg-slate-50 dark:hover:bg-slate-800/30 transition-colors"
                 >
                   <td class="px-6 py-4">
-                    <div class="font-semibold text-[#0e141b] dark:text-white">{{ user.prenom }} {{ user.nom }}</div>
+                    <div class="font-semibold text-[#0e141b] dark:text-white">{{ user.nom }} {{ user.prenom }}</div>
                     <div class="text-xs text-slate-500">ID: {{ user._id.substring(0, 8) }}</div>
                   </td>
                   <td class="px-6 py-4">
@@ -240,7 +240,7 @@
     <ConfirmationModal
       :is-open="showDeleteModal"
       title="Supprimer l'utilisateur"
-      :message="`Êtes-vous sûr de vouloir supprimer ${userToDelete?.prenom} ${userToDelete?.nom} ? Cette action est irréversible.`"
+      :message="`Êtes-vous sûr de vouloir supprimer ${userToDelete?.nom} ${userToDelete?.prenom} ? Cette action est irréversible.`"
       confirm-text="Supprimer"
       cancel-text="Annuler"
       type="danger"

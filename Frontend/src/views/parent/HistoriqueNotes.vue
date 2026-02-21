@@ -173,11 +173,27 @@ const fetchNotes = async () => {
             date: new Date(n.updatedAt).toLocaleDateString()
         }));
         
-        // Derive periods
-        const distinctPeriods = [...new Set(notes.value.map(n => n.periode))].filter(Boolean).sort();
-        periods.value = distinctPeriods;
-        // Default to filtering all or most recent? Let's stay on 'all' or last one
-        if (distinctPeriods.length && selectedPeriod.value === 'all') {
+        // Fetch child class info for filiere
+        const child = children.value.find(c => c._id === selectedChildId.value);
+        if (child && child.classe) {
+            const classId = child.classe._id || child.classe;
+            try {
+                const classRes = await api.getClasse(classId);
+                const classeObj = classRes.data.data;
+                periods.value = classeObj.filiere === 'Technique'
+                    ? ['Semestre 1', 'Semestre 2']
+                    : ['Trimestre 1', 'Trimestre 2', 'Trimestre 3'];
+            } catch (classError) {
+                console.error('Error fetching child class:', classError);
+                // Fallback to deriving from notes
+                periods.value = [...new Set(notes.value.map(n => n.periode))].filter(Boolean).sort();
+            }
+        } else {
+            // Fallback
+            periods.value = [...new Set(notes.value.map(n => n.periode))].filter(Boolean).sort();
+        }
+
+        if (periods.value.length && selectedPeriod.value === 'all') {
             selectedPeriod.value = 'all'; 
         }
 

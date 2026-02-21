@@ -103,7 +103,7 @@
                   </span>
                   <span class="flex items-center gap-1 group/item">
                     <span class="material-symbols-outlined text-sm group-hover/item:text-primary transition-colors">person</span>
-                    {{ exam.professeur?.prenom }} {{ exam.professeur?.nom }}
+                    {{ exam.professeur?.nom }} {{ exam.professeur?.prenom }}
                   </span>
                 </div>
               </div>

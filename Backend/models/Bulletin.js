@@ -160,11 +160,9 @@ BulletinSchema.methods.calculerMoyenneGenerale = async function () {
         for (const note of this.notes) {
             const coefficient = note.coeff || 1;
             const moyenne = note.moyenneMatiere || 0;
-            const retrait = note.retraitPoints || 0;
 
-            // Note pondérée = (moyenne - retrait) * coefficient
-            // We ensure (moyenne - retrait) doesn't go below 0
-            const finalNoteMatiere = Math.max(0, moyenne - retrait);
+            // La note n'est plus amputée par matière pour les absences (gestion globale uniquement)
+            const finalNoteMatiere = moyenne;
 
             totalPoints += finalNoteMatiere * coefficient;
             totalCoefficients += coefficient;
@@ -173,12 +171,12 @@ BulletinSchema.methods.calculerMoyenneGenerale = async function () {
         this.totalPoints = totalPoints;
         this.totalCoefficients = totalCoefficients;
 
-        // Apply global withdrawal (retraitPoints) to the weighted total during average calculation
-        const totalRetrait = this.retraitPoints || 0;
-        const weightedTotalApresRetrait = Math.max(0, totalPoints - totalRetrait);
+        // Calcul de la moyenne générale brute
+        let moyenneBrute = totalCoefficients > 0 ? totalPoints / totalCoefficients : 0;
 
-        // The average is now (weightedTotal - retrait) / totalCoefficients
-        this.moyenneGenerale = totalCoefficients > 0 ? weightedTotalApresRetrait / totalCoefficients : 0;
+        // Application du retrait global directement sur la moyenne générale
+        const totalRetrait = this.retraitPoints || 0;
+        this.moyenneGenerale = Math.max(0, moyenneBrute - totalRetrait);
 
         // Moyenne définitive is same as moyenneGenerale after deductions
         this.moyenneDefinitive = this.moyenneGenerale;

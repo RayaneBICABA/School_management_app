@@ -12,7 +12,7 @@
               <div class="p-2 bg-white rounded-lg shadow-lg">
                 <span class="material-symbols-outlined text-primary text-3xl">school</span>
               </div>
-              <span class="text-white text-xl font-bold tracking-tight">Academia Plus</span>
+              <span class="text-white text-xl font-bold tracking-tight">Unica</span>
             </div>
             <h1 class="text-4xl xl:text-5xl font-extrabold text-white leading-tight mb-6">
               Rejoignez votre plateforme académique
@@ -45,7 +45,7 @@
           <div class="flex flex-col gap-2">
             <div class="lg:hidden flex items-center gap-2 mb-6">
               <span class="material-symbols-outlined text-primary text-2xl">school</span>
-              <span class="text-[#0e141b] dark:text-white font-bold">Academia Plus</span>
+              <span class="text-[#0e141b] dark:text-white font-bold">Unica</span>
             </div>
             <h2 class="text-[#0e141b] dark:text-white text-3xl font-black leading-tight tracking-tight">Inscription Élève</h2>
             <p class="text-[#4e7397] dark:text-slate-400 text-base font-normal">Créez votre compte pour accéder à votre espace personnel.</p>

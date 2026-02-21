@@ -56,14 +56,24 @@
               <h2 class="text-xl font-bold text-[#0e141b] dark:text-white">Notes des élèves</h2>
               <p class="text-sm text-[#4e7397] mt-1">{{ eleves.length }} élève(s) - {{ evaluations.length }} évaluation(s)</p>
             </div>
-            <button 
-              @click="saveAllNotes" 
-              :disabled="isSaving"
-              class="px-6 py-2 bg-green-600 text-white rounded-lg font-bold hover:bg-green-700 transition-colors disabled:opacity-50 flex items-center gap-2"
-            >
-              <span class="material-symbols-outlined">save</span>
-              {{ isSaving ? 'Enregistrement...' : 'Enregistrer tout' }}
-            </button>
+            <div class="flex items-center gap-3">
+              <button 
+                @click="saveAllNotes(false)" 
+                :disabled="isSaving || isLocked"
+                class="px-6 py-2 bg-slate-600 text-white rounded-lg font-bold hover:bg-slate-700 transition-colors disabled:opacity-50 flex items-center gap-2"
+              >
+                <span class="material-symbols-outlined">save</span>
+                {{ isSaving ? 'Enregistrement...' : 'Enregistrer Brouillon' }}
+              </button>
+              <button 
+                @click="confirmSubmit" 
+                :disabled="isSaving || isLocked || evaluations.length === 0"
+                class="px-6 py-2 bg-primary text-white rounded-lg font-bold hover:bg-primary/90 transition-colors disabled:opacity-50 flex items-center gap-2"
+              >
+                <span class="material-symbols-outlined">send</span>
+                Soumettre au Censeur
+              </button>
+            </div>
           </div>
         </div>
 
@@ -81,7 +91,12 @@
             <thead class="bg-slate-50 dark:bg-slate-800/50 sticky top-0">
               <tr>
                 <th class="px-4 py-3 text-left text-sm font-bold text-[#0e141b] dark:text-white sticky left-0 bg-slate-50 dark:bg-slate-800/50 z-10">
-                  Élève
+                  <div class="flex items-center gap-2">
+                    <span>Élève</span>
+                    <span v-if="globalStatus" :class="getStatutClass(globalStatus)" class="px-2 py-0.5 rounded-full text-[10px] uppercase font-black">
+                      {{ globalStatus }}
+                    </span>
+                  </div>
                 </th>
                 <th 
                   v-for="eval in evaluations" 
@@ -108,7 +123,7 @@
               <tr v-for="eleve in eleves" :key="eleve._id" class="hover:bg-slate-50 dark:hover:bg-slate-800/30 transition-colors">
                 <td class="px-4 py-3 text-sm font-medium text-[#0e141b] dark:text-white sticky left-0 bg-white dark:bg-slate-900">
                   <div>
-                    <p>{{ eleve.prenom }} {{ eleve.nom }}</p>
+                    <p>{{ eleve.nom }} {{ eleve.prenom }}</p>
                     <p class="text-xs text-[#4e7397]">{{ eleve.matricule }}</p>
                   </div>
                 </td>
@@ -123,7 +138,8 @@
                     min="0" 
                     max="20" 
                     step="0.5"
-                    class="w-20 px-2 py-1 text-center rounded border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-[#0e141b] dark:text-white focus:ring-2 focus:ring-primary/20"
+                    :disabled="isLocked"
+                    class="w-20 px-2 py-1 text-center rounded border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-[#0e141b] dark:text-white focus:ring-2 focus:ring-primary/20 disabled:opacity-50 disabled:cursor-not-allowed"
                     placeholder="-"
                   />
                 </td>
@@ -141,11 +157,23 @@
           <p class="text-[#4e7397] mb-4">Aucune évaluation créée pour cette période</p>
           <button 
             @click="showAddEvalModal = true"
-            class="px-6 py-2 bg-primary text-white rounded-lg font-bold hover:bg-primary/90 transition-colors inline-flex items-center gap-2"
+            :disabled="isLocked"
+            class="px-6 py-2 bg-primary text-white rounded-lg font-bold hover:bg-primary/90 transition-colors inline-flex items-center gap-2 disabled:opacity-50"
           >
             <span class="material-symbols-outlined">add</span>
             Créer votre première évaluation
           </button>
+        </div>
+
+        <!-- Info Lock -->
+        <div v-if="isLocked" class="p-4 bg-amber-50 dark:bg-amber-900/20 border-t border-amber-200 dark:border-amber-800">
+          <div class="flex items-center gap-2 text-amber-700 dark:text-amber-400">
+            <span class="material-symbols-outlined">lock</span>
+            <p class="text-sm font-medium">
+              Ces notes sont verrouillées car elles ont été {{ globalStatus === 'VALIDEE' ? 'validées par le censeur' : 'soumises pour validation' }}.
+              Elles ne peuvent plus être modifiées.
+            </p>
+          </div>
         </div>
       </div>
 
@@ -275,6 +303,8 @@ const eleves = ref([]);
 const evaluations = ref([]);
 const periodes = ref([]);
 const notesData = ref({});
+const notesDocs = ref({}); // Pour stocker les documents Note complets (et leurs IDs)
+const globalStatus = ref(''); // Statut global de la sélection (basé sur le premier trouvé)
 
 const selectedClasse = ref('');
 const selectedMatiere = ref('');
@@ -283,6 +313,10 @@ const selectedPeriode = ref('');
 const isLoading = ref(false);
 const isSaving = ref(false);
 const showAddEvalModal = ref(false);
+
+const isLocked = computed(() => {
+  return globalStatus.value === 'EN_ATTENTE' || globalStatus.value === 'VALIDEE';
+});
 
 // Modal state
 const showConfirmModal = ref(false);
@@ -341,6 +375,7 @@ const loadData = async () => {
   if (!selectedClasse.value || !selectedMatiere.value || !selectedPeriode.value) return;
 
   isLoading.value = true;
+  globalStatus.value = '';
 
   try {
     // Charger les élèves
@@ -376,30 +411,55 @@ const loadData = async () => {
 
     // Initialiser notesData
     const tempNotesData = {};
+    const tempNotesDocs = {};
     eleves.value.forEach(eleve => {
       tempNotesData[eleve._id] = {};
-      evaluations.value.forEach(eval => {
-        tempNotesData[eleve._id][eval.nom] = null;
+      evaluations.value.forEach(evalCol => {
+        tempNotesData[eleve._id][evalCol.nom] = null;
       });
     });
 
     // Remplir avec les notes existantes
     if (notesRes.data.success) {
+      if (notesRes.data.data.length > 0) {
+        globalStatus.value = notesRes.data.data[0].statut || 'BROUILLON';
+      }
       notesRes.data.data.forEach(noteDoc => {
-        if (tempNotesData[noteDoc.eleve._id]) {
+        const eleveId = noteDoc.eleve._id || noteDoc.eleve;
+        if (tempNotesData[eleveId]) {
+          tempNotesDocs[eleveId] = noteDoc;
           noteDoc.notes.forEach(note => {
-            tempNotesData[noteDoc.eleve._id][note.type] = note.valeur;
+            tempNotesData[eleveId][note.type] = note.valeur;
           });
         }
       });
     }
 
     notesData.value = tempNotesData;
+    notesDocs.value = tempNotesDocs;
 
   } catch (err) {
     console.error('Erreur chargement données:', err);
   } finally {
     isLoading.value = false;
+  }
+};
+
+const getStatutClass = (statut) => {
+  switch (statut) {
+    case 'VALIDEE': return 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400';
+    case 'REJETEE': return 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400';
+    case 'EN_ATTENTE': return 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400';
+    default: return 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-400';
+  }
+};
+
+const getStatutLabel = (statut) => {
+  switch (statut) {
+    case 'VALIDEE': return 'Validée';
+    case 'REJETEE': return 'Rejetée';
+    case 'EN_ATTENTE': return 'En attente';
+    default: return 'Brouillon';
   }
 };
 
@@ -414,21 +474,23 @@ const calculateMoyenne = (eleveId) => {
   return (sum / validNotes.length).toFixed(2);
 };
 
-const saveAllNotes = async () => {
+const saveAllNotes = async (isSubmit = false) => {
+  if (isLocked.value && !isSubmit) return;
   isSaving.value = true;
 
   try {
+    const promises = [];
     for (const eleve of eleves.value) {
       const elevesNotes = notesData.value[eleve._id];
       const notesArray = [];
 
       // Construire le tableau de notes
-      evaluations.value.forEach(eval => {
-        const noteValue = elevesNotes[eval.nom];
+      evaluations.value.forEach(evalCol => {
+        const noteValue = elevesNotes[evalCol.nom];
         if (noteValue !== null && noteValue !== '') {
           notesArray.push({
             valeur: parseFloat(noteValue),
-            type: eval.nom,
+            type: evalCol.nom,
             coefficient: 1
           });
         }
@@ -436,30 +498,37 @@ const saveAllNotes = async () => {
 
       if (notesArray.length === 0) continue;
 
-      // Vérifier si une note existe déjà
-      const existingNotesRes = await api.getNotes({
-        eleve: eleve._id,
-        matiere: selectedMatiere.value,
-        periode: selectedPeriode.value
-      });
+      const existingNote = notesDocs.value[eleve._id];
 
-      if (existingNotesRes.data.data.length > 0) {
+      if (existingNote) {
         // Mettre à jour
-        const noteId = existingNotesRes.data.data[0]._id;
-        await api.updateNote(noteId, { notes: notesArray });
+        promises.push(api.updateNote(existingNote._id, { notes: notesArray }));
       } else {
         // Créer
-        await api.createNotes({
+        promises.push(api.createNotes({
           eleve: eleve._id,
           matiere: selectedMatiere.value,
           classe: selectedClasse.value,
           periode: selectedPeriode.value,
-          notes: notesArray
-        });
+          notes: notesArray,
+          statut: 'BROUILLON'
+        }));
       }
     }
 
-    success('Notes enregistrées avec succès !');
+    await Promise.all(promises);
+
+    if (isSubmit) {
+      // Recharger pour avoir les IDs corrects si on vient de créer des notes
+      await loadData();
+      const submitPromises = Object.values(notesDocs.value).map(doc => api.submitNote(doc._id));
+      await Promise.all(submitPromises);
+      success('Notes soumises au censeur !');
+    } else {
+      success('Brouillon enregistré');
+    }
+    
+    await loadData();
   } catch (err) {
     console.error('Erreur sauvegarde notes:', err);
     error('Erreur lors de l\'enregistrement des notes');
@@ -467,6 +536,17 @@ const saveAllNotes = async () => {
     isSaving.value = false;
   }
 };
+
+const confirmSubmit = () => {
+  openConfirmModal(
+    'Soumettre au censeur ?',
+    'Une fois soumises, vous ne pourrez plus modifier ces notes sans une demande de déblocage. Voulez-vous continuer ?',
+    'Soumettre',
+    () => saveAllNotes(true),
+    'warning'
+  );
+};
+
 
 const openConfirmModal = (title, message, actionText, action, type = 'info', cancelText = 'Annuler') => {
   confirmModalTitle.value = title;
@@ -491,6 +571,10 @@ const executeConfirmAction = async () => {
 };
 
 const deleteEvaluation = (evalId) => {
+  if (isLocked.value) {
+    warning('Impossible de supprimer une évaluation sur des notes verrouillées');
+    return;
+  }
   openConfirmModal(
     'Supprimer évaluation',
     'Supprimer cette évaluation ? Toutes les notes associées seront supprimées.',

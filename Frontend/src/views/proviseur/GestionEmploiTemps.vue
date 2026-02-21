@@ -60,7 +60,7 @@
                         {{ getSchedule(day, hour).matiere.nom }}
                       </p>
                       <p class="text-[10px] font-bold text-slate-600 dark:text-slate-300 truncate">
-                         {{ getSchedule(day, hour).professeur ? `${getSchedule(day, hour).professeur.prenom} ${getSchedule(day, hour).professeur.nom}` : 'Non assigné' }}
+                         {{ getSchedule(day, hour).professeur ? `${getSchedule(day, hour).professeur.nom} ${getSchedule(day, hour).professeur.prenom}` : 'Non assigné' }}
                       </p>
                     </div>
                     <div class="flex items-center justify-between mt-1">
@@ -282,7 +282,7 @@ const closeModal = () => {
 const onMatiereChange = () => {
     const link = classeMatieres.value.find(cm => cm.matiere._id === form.value.matiere);
     if(link && link.professeur) {
-        assignedProfName.value = `${link.professeur.prenom} ${link.professeur.nom}`;
+        assignedProfName.value = `${link.professeur.nom} ${link.professeur.prenom}`;
         form.value.professeur = link.professeur._id;
     } else {
         assignedProfName.value = '';

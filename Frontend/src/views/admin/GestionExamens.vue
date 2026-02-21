@@ -111,7 +111,7 @@
                 {{ exam.heureDebut }} - {{ exam.heureFin }}
               </td>
               <td class="px-6 py-4 text-sm text-slate-600 dark:text-slate-400">
-                {{ exam.professeur?.prenom }} {{ exam.professeur?.nom }}
+                {{ exam.professeur?.nom }} {{ exam.professeur?.prenom }}
               </td>
               <td class="px-6 py-4">
                 <span :class="getStatusClass(exam.date)">

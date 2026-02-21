@@ -38,7 +38,7 @@
 
 <script setup>
 import { ref, onMounted, computed } from 'vue'
-import api from '@/services/api'
+import api, { BASE_ASSET_URL } from '@/services/api'
 
 const props = defineProps({
   title: {
@@ -52,7 +52,7 @@ const unreadCount = ref(0)
 
 const userName = computed(() => {
   if (user.value.prenom && user.value.nom) {
-    return `${user.value.prenom} ${user.value.nom}`
+    return `${user.value.nom} ${user.value.prenom}`
   }
   return 'Utilisateur'
 })
@@ -73,7 +73,7 @@ const userRoleLabel = computed(() => {
 
 const userAvatar = computed(() => {
   if (user.value.photo) {
-    return user.value.photo.startsWith('http') ? user.value.photo : `http://localhost:5000/${user.value.photo}`
+    return user.value.photo.startsWith('http') ? user.value.photo : `${BASE_ASSET_URL}/${user.value.photo}`
   }
   return 'https://ui-avatars.com/api/?name=' + encodeURIComponent(userName.value) + '&background=0D8ABC&color=fff'
 })

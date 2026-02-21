@@ -212,7 +212,8 @@ const routes = [
       { path: 'ajouter-utilisateur', name: 'CenseurAjouterUtilisateur', component: () => import('@/views/admin/AjouterUtilisateur.vue') },
       { path: 'notifications', name: 'CenseurNotifications', component: () => import('@/views/common/GlobalNotifications.vue') },
       { path: 'master-sheet', name: 'CenseurMasterSheet', component: () => import('@/views/common/MasterGradeSheet.vue') },
-      { path: 'profil', name: 'CenseurProfil', component: CenseurProfil }
+      { path: 'profil', name: 'CenseurProfil', component: CenseurProfil },
+      { path: 'notes/detail', name: 'CenseurDetailNotesMatiere', component: () => import('@/views/admin/DetailNotesMatiere.vue') }
     ]
   },
   // Routes CPE

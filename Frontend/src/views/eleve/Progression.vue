@@ -173,7 +173,7 @@
 
       <!-- Footer / Feedback -->
       <footer class="mt-12 py-6 border-t border-[#d0dbe7] dark:border-slate-700 flex justify-between items-center text-[#4e7397] text-xs">
-        <p>© 2024 Système de Gestion Scolaire - Portails Élèves</p>
+        <p>© 2024 Unica - Portails Élèves</p>
         <div class="flex gap-4">
           <a class="hover:text-primary underline" href="#">Contacter un professeur</a>
           <a class="hover:text-primary underline" href="#">Besoin d'aide ?</a>

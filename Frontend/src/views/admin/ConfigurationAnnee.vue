@@ -255,7 +255,7 @@
               <!-- Logo Upload -->
               <div class="flex flex-col items-center gap-3">
                 <div class="size-32 rounded-xl border-2 border-dashed border-slate-200 dark:border-slate-700 flex items-center justify-center overflow-hidden bg-slate-50 dark:bg-slate-800">
-                  <img v-if="schoolConfig.logo" :src="`http://localhost:5000${schoolConfig.logo}`" class="max-w-full max-h-full object-contain" />
+                  <img v-if="schoolConfig.logo" :src="`${BASE_ASSET_URL}${schoolConfig.logo}`" class="max-w-full max-h-full object-contain" />
                   <span v-else class="material-symbols-outlined text-4xl text-slate-300">image</span>
                 </div>
                 <input type="file" ref="logoInput" class="hidden" @change="handleLogoUpload" accept="image/*" />

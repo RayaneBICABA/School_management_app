@@ -42,11 +42,7 @@
         <div>
           <label class="block text-sm font-medium text-gray-700 mb-1">Période</label>
           <select v-model="filters.periode" class="w-full rounded-lg border-gray-300 focus:ring-blue-500 focus:border-blue-500">
-            <option value="Trimestre 1">Trimestre 1</option>
-            <option value="Trimestre 2">Trimestre 2</option>
-            <option value="Trimestre 3">Trimestre 3</option>
-            <option value="Semestre 1">Semestre 1</option>
-            <option value="Semestre 2">Semestre 2</option>
+            <option v-for="p in availablePeriodes" :key="p" :value="p">{{ p }}</option>
           </select>
         </div>
         <div>
@@ -206,8 +202,8 @@
 </template>
 
 <script setup>
-import { ref, onMounted, defineComponent, h } from 'vue';
-import api from '@/services/api';
+import { ref, computed, watch, onMounted, defineComponent, h } from 'vue';
+import api, { BASE_ASSET_URL } from '@/services/api';
 import { useToast } from '@/composables/useToast';
 
 const { success, error: toastError } = useToast();
@@ -316,6 +312,31 @@ const matrix = ref([]);
 const subjectStats = ref({});
 const overallStats = ref(null);
 const schoolConfig = ref({});
+
+const availablePeriodes = computed(() => {
+  if (!filters.value.classe || filters.value.classe === 'all') {
+    return ['Trimestre 1', 'Trimestre 2', 'Trimestre 3', 'Semestre 1', 'Semestre 2'];
+  }
+  const selectedClass = classes.value.find(c => c._id === filters.value.classe);
+  if (!selectedClass) return [];
+  return selectedClass.filiere === 'Technique' 
+    ? ['Semestre 1', 'Semestre 2'] 
+    : ['Trimestre 1', 'Trimestre 2', 'Trimestre 3'];
+});
+
+watch(() => filters.value.classe, (newVal) => {
+  if (newVal && newVal !== 'all') {
+    const selectedClass = classes.value.find(c => c._id === newVal);
+    if (selectedClass) {
+      const periods = selectedClass.filiere === 'Technique' 
+        ? ['Semestre 1', 'Semestre 2'] 
+        : ['Trimestre 1', 'Trimestre 2', 'Trimestre 3'];
+      if (!periods.includes(filters.value.periode)) {
+        filters.value.periode = periods[0];
+      }
+    }
+  }
+});
 
 const fetchSchoolConfig = async () => {
   try {
@@ -460,7 +481,7 @@ const printSheet = () => {
       </div>
       <div style="width: 40%; display: flex; flex-direction: column; align-items: center; text-align: center;">
         ${schoolConfig.value.logo ? 
-          `<img src="http://localhost:5000${schoolConfig.value.logo}" style="height: 60px; max-width: 180px; object-fit: contain; margin-bottom: 5px;" />` : 
+          `<img src="${BASE_ASSET_URL}${schoolConfig.value.logo}" style="height: 60px; max-width: 180px; object-fit: contain; margin-bottom: 5px;" />` : 
           `<div style="font-size: 24px; font-weight: 900; color: #1e3a8a; letter-spacing: -0.05em;">${schoolConfig.value.shortName || 'LWS'}</div>`
         }
         ${schoolConfig.value.motto ? `<div style="font-size: 9px; font-weight: bold; color: #666; text-transform: uppercase; letter-spacing: 0.05em; margin-top: 4px;">${schoolConfig.value.motto}</div>` : ''}

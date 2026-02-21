@@ -16,7 +16,7 @@
             <div class="absolute -bottom-2 -right-2 w-8 h-8 rounded-full bg-green-500 border-4 border-white dark:border-slate-900"></div>
           </div>
           <div>
-            <h1 class="text-2xl md:text-3xl font-black text-slate-900 dark:text-white tracking-tight">{{ user.prenom }} {{ user.nom }}</h1>
+            <h1 class="text-2xl md:text-3xl font-black text-slate-900 dark:text-white tracking-tight">{{ user.nom }} {{ user.prenom }}</h1>
             <p class="text-slate-500 font-medium">Proviseur • Administration Centrale</p>
             <div class="flex items-center gap-3 mt-2">
               <span class="px-2 py-1 bg-primary/10 text-primary text-[10px] font-bold rounded-lg tracking-wider uppercase">ID: {{ user._id.substring(0,8).toUpperCase() }}</span>
@@ -75,6 +75,10 @@
                 </div>
                 <h2 class="text-xl font-bold">Historique de Connexion</h2>
               </div>
+              <button @click="clearHistory" class="text-xs font-bold text-slate-500 hover:text-red-500 transition-colors flex items-center gap-1" title="Vider l'historique de connexion" v-if="user?.lastLogins?.length > 1">
+                <span class="material-symbols-outlined text-sm">delete_sweep</span>
+                Vider
+              </button>
             </div>
 
             <div class="overflow-x-auto">
@@ -290,6 +294,23 @@ const parseUserAgent = (ua) => {
     if (ua.includes('Safari')) return 'Safari';
     if (ua.includes('Edge')) return 'Edge';
     return 'Navigateur Web';
+};
+
+const clearHistory = async () => {
+    if (!confirm('Êtes-vous sûr de vouloir vider l\'historique de vos connexions ? (La session actuelle sera conservée)')) {
+        return;
+    }
+
+    try {
+        const res = await api.clearConnectionHistory();
+        if (res.data.success) {
+            user.value.lastLogins = res.data.data;
+            success('Historique des connexions vidé avec succès.');
+        }
+    } catch (err) {
+        console.error('Erreur lors du vidage de l\'historique:', err);
+        error('Erreur lors du vidage de l\'historique.');
+    }
 };
 
 onMounted(() => {

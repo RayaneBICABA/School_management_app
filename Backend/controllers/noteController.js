@@ -182,9 +182,12 @@ exports.updateNote = asyncHandler(async (req, res, next) => {
         return next(new ErrorResponse('Non autorisé à modifier cette note', 403));
     }
 
-    // Ne pas permettre la modification si la note est validée
-    if (note.statut === 'VALIDEE') {
-        return next(new ErrorResponse('Impossible de modifier une note validée', 400));
+    // Ne pas permettre la modification si la note est validée ou déjà soumise (sauf pour l'admin)
+    if ((note.statut === 'VALIDEE' || note.statut === 'EN_ATTENTE') && req.user.role !== 'ADMIN') {
+        const msg = note.statut === 'VALIDEE'
+            ? 'Impossible de modifier une note déjà validée'
+            : 'Impossible de modifier une note déjà soumise pour validation';
+        return next(new ErrorResponse(msg, 400));
     }
 
     note = await Note.findByIdAndUpdate(req.params.id, req.body, {
@@ -213,9 +216,9 @@ exports.deleteNote = asyncHandler(async (req, res, next) => {
         return next(new ErrorResponse('Non autorisé à supprimer cette note', 403));
     }
 
-    // Ne pas permettre la suppression si validée
-    if (note.statut === 'VALIDEE') {
-        return next(new ErrorResponse('Impossible de supprimer une note validée', 400));
+    // Ne pas permettre la suppression si validée ou soumise (sauf admin)
+    if ((note.statut === 'VALIDEE' || note.statut === 'EN_ATTENTE') && req.user.role !== 'ADMIN') {
+        return next(new ErrorResponse('Impossible de supprimer une note verrouillée', 400));
     }
 
     await note.deleteOne();
@@ -367,8 +370,8 @@ exports.unblockNotes = asyncHandler(async (req, res, next) => {
     const { classe, matiere, periode } = req.body;
 
     // Vérifier le rôle
-    if (req.user.role !== 'ADMIN') {
-        return next(new ErrorResponse('Seul l\'administrateur peut débloquer les notes', 403));
+    if (req.user.role !== 'ADMIN' && req.user.role !== 'CENSEUR') {
+        return next(new ErrorResponse('Seuls l\'administrateur et le censeur peuvent débloquer les notes', 403));
     }
 
     if (!classe || !matiere || !periode) {
@@ -380,7 +383,7 @@ exports.unblockNotes = asyncHandler(async (req, res, next) => {
         { classe, matiere, periode, statut: 'VALIDEE' },
         {
             $set: {
-                statut: 'EN_ATTENTE',
+                statut: 'BROUILLON',
                 updatedAt: Date.now()
             }
         }

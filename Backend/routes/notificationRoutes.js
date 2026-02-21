@@ -3,7 +3,8 @@ const {
     sendNotification,
     getNotifications,
     getSentNotifications,
-    markAsRead
+    markAsRead,
+    clearNotificationHistory
 } = require('../controllers/notificationController');
 
 const router = express.Router();
@@ -16,6 +17,8 @@ router
     .route('/')
     .get(getNotifications)
     .post(authorize('ADMIN', 'PROVISEUR', 'CENSEUR', 'CPE', 'PROFESSEUR', 'SECRETAIRE'), sendNotification);
+
+router.delete('/history', authorize('ADMIN', 'PROVISEUR', 'CENSEUR', 'CPE', 'PROFESSEUR', 'SECRETAIRE'), clearNotificationHistory);
 
 router.get('/sent', authorize('ADMIN', 'PROVISEUR', 'CENSEUR', 'CPE', 'PROFESSEUR', 'SECRETAIRE'), getSentNotifications);
 

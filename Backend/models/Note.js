@@ -50,8 +50,8 @@ const NoteSchema = new mongoose.Schema({
     }],
     statut: {
         type: String,
-        enum: ['EN_ATTENTE', 'VALIDEE', 'REJETEE'],
-        default: 'EN_ATTENTE'
+        enum: ['BROUILLON', 'EN_ATTENTE', 'VALIDEE', 'REJETEE'],
+        default: 'BROUILLON'
     },
     validePar: {
         type: mongoose.Schema.Types.ObjectId,

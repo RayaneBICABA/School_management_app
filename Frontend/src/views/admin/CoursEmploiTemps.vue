@@ -1,7 +1,7 @@
 <template>
   <div class="flex flex-col gap-6 h-full">
     <!-- Page Heading & Selectors -->
-    <div class="flex flex-col gap-4">
+    <div class="flex flex-col gap-4 flex-shrink-0">
       <div class="flex items-end justify-between">
         <div class="flex flex-col gap-1">
           <h2 class="text-2xl font-black tracking-tight text-[#0e141b] dark:text-white">Cours et Emplois du Temps</h2>
@@ -62,9 +62,9 @@
     </div>
 
     <!-- Calendar Work Area -->
-    <div class="flex gap-6 h-full min-h-[600px]">
+    <div class="flex gap-6 flex-1 min-h-0">
       <!-- Left: Draggable Subjects Palette -->
-      <div class="w-64 flex-shrink-0 flex flex-col gap-4">
+      <div class="w-64 flex-shrink-0 flex flex-col gap-4 overflow-y-auto pr-1 pb-4">
         <div class="p-4 bg-white dark:bg-[#1a252f] rounded-xl border border-[#d0dbe7] dark:border-slate-700 shadow-sm flex flex-col gap-4">
           <h3 class="text-xs font-bold uppercase tracking-wider text-[#4e7397] dark:text-slate-400">Matières à placer</h3>
           <div class="flex flex-col gap-2">
@@ -90,12 +90,19 @@
               </div>
               <p :class="['text-[10px] mt-1', getMatiereSubTextColor(matiere.couleur)]">{{ matiere.professeur }} • {{ matiere.salle }}</p>
             </div>
-            <div class="mt-2 border-t border-dashed border-slate-200 dark:border-slate-700 pt-3">
+            <div class="mt-2 border-t border-dashed border-slate-200 dark:border-slate-700 pt-3 flex flex-col gap-2">
               <button 
                 @click="showAddMatiereModal = true"
                 class="w-full py-2 text-xs font-medium text-primary hover:bg-primary/5 rounded border border-primary/20 border-dashed transition-colors"
               >
                 + Ajouter une matière
+              </button>
+              <button 
+                @click="openImportModal"
+                class="w-full py-2 text-xs font-medium text-[#4e7397] hover:bg-slate-50 dark:hover:bg-slate-700 rounded border border-slate-200 dark:border-slate-700 border-dashed transition-colors flex items-center justify-center gap-1"
+              >
+                <span class="material-symbols-outlined text-sm">content_copy</span>
+                Importer d'une classe
               </button>
             </div>
           </div>
@@ -220,7 +227,7 @@
     </div>
 
     <!-- Global Stats Bar / Legend -->
-    <footer class="h-10 bg-white dark:bg-[#1a252f] border-t border-[#d0dbe7] dark:border-slate-700 px-6 flex items-center justify-between text-[10px] font-medium text-[#4e7397] dark:text-slate-400">
+    <footer class="flex-shrink-0 h-10 bg-white dark:bg-[#1a252f] border-t border-[#d0dbe7] dark:border-slate-700 px-6 flex items-center justify-between text-[10px] font-medium text-[#4e7397] dark:text-slate-400">
       <div class="flex gap-6">
         <span class="flex items-center gap-2"><span class="size-2 rounded-full bg-blue-500"></span> Sciences</span>
         <span class="flex items-center gap-2"><span class="size-2 rounded-full bg-purple-500"></span> Lettres</span>
@@ -285,6 +292,91 @@
       type="danger"
       actionLabel="Supprimer"
     />
+
+    <!-- Import Courses Modal -->
+    <div v-if="showImportModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4" @click.self="closeImportModal">
+      <div class="bg-white dark:bg-slate-900 rounded-xl shadow-2xl w-full max-w-lg flex flex-col max-h-[90vh]">
+        <div class="px-6 py-5 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center bg-slate-50/30 dark:bg-slate-800/30">
+          <h3 class="text-xl font-bold text-[#0e141b] dark:text-white">Importer d'une classe</h3>
+          <button @click="closeImportModal" class="text-slate-400 hover:text-slate-600 transition-colors">
+            <span class="material-symbols-outlined">close</span>
+          </button>
+        </div>
+        
+        <div class="p-6 space-y-4 overflow-hidden flex flex-col">
+          <div class="flex flex-col gap-2">
+            <label class="text-sm font-semibold text-[#0e141b] dark:text-slate-200">Classe source</label>
+            <select 
+              v-model="importData.sourceId"
+              @change="fetchSourceMatieres"
+              class="w-full bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 rounded-lg text-sm focus:ring-primary focus:border-primary h-12 px-4 shadow-sm"
+            >
+              <option value="">Sélectionner une classe source</option>
+              <option v-for="c in sortedClassesForImport" :key="c.id" :value="c.id" :disabled="c.id === selectedClass">
+                {{ c.label }}
+              </option>
+            </select>
+          </div>
+
+          <div v-if="importData.loadingMatieres" class="py-12 text-center">
+            <span class="material-symbols-outlined animate-spin text-primary text-4xl">progress_activity</span>
+            <p class="text-xs text-slate-400 mt-2">Chargement des matières...</p>
+          </div>
+
+          <div v-else-if="sourceMatieres.length > 0" class="flex flex-col flex-1 overflow-hidden">
+            <div class="flex items-center justify-between mb-2">
+              <span class="text-xs font-bold text-[#4e7397] uppercase tracking-wider">{{ sourceMatieres.length }} matières disponibles</span>
+              <button @click="toggleSelectAllMatieres" class="text-xs text-primary font-bold hover:underline">
+                {{ importData.selectedIds.length === sourceMatieres.length ? 'Tout désélectionner' : 'Tout sélectionner' }}
+              </button>
+            </div>
+            
+            <div class="overflow-y-auto space-y-2 border border-slate-100 dark:border-slate-800 rounded-lg p-2 bg-slate-50/50 dark:bg-slate-800/20">
+              <label 
+                v-for="m in sourceMatieres" 
+                :key="m.matiere?._id"
+                class="flex items-center gap-3 p-3 bg-white dark:bg-slate-900 rounded-lg border border-slate-200 dark:border-slate-700 cursor-pointer hover:border-primary transition-all group"
+              >
+                <input 
+                  type="checkbox" 
+                  :value="m.matiere?._id" 
+                  v-model="importData.selectedIds"
+                  class="h-4 w-4 text-primary rounded border-slate-300 focus:ring-primary"
+                />
+                <div class="flex-1">
+                  <p class="text-sm font-bold text-[#0e141b] dark:text-white group-hover:text-primary transition-colors">
+                    {{ m.matiere?.nom }}
+                  </p>
+                  <p class="text-[10px] text-slate-500">Coefficient: {{ m.coefficient }}</p>
+                </div>
+              </label>
+            </div>
+          </div>
+
+          <div v-else-if="importData.sourceId" class="py-12 text-center text-slate-500 italic flex flex-col items-center gap-2">
+            <span class="material-symbols-outlined text-4xl opacity-20">inventory_2</span>
+            <p>Cette classe n'a pas encore de matières configurées.</p>
+          </div>
+        </div>
+
+        <div class="p-6 border-t border-slate-100 dark:border-slate-800 flex gap-3 bg-slate-50/30 dark:bg-slate-800/30 rounded-b-xl">
+          <button 
+            @click="closeImportModal"
+            class="flex-1 bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 font-bold py-3 rounded-lg border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 transition-all text-sm"
+          >
+            Annuler
+          </button>
+          <button 
+            @click="confirmImport"
+            :disabled="!importData.selectedIds.length || importData.isImporting"
+            class="flex-1 bg-primary text-white font-bold py-3 rounded-lg hover:bg-primary/90 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 text-sm shadow-lg shadow-primary/20"
+          >
+            <span v-if="importData.isImporting" class="material-symbols-outlined animate-spin text-sm">progress_activity</span>
+            {{ importData.isImporting ? 'Importation en cours...' : `Importer (${importData.selectedIds.length})` }}
+          </button>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -318,10 +410,26 @@ const newMatiere = reactive({
   couleur: 'blue'
 })
 
-// Matières à placer
 const matieresAPlacer = ref([])
 const emploiDuTemps = reactive({})
 const conflicts = ref([])
+
+// Import Logic State
+const showImportModal = ref(false)
+const sourceMatieres = ref([])
+const importData = reactive({
+  sourceId: '',
+  selectedIds: [],
+  loadingMatieres: false,
+  isImporting: false
+})
+
+const sortedClassesForImport = computed(() => {
+    return classes.value.map(c => ({
+        id: c._id,
+        label: `${c.niveau} ${c.section} (${c.filiere || 'Générale'})`
+    })).sort((a, b) => a.label.localeCompare(b.label))
+})
 
 const fetchData = async () => {
   try {
@@ -767,6 +875,71 @@ const addMatiere = async () => {
   } else if (!selectedClass.value) {
     error('Veuillez d\'abord sélectionner une classe')
   }
+}
+
+// Selective Import functions
+const openImportModal = () => {
+    if (!selectedClass.value) {
+        error('Veuillez sélectionner une classe de destination.')
+        return
+    }
+    showImportModal.value = true
+    importData.sourceId = ''
+    importData.selectedIds = []
+    sourceMatieres.value = []
+}
+
+const closeImportModal = () => {
+    showImportModal.value = false
+}
+
+const fetchSourceMatieres = async () => {
+    if (!importData.sourceId) {
+        sourceMatieres.value = []
+        return
+    }
+    
+    importData.loadingMatieres = true
+    try {
+        const response = await api.getClasseMatieres(importData.sourceId)
+        sourceMatieres.value = Array.isArray(response.data.data) ? response.data.data : []
+        // Auto select all by default
+        importData.selectedIds = sourceMatieres.value.map(m => m.matiere?._id).filter(Boolean)
+    } catch (err) {
+        console.error('Erreur chargement matières source:', err)
+        error('Impossible de charger les matières de la classe source.')
+    } finally {
+        importData.loadingMatieres = false
+    }
+}
+
+const toggleSelectAllMatieres = () => {
+    if (importData.selectedIds.length === sourceMatieres.value.length) {
+        importData.selectedIds = []
+    } else {
+        importData.selectedIds = sourceMatieres.value.map(m => m.matiere?._id).filter(Boolean)
+    }
+}
+
+const confirmImport = async () => {
+    if (!selectedClass.value || !importData.sourceId || importData.selectedIds.length === 0) return
+    
+    importData.isImporting = true
+    try {
+        await api.importClasseMatieres(selectedClass.value, {
+            sourceClasseId: importData.sourceId,
+            matiereIds: importData.selectedIds
+        })
+        
+        await onClassChange()
+        success(`${importData.selectedIds.length} matières importées avec succès !`)
+        closeImportModal()
+    } catch (err) {
+        console.error('Erreur import:', err)
+        error('Erreur lors de l\'importation des matières.')
+    } finally {
+        importData.isImporting = false
+    }
 }
 </script>
 

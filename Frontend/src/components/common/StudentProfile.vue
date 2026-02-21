@@ -241,7 +241,7 @@
 
 <script setup>
 import { ref, computed, onMounted, watch } from 'vue'
-import api from '@/services/api'
+import api, { BASE_ASSET_URL } from '@/services/api'
 import StudentInfoTab from './tabs/StudentInfoTab.vue'
 import StudentDisciplineTab from './tabs/StudentDisciplineTab.vue'
 import StudentPedagogyTab from './tabs/StudentPedagogyTab.vue'
@@ -364,7 +364,7 @@ const fetchStudentProfile = async () => {
     
     student.value = {
       _id: studentData._id,
-      name: `${studentData.prenom} ${studentData.nom}`,
+      name: `${studentData.nom} ${studentData.prenom}`,
       prenom: studentData.prenom,
       nom: studentData.nom,
       class: studentData.classe && typeof studentData.classe === 'object' && studentData.classe.niveau
@@ -373,7 +373,7 @@ const fetchStudentProfile = async () => {
       filiere: studentData.classe && typeof studentData.classe === 'object' ? studentData.classe.filiere || 'Générale' : 'Non définie',
       matricule: studentData.matricule || 'Non défini',
       avatar: studentData.photo === 'no-photo.jpg' 
-        ? `https://ui-avatars.com/api/?name=${studentData.prenom}+${studentData.nom}&background=random` 
+        ? `https://ui-avatars.com/api/?name=${studentData.nom}+${studentData.prenom}&background=random` 
         : `/uploads/${studentData.photo}`,
       birthDate: studentData.dateNaissance || 'Non renseignée',
       birthPlace: studentData.lieuNaissance || 'Non renseigné',
@@ -425,7 +425,7 @@ const fetchEmergencyContacts = async () => {
     
     emergencyContacts.value = res.data.data.map((contact, index) => ({
       id: contact._id,
-      name: `${contact.prenom} ${contact.nom}`,
+      name: `${contact.nom} ${contact.prenom}`,
       relation: contact.relation || 'Non spécifiée',
       phone: contact.telephone,
       priority: contact.prioritaire || index === 0
@@ -470,7 +470,7 @@ const saveStudentInfo = async (formData) => {
         address: formData.adresse,
         class: student.value.class, // Keep existing class string
         filiere: formData.filiere || student.value.filiere,
-        name: `${formData.prenom} ${formData.nom}`,
+        name: `${formData.nom} ${formData.prenom}`,
         age: calculateAge(formData.dateNaissance),
         // Add parent data if available
         fatherName: formData.fatherName,
@@ -592,7 +592,7 @@ const exportToJSON = () => {
   const url = URL.createObjectURL(blob)
   const link = document.createElement('a')
   link.href = url
-  link.download = `profil-${student.value.prenom}-${student.value.nom}-${new Date().toISOString().split('T')[0]}.json`
+  link.download = `profil-${student.value.nom}-${student.value.prenom}-${new Date().toISOString().split('T')[0]}.json`
   
   // Trigger download
   document.body.appendChild(link)
@@ -616,7 +616,7 @@ const exportToPDF = async () => {
     const url = window.URL.createObjectURL(blob)
     const link = document.createElement('a')
     
-    const fileName = `fiche-eleve-${student.value.prenom}-${student.value.nom}.pdf`.replace(/\s+/g, '-').toLowerCase()
+    const fileName = `fiche-eleve-${student.value.nom}-${student.value.prenom}.pdf`.replace(/\s+/g, '-').toLowerCase()
     
     link.href = url
     link.setAttribute('download', fileName)
@@ -711,13 +711,11 @@ const getPhotoUrl = (photoPath) => {
   
   // If it starts with /uploads, add the backend base URL
   if (photoPath.startsWith('/uploads')) {
-    const baseUrl = import.meta.env.VITE_API_URL ? import.meta.env.VITE_API_URL.replace('/api/v1', '') : 'http://localhost:5000'
-    return `${baseUrl}${photoPath}`
+    return `${BASE_ASSET_URL}${photoPath}`
   }
   
   // Otherwise, assume it's a relative path in uploads
-  const baseUrl = import.meta.env.VITE_API_URL ? import.meta.env.VITE_API_URL.replace('/api/v1', '') : 'http://localhost:5000'
-  return `${baseUrl}/uploads/${photoPath}`
+  return `${BASE_ASSET_URL}/uploads/${photoPath}`
 }
 
 const handleImageError = (event) => {

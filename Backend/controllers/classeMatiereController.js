@@ -150,6 +150,52 @@ exports.removeMatiereFromClasse = async (req, res) => {
     }
 };
 
+// @desc    Import matieres from another classe
+// @route   POST /api/v1/classes/:classeId/matieres/import
+// @access  Private/Admin
+exports.importClasseMatieres = async (req, res) => {
+    try {
+        const { sourceClasseId, matiereIds } = req.body;
+        const { classeId } = req.params;
+
+        if (!sourceClasseId) {
+            return res.status(400).json({ success: false, error: 'ID classe source requis' });
+        }
+
+        // Get subjects from source class
+        const sourceMatieres = await ClasseMatiere.find({ classe: sourceClasseId });
+
+        // Filter by provided matiereIds if any
+        let matieresToImport = sourceMatieres;
+        if (matiereIds && matiereIds.length > 0) {
+            matieresToImport = sourceMatieres.filter(sm => matiereIds.includes(sm.matiere.toString()));
+        }
+
+        const results = [];
+        for (const sm of matieresToImport) {
+            // Check if already exists in target
+            const existing = await ClasseMatiere.findOne({ classe: classeId, matiere: sm.matiere });
+            if (!existing) {
+                const newCM = await ClasseMatiere.create({
+                    classe: classeId,
+                    matiere: sm.matiere,
+                    coefficient: sm.coefficient,
+                    heuresParSemaine: sm.heuresParSemaine
+                });
+                results.push(newCM);
+            }
+        }
+
+        res.status(200).json({
+            success: true,
+            count: results.length,
+            data: results
+        });
+    } catch (err) {
+        res.status(500).json({ success: false, error: err.message });
+    }
+};
+
 // @desc    Get classes assigned to current professor
 // @route   GET /api/v1/classe-matieres/my-classes
 // @access  Private/Professor

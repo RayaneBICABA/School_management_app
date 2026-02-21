@@ -49,6 +49,10 @@ const NotificationSchema = new mongoose.Schema({
         enum: ['Envoyé', 'Brouillon', 'Erreur'],
         default: 'Envoyé'
     },
+    deletedBySender: {
+        type: Boolean,
+        default: false
+    },
     createdAt: {
         type: Date,
         default: Date.now

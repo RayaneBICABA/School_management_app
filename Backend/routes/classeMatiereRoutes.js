@@ -5,6 +5,7 @@ const {
     addMatiereToClasse,
     updateClasseMatiere,
     removeMatiereFromClasse,
+    importClasseMatieres,
     getMyClasses
 } = require('../controllers/classeMatiereController');
 
@@ -20,6 +21,8 @@ router.get('/my-classes', protect, authorize('PROFESSEUR'), getMyClasses);
 router.route('/')
     .get(protect, getClasseMatieres)
     .post(protect, authorize('ADMIN', 'PROVISEUR', 'CENSEUR', 'SECRETAIRE'), addMatiereToClasse);
+
+router.post('/import', protect, authorize('ADMIN', 'PROVISEUR', 'CENSEUR', 'SECRETAIRE'), importClasseMatieres);
 
 router.route('/:id')
     .put(protect, authorize('ADMIN', 'PROVISEUR', 'CENSEUR', 'SECRETAIRE'), updateClasseMatiere)

@@ -156,7 +156,7 @@
               <tr v-for="eleve in eleves" :key="eleve._id" class="hover:bg-slate-50 dark:hover:bg-slate-800/30 transition-colors">
                 <td class="px-4 py-3 text-sm font-medium text-[#0e141b] dark:text-white sticky left-0 bg-white dark:bg-slate-900">
                   <div>
-                    <p>{{ eleve.prenom }} {{ eleve.nom }}</p>
+                    <p>{{ eleve.nom }} {{ eleve.prenom }}</p>
                     <p class="text-xs text-[#4e7397]">{{ eleve.matricule }}</p>
                   </div>
                 </td>
@@ -407,6 +407,11 @@ const onClasseChange = async () => {
     periodes.value = filiere === 'Générale'
       ? ['Trimestre 1', 'Trimestre 2', 'Trimestre 3']
       : ['Semestre 1', 'Semestre 2'];
+    
+    // Si la période actuelle n'est pas dans la liste, on la réinitialise
+    if (selectedPeriode.value && !periodes.value.includes(selectedPeriode.value)) {
+      selectedPeriode.value = '';
+    }
     
     console.log('✅ Périodes définies:', periodes.value);
     

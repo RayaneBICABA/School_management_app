@@ -13,7 +13,7 @@
       <div v-else>
         <!-- Breadcrumbs -->
         <nav class="flex items-center gap-2 text-sm text-slate-500 mb-4 font-display">
-          <router-link to="/admin/notes" class="hover:text-primary transition-colors">Supervision des Notes</router-link>
+          <router-link :to="returnPath" class="hover:text-primary transition-colors">Supervision des Notes</router-link>
           <span class="material-symbols-outlined text-sm">chevron_right</span>
           <span class="font-medium text-slate-900 dark:text-white">{{ info.matiereNom || 'Détails' }}</span>
         </nav>
@@ -21,7 +21,7 @@
         <!-- Page Heading -->
         <div class="flex flex-wrap justify-between items-start gap-4 mb-8">
           <div class="flex items-center gap-3">
-            <button @click="$router.go(-1)" class="flex items-center gap-2 px-3 py-2 text-slate-600 dark:text-slate-400 hover:text-primary dark:hover:text-primary hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors font-medium">
+            <button @click="$router.push(returnPath)" class="flex items-center gap-2 px-3 py-2 text-slate-600 dark:text-slate-400 hover:text-primary dark:hover:text-primary hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors font-medium">
               <span class="material-symbols-outlined">arrow_back</span>
               <span>Retour</span>
             </button>
@@ -70,7 +70,7 @@
               <tr v-for="note in notes" :key="note._id" class="hover:bg-slate-50/50 dark:hover:bg-slate-800/50 transition-colors">
                 <td class="px-6 py-4">
                   <div class="flex flex-col">
-                    <span class="text-sm font-bold text-slate-900 dark:text-white">{{ note.eleve?.prenom }} {{ note.eleve?.nom }}</span>
+                    <span class="text-sm font-bold text-slate-900 dark:text-white">{{ note.eleve?.nom }} {{ note.eleve?.prenom }}</span>
                     <span class="text-xs text-slate-500">ID: {{ note.eleve?.matricule || 'N/A' }}</span>
                   </div>
                 </td>
@@ -115,6 +115,15 @@ const route = useRoute();
 const router = useRouter();
 const { success, error: showError } = useToast();
 
+const userRole = computed(() => {
+  const user = JSON.parse(localStorage.getItem('user') || '{}');
+  return user.role || '';
+});
+
+const returnPath = computed(() => {
+  return userRole.value === 'CENSEUR' ? '/censeur/notes' : '/admin/notes';
+});
+
 const classeId = route.query.classe;
 const matiereId = route.query.matiere;
 const periode = route.query.periode;
@@ -131,7 +140,7 @@ const info = ref({
 const loadNotes = async () => {
   if (!classeId || !matiereId || !periode) {
     showError('Paramètres manquants');
-    router.push('/admin/notes');
+    router.push(returnPath.value);
     return;
   }
 
@@ -150,7 +159,7 @@ const loadNotes = async () => {
       info.value = {
         classeNom: `${firstNote.classe?.niveau || ''} ${firstNote.classe?.section || ''}`,
         matiereNom: firstNote.matiere?.nom || '',
-        professeurNom: `${firstNote.professeur?.prenom || ''} ${firstNote.professeur?.nom || ''}`
+        professeurNom: `${firstNote.professeur?.nom || ''} ${firstNote.professeur?.prenom || ''}`
       };
     } else {
       // Fallback: fetch classe and matiere names separately if no notes

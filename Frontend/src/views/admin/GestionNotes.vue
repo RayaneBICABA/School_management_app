@@ -15,11 +15,7 @@
             <div class="flex items-center gap-3">
               <span class="text-xs font-semibold uppercase text-slate-400 tracking-wider">Période:</span>
               <select v-model="selectedPeriod" class="bg-transparent text-sm font-bold text-slate-700 dark:text-slate-200 border-none focus:ring-0 cursor-pointer hover:text-primary transition-colors">
-                <option value="Trimestre 1">Trimestre 1</option>
-                <option value="Trimestre 2">Trimestre 2</option>
-                <option value="Trimestre 3">Trimestre 3</option>
-                <option value="Semestre 1">Semestre 1</option>
-                <option value="Semestre 2">Semestre 2</option>
+                <option v-for="p in availablePeriodes" :key="p" :value="p">{{ p }}</option>
               </select>
             </div>
           </div>
@@ -44,8 +40,8 @@
               <span class="material-symbols-outlined text-green-500">verified</span>
             </div>
             <div class="flex items-baseline gap-2">
-              <p class="text-3xl font-bold">{{ fullClasses }}/{{ filteredClasses.length }}</p>
-              <span class="text-slate-400 text-sm font-medium">{{ ((fullClasses/filteredClasses.length)*100 || 0).toFixed(0) }}%</span>
+              <p class="text-3xl font-bold">{{ fullClasses }}/{{ allClasses.length }}</p>
+              <span class="text-slate-400 text-sm font-medium">{{ ((fullClasses/allClasses.length)*100 || 0).toFixed(0) }}%</span>
             </div>
           </div>
         </div>
@@ -61,7 +57,7 @@
               <div class="w-full md:w-64">
                 <select v-model="selectedClassId" class="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg px-4 py-2.5 text-sm font-medium focus:ring-2 focus:ring-primary/20 outline-none transition-all">
                   <option value="" disabled selected>Sélectionner une classe...</option>
-                  <option v-for="cls in filteredClasses" :key="cls._id" :value="cls._id">
+                  <option v-for="cls in allClasses" :key="cls._id" :value="cls._id">
                     {{ cls.niveau }} {{ cls.section }}
                   </option>
                 </select>
@@ -99,9 +95,9 @@
                     <td class="px-6 py-4 text-sm text-slate-600 dark:text-slate-400">
                       <span v-if="subject.professeur" class="flex items-center gap-2">
                          <span class="size-6 rounded-full bg-slate-100 flex items-center justify-center text-[10px] font-bold text-slate-600">
-                            {{ subject.professeur.prenom[0] }}{{ subject.professeur.nom[0] }}
+                            {{ subject.professeur.nom[0] }}{{ subject.professeur.prenom[0] }}
                          </span>
-                         {{ subject.professeur.prenom }} {{ subject.professeur.nom }}
+                         {{ subject.professeur.nom }} {{ subject.professeur.prenom }}
                       </span>
                       <span v-else class="text-orange-500 text-xs italic">Non assigné</span>
                     </td>
@@ -154,7 +150,7 @@
                     <span class="material-symbols-outlined">warning</span>
                   </div>
                   <div class="flex flex-col flex-1">
-                    <h4 class="text-sm font-bold leading-tight">{{ alert.professeur?.prenom }} {{ alert.professeur?.nom }} - {{ alert.matiere?.nom }}</h4>
+                    <h4 class="text-sm font-bold leading-tight">{{ alert.professeur?.nom }} {{ alert.professeur?.prenom }} - {{ alert.matiere?.nom }}</h4>
                     <p class="text-slate-500 dark:text-slate-400 text-xs mt-1">Saisie manquante ({{ alert.classe?.niveau }} {{ alert.classe?.section }})</p>
                   </div>
                 </div>
@@ -217,23 +213,30 @@ watch([selectedClassId, selectedPeriod], ([newClass, newPeriod]) => {
   });
 });
 
-// Filter classes based on selected Period (Trimester -> General, Semester -> Technical)
-const filteredClasses = computed(() => {
-    if (selectedPeriod.value.toLowerCase().includes('trimestre')) {
-        return allClasses.value.filter(c => c.filiere === 'Générale' || !c.filiere || c.filiere === 'Generale'); // Default to General if undefined
-    } else {
-        return allClasses.value.filter(c => c.filiere === 'Technique');
+// Filter available periods based on selected class
+const availablePeriodes = computed(() => {
+    if (!selectedClassId.value) {
+        return ['Trimestre 1', 'Trimestre 2', 'Trimestre 3', 'Semestre 1', 'Semestre 2'];
     }
+    const selectedClass = allClasses.value.find(c => c._id === selectedClassId.value);
+    if (!selectedClass) return [];
+    return selectedClass.filiere === 'Technique' 
+        ? ['Semestre 1', 'Semestre 2'] 
+        : ['Trimestre 1', 'Trimestre 2', 'Trimestre 3'];
 });
 
-// Watcher to reset selected class when period type changes
-watch(selectedPeriod, (newPeriod, oldPeriod) => {
-    // Only reset if we're switching between Trimester and Semester types
-    const isNewTrimester = newPeriod.toLowerCase().includes('trimestre');
-    const isOldTrimester = oldPeriod?.toLowerCase().includes('trimestre');
-    
-    if (isOldTrimester !== undefined && isNewTrimester !== isOldTrimester) {
-        selectedClassId.value = '';
+// Watcher to sync period when class changes
+watch(selectedClassId, (newId) => {
+    if (newId) {
+        const selectedClass = allClasses.value.find(c => c._id === newId);
+        if (selectedClass) {
+            const periods = selectedClass.filiere === 'Technique' 
+                ? ['Semestre 1', 'Semestre 2'] 
+                : ['Trimestre 1', 'Trimestre 2', 'Trimestre 3'];
+            if (!periods.includes(selectedPeriod.value)) {
+                selectedPeriod.value = periods[0];
+            }
+        }
     }
 });
 
@@ -294,7 +297,7 @@ const entryAlerts = computed(() => {
 const fullClasses = computed(() => {
     // Determine completed classes based on new logic (optional, for the top card)
     // A class is full if all its subjects are validated
-    return filteredClasses.value.filter(cls => {
+    return allClasses.value.filter(cls => {
         const classAssignments = assignments.value.filter(a => a.classe && (a.classe._id === cls._id || a.classe === cls._id));
         if (classAssignments.length === 0) return false;
         

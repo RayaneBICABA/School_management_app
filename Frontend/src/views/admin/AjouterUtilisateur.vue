@@ -39,12 +39,12 @@
             </h3>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div class="flex flex-col gap-2">
-                <label class="text-sm font-medium text-[#0e141b] dark:text-slate-200">Prénom</label>
-                <input v-model="form.prenom" required class="form-input rounded-lg border-[#d0dbe7] dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-[#0e141b] dark:text-white focus:border-primary focus:ring-primary h-12 px-4 text-base transition-all" placeholder="Ex: Jean" type="text"/>
-              </div>
-              <div class="flex flex-col gap-2">
                 <label class="text-sm font-medium text-[#0e141b] dark:text-slate-200">Nom</label>
                 <input v-model="form.nom" required class="form-input rounded-lg border-[#d0dbe7] dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-[#0e141b] dark:text-white focus:border-primary focus:ring-primary h-12 px-4 text-base transition-all" placeholder="Ex: Dupont" type="text"/>
+              </div>
+              <div class="flex flex-col gap-2">
+                <label class="text-sm font-medium text-[#0e141b] dark:text-slate-200">Prénom</label>
+                <input v-model="form.prenom" required class="form-input rounded-lg border-[#d0dbe7] dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-[#0e141b] dark:text-white focus:border-primary focus:ring-primary h-12 px-4 text-base transition-all" placeholder="Ex: Jean" type="text"/>
               </div>
               <div class="flex flex-col gap-2 md:col-span-2">
                 <label class="text-sm font-medium text-[#0e141b] dark:text-slate-200">Adresse Email</label>

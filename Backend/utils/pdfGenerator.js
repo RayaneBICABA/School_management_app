@@ -110,7 +110,8 @@ const generateBulletinPDF = async (bulletinData, schoolConfig = {}) => {
         return pdfBuffer;
 
     } catch (error) {
-        console.error('Erreur lors de la génération du PDF:', error);
+        console.error('Erreur lors de la génération du PDF (Bulletin):', error.message);
+        if (error.stack) console.error(error.stack);
         throw error;
     } finally {
         if (browser) {
@@ -273,7 +274,8 @@ const generateClassBulletinsPDF = async (bulletinsData, schoolConfig = {}) => {
         return pdfBuffer;
 
     } catch (error) {
-        console.error('Erreur lors de la génération du PDF classe:', error);
+        console.error('Erreur lors de la génération du PDF classe:', error.message);
+        if (error.stack) console.error(error.stack);
         throw error;
     } finally {
         if (browser) {
@@ -289,7 +291,7 @@ const generateClassBulletinsPDF = async (bulletinsData, schoolConfig = {}) => {
  */
 const generateHeaderHTML = (schoolConfig, secondaryText = '') => {
     const logoHtml = schoolConfig.logo ?
-        `<img src="http://localhost:5000${schoolConfig.logo}" style="height: 60px; max-width: 180px; object-fit: contain; margin-bottom: 5px;" />` :
+        `<img src="${process.env.BACKEND_URL || 'http://localhost:5000'}${schoolConfig.logo}" style="height: 60px; max-width: 180px; object-fit: contain; margin-bottom: 5px;" />` :
         `<div class="logo-text">${schoolConfig.shortName || 'LWS'}</div>`;
 
     const mottoHtml = schoolConfig.motto ?
@@ -509,7 +511,8 @@ const generateMasterGradeSheetPDF = async (data, schoolConfig = {}) => {
 
         return pdfBuffer;
     } catch (error) {
-        console.error('Erreur Master Sheet PDF:', error);
+        console.error('Erreur Master Sheet PDF:', error.message);
+        if (error.stack) console.error(error.stack);
         throw error;
     } finally {
         if (browser) await browser.close();
@@ -601,7 +604,8 @@ const generateBulkMasterGradeSheetPDF = async (allSheetsData, schoolConfig = {})
 
         return pdfBuffer;
     } catch (error) {
-        console.error('Erreur Bulk Master Sheet PDF:', error);
+        console.error('Erreur Bulk Master Sheet PDF:', error.message);
+        if (error.stack) console.error(error.stack);
         throw error;
     } finally {
         if (browser) await browser.close();

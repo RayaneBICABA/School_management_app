@@ -35,7 +35,7 @@
           </button>
         </div>
         <div class="flex flex-col justify-center grow">
-          <p class="text-slate-900 dark:text-white text-2xl font-bold tracking-tight">{{ user.prenom }} {{ user.nom }}</p>
+          <p class="text-slate-900 dark:text-white text-2xl font-bold tracking-tight">{{ user.nom }} {{ user.prenom }}</p>
           <p class="text-slate-600 dark:text-slate-400 text-base font-normal mb-1">{{ user.role }}</p>
           <div class="flex items-center gap-4 mt-2">
             <span class="flex items-center gap-1 text-xs text-slate-600 bg-slate-100 dark:bg-slate-800 px-2 py-1 rounded">
@@ -93,9 +93,15 @@
 
         <!-- Login History -->
         <div class="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-6">
-          <div class="flex items-center gap-2 mb-6">
-            <span class="material-symbols-outlined text-primary">history</span>
-            <h3 class="text-lg font-bold">Dernières connexions</h3>
+          <div class="flex items-center justify-between mb-6">
+            <div class="flex items-center gap-2">
+              <span class="material-symbols-outlined text-primary">history</span>
+              <h3 class="text-lg font-bold">Dernières connexions</h3>
+            </div>
+            <button @click="clearHistory" class="text-xs font-bold text-slate-500 hover:text-red-500 transition-colors flex items-center gap-1" title="Vider l'historique de connexion" v-if="user?.lastLogins?.length > 1">
+              <span class="material-symbols-outlined text-sm">delete_sweep</span>
+              Vider
+            </button>
           </div>
           <div class="space-y-4">
             <div v-for="(login, index) in (user?.lastLogins || [])" :key="index" class="flex items-center justify-between py-2 border-b border-slate-50 dark:border-slate-800 last:border-0">
@@ -136,7 +142,7 @@
 
 <script setup>
 import { ref, onMounted, computed } from 'vue'
-import api from '@/services/api'
+import api, { BASE_ASSET_URL } from '@/services/api'
 
 // Données réactives
 const activeTab = ref('personnel')
@@ -173,21 +179,15 @@ const handlePhotoUpload = async (event) => {
 
 // Computed property for photo URL
 const photoUrl = computed(() => {
-    console.log('🖼️ Computing photoUrl, user.photo:', user.value?.photo);
-    
     if (!user.value || !user.value.photo || user.value.photo === 'no-photo.jpg') {
-        console.log('🖼️ No photo, returning null');
         return null;
     }
     // If photo already contains http, return as is
     if (user.value.photo.startsWith('http')) {
-        console.log('🖼️ Photo has http, returning as is:', user.value.photo);
         return user.value.photo;
     }
-    // Otherwise, prepend backend URL
-    const fullUrl = `http://localhost:5000${user.value.photo}`;
-    console.log('🖼️ Returning full URL:', fullUrl);
-    return fullUrl;
+    // Otherwise, prepend dynamic backend URL
+    return `${BASE_ASSET_URL}${user.value.photo}`;
 });
 
 // Données du mot de passe
@@ -310,6 +310,23 @@ const parseUserAgent = (ua) => {
     if (ua.includes('Safari')) return 'Safari';
     if (ua.includes('Edge')) return 'Edge';
     return 'Navigateur Web';
+};
+
+const clearHistory = async () => {
+    if (!confirm('Êtes-vous sûr de vouloir vider l\'historique de vos connexions ? (La session actuelle sera conservée)')) {
+        return;
+    }
+
+    try {
+        const res = await api.clearConnectionHistory();
+        if (res.data.success) {
+            user.value.lastLogins = res.data.data;
+            alert('Historique des connexions vidé avec succès.');
+        }
+    } catch (error) {
+        console.error('Erreur lors du vidage de l\'historique:', error);
+        alert('Erreur lors du vidage de l\'historique.');
+    }
 };
 
 const toggleAlerte = (id, type) => {

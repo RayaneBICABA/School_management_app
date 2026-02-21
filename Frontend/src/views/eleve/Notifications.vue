@@ -48,7 +48,7 @@
             </div>
             <div class="text-sm text-slate-600 dark:text-slate-400 mb-2 leading-relaxed prose dark:prose-invert max-w-none" v-html="notif.content"></div>
             <div class="flex items-center gap-2 mt-2">
-              <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Par {{ notif.sender?.prenom }} {{ notif.sender?.nom }} ({{ notif.sender?.role }})</span>
+              <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Par {{ notif.sender?.nom }} {{ notif.sender?.prenom }} ({{ notif.sender?.role }})</span>
             </div>
           </div>
         </div>

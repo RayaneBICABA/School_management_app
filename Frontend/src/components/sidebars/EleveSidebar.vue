@@ -5,7 +5,7 @@
         <div class="bg-primary/10 p-2 rounded-lg">
           <span class="material-symbols-outlined text-primary text-3xl">school</span>
         </div>
-        <span class="text-xl font-bold tracking-tight text-slate-800 dark:text-white">Giscard</span>
+        <span class="text-xl font-bold tracking-tight text-slate-800 dark:text-white">Unica</span>
       </div>
 
       <nav class="flex flex-col gap-1.5 flex-grow">

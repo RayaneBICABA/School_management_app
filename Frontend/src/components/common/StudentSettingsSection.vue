@@ -28,9 +28,15 @@
 
       <!-- Login History Section -->
       <div class="space-y-6">
-        <div class="flex items-center gap-2 mb-4">
-          <span class="material-symbols-outlined text-primary">history</span>
-          <h4 class="text-base font-bold text-slate-900 dark:text-white">Historique des Connexions</h4>
+        <div class="flex items-center justify-between mb-4">
+          <div class="flex items-center gap-2">
+            <span class="material-symbols-outlined text-primary">history</span>
+            <h4 class="text-base font-bold text-slate-900 dark:text-white">Historique des Connexions</h4>
+          </div>
+          <button @click="clearHistory" class="text-xs font-bold text-slate-500 hover:text-red-500 transition-colors flex items-center gap-1" title="Vider l'historique de connexion" v-if="student?.lastLogins?.length > 1">
+            <span class="material-symbols-outlined text-sm">delete_sweep</span>
+            Vider
+          </button>
         </div>
         
         <div class="overflow-x-auto">
@@ -205,6 +211,25 @@ const getBrowserName = (userAgent) => {
   if (userAgent.includes('Edge')) return 'Edge'
   return 'Autre'
 }
+
+const clearHistory = async () => {
+    if (!confirm('Êtes-vous sûr de vouloir vider l\'historique de vos connexions ? (La session actuelle sera conservée)')) {
+        return;
+    }
+
+    try {
+        const res = await api.clearConnectionHistory();
+        if (res.data.success) {
+            // Update the prop directly if allowed or handle parent update
+            // Since this component is for the student's own settings, we can expect the student object to be updated or we can just update it locally if it's reactive
+            props.student.lastLogins = res.data.data;
+            alert('Historique des connexions vidé avec succès.');
+        }
+    } catch (error) {
+        console.error('Erreur lors du vidage de l\'historique:', error);
+        alert('Erreur lors du vidage de l\'historique.');
+    }
+};
 
 const closePasswordModal = () => {
   showPasswordModal.value = false

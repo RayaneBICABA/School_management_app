@@ -24,7 +24,7 @@
               </button>
             </div>
             <div class="flex flex-col justify-center">
-              <p class="text-slate-900 dark:text-white text-2xl font-bold leading-tight tracking-tight">{{ user.prenom }} {{ user.nom }}</p>
+              <p class="text-slate-900 dark:text-white text-2xl font-bold leading-tight tracking-tight">{{ user.nom }} {{ user.prenom }}</p>
               <p class="text-slate-500 dark:text-slate-400 text-base font-normal leading-normal">{{ user.role }}</p>
               <div class="flex items-center gap-2 mt-1">
                 <span class="bg-primary/20 text-primary text-[10px] font-bold px-2 py-0.5 rounded-full uppercase">Bureau 102</span>
@@ -72,8 +72,14 @@
           <!-- Login History -->
           <div class="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-slate-200 dark:border-slate-800 overflow-hidden">
             <div class="px-6 py-4 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
-              <h3 class="text-lg font-bold">Dernières connexions</h3>
-              <span class="text-xs text-slate-500 font-medium">Historique récent (10)</span>
+              <div class="flex items-center gap-2">
+                <h3 class="text-lg font-bold">Dernières connexions</h3>
+                <span class="text-xs text-slate-500 font-medium">(10)</span>
+              </div>
+              <button @click="clearHistory" class="text-xs font-bold text-slate-500 hover:text-red-500 transition-colors flex items-center gap-1" title="Vider l'historique de connexion" v-if="user?.lastLogins?.length > 1">
+                <span class="material-symbols-outlined text-sm">delete_sweep</span>
+                Vider
+              </button>
             </div>
             <div class="p-6 space-y-4">
               <div v-for="(login, index) in (user?.lastLogins || [])" :key="index" class="flex items-center justify-between py-3 border-b border-slate-50 dark:border-slate-800 last:border-0 hover:bg-slate-50 dark:hover:bg-slate-800/50 px-4 -mx-4 transition-colors rounded-lg">
@@ -279,6 +285,23 @@ const parseUserAgent = (ua) => {
     if (ua.includes('Safari')) return 'Safari';
     if (ua.includes('Edge')) return 'Edge';
     return 'Navigateur Web';
+};
+
+const clearHistory = async () => {
+    if (!confirm('Êtes-vous sûr de vouloir vider l\'historique de vos connexions ? (La session actuelle sera conservée)')) {
+        return;
+    }
+
+    try {
+        const res = await api.clearConnectionHistory();
+        if (res.data.success) {
+            user.value.lastLogins = res.data.data;
+            alert('Historique des connexions vidé avec succès.');
+        }
+    } catch (error) {
+        console.error('Erreur lors du vidage de l\'historique:', error);
+        alert('Erreur lors du vidage de l\'historique.');
+    }
 };
 
 // Paramètres de sécurité

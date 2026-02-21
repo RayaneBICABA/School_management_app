@@ -5,7 +5,7 @@
         <span class="material-symbols-outlined">school</span>
       </div>
       <div class="flex flex-col">
-        <h1 class="text-slate-900 dark:text-white text-base font-bold leading-tight">Gestion Scolaire</h1>
+        <h1 class="text-slate-900 dark:text-white text-base font-bold leading-tight">Unica</h1>
         <p class="text-slate-500 dark:text-slate-400 text-xs font-medium">Panel Proviseur</p>
       </div>
     </div>

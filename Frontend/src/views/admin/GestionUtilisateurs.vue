@@ -99,7 +99,7 @@
                                     {{ getInitials(user.nom, user.prenom) }}
                                 </div>
                                 <div class="min-w-0">
-                                    <p class="text-sm font-bold text-slate-900 dark:text-white truncate" :title="user.prenom + ' ' + user.nom">{{ user.prenom }} {{ user.nom }}</p>
+                                    <p class="text-sm font-bold text-slate-900 dark:text-white truncate" :title="user.nom + ' ' + user.prenom">{{ user.nom }} {{ user.prenom }}</p>
                                     <p v-if="user.email" class="text-xs text-slate-500 truncate">{{ user.email }}</p>
                                 </div>
                             </div>
@@ -136,7 +136,7 @@
                                     {{ getInitials(user.nom, user.prenom) }}
                                 </div>
                                 <div class="min-w-0">
-                                    <p class="text-sm font-bold text-slate-900 dark:text-white truncate">{{ user.prenom }} {{ user.nom }}</p>
+                                    <p class="text-sm font-bold text-slate-900 dark:text-white truncate">{{ user.nom }} {{ user.prenom }}</p>
                                     <p class="text-xs text-slate-500 truncate">{{ user.email }}</p>
                                     <p v-if="user.matricule" class="text-xs text-primary font-medium">Matricule: {{ user.matricule }}</p>
                                 </div>
@@ -193,7 +193,7 @@
       <div class="px-6 py-5 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center">
         <div>
           <h2 class="text-2xl font-bold tracking-tight text-[#0e141b] dark:text-white">Modifier l'utilisateur</h2>
-          <p class="text-[#4e7397] dark:text-slate-400 text-sm mt-1">Mettre à jour les informations de {{ editForm.prenom }} {{ editForm.nom }}</p>
+          <p class="text-[#4e7397] dark:text-slate-400 text-sm mt-1">Mettre à jour les informations de {{ editForm.nom }} {{ editForm.prenom }}</p>
         </div>
         <button @click="closeEditModal" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors">
           <span class="material-symbols-outlined">close</span>
@@ -417,7 +417,7 @@ const getAvatarColor = (role) => {
 }
 
 const getInitials = (nom, prenom) => {
-  return `${prenom?.charAt(0) || ''}${nom?.charAt(0) || ''}`.toUpperCase()
+  return `${nom?.charAt(0) || ''}${prenom?.charAt(0) || ''}`.toUpperCase()
 }
 
 const formatDate = (dateString) => {

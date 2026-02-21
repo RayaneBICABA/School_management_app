@@ -34,7 +34,7 @@
                 <div class="relative">
                   <select v-model="selectedProf" class="form-input w-full rounded-lg border border-[#d0dbe7] dark:border-slate-700 bg-white dark:bg-slate-800 text-[#0e141b] dark:text-white h-12 px-4 focus:ring-2 focus:ring-primary/20 focus:border-primary appearance-none">
                     <option disabled value="">Rechercher par nom</option>
-                    <option v-for="p in profs" :key="p._id" :value="p._id">{{ p.prenom }} {{ p.nom }}</option>
+                    <option v-for="p in profs" :key="p._id" :value="p._id">{{ p.nom }} {{ p.prenom }}</option>
                   </select>
                   <div class="absolute inset-y-0 right-3 flex items-center pointer-events-none text-[#4e7397]">
                     <span class="material-symbols-outlined">expand_more</span>

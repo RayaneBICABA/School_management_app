@@ -8,6 +8,9 @@ const api = axios.create({
     }
 });
 
+// Base Asset URL (for images, uploads, etc.)
+export const BASE_ASSET_URL = (import.meta.env.VITE_API_URL || 'http://localhost:5000/api/v1').replace('/api/v1', '');
+
 import { useToast } from '@/composables/useToast';
 
 // Interceptor to add token to requests
@@ -66,6 +69,9 @@ export default {
     },
     updatePassword(passwords) {
         return api.put('/auth/updatepassword', passwords);
+    },
+    clearConnectionHistory() {
+        return api.delete('/auth/history');
     },
     uploadPhoto(formData) {
         // Convert FormData to base64 to avoid multer issues
@@ -269,6 +275,9 @@ export default {
     },
     removeMatiereFromClasse(classeId, id) {
         return api.delete(`/classes/${classeId}/matieres/${id}`);
+    },
+    importClasseMatieres(classeId, data) {
+        return api.post(`/classes/${classeId}/matieres/import`, data);
     },
 
     // Schedules (Timetable)
@@ -680,6 +689,9 @@ export default {
     },
     markNotificationAsRead(notificationId) {
         return api.put(`/notifications/${notificationId}/read`);
+    },
+    clearNotificationHistory() {
+        return api.delete('/notifications/history');
     },
     getAttendance(studentId, params) {
         return api.get(`/eleves/${studentId}/attendance`, { params });

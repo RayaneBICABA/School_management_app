@@ -178,7 +178,7 @@ const fetchStudents = async () => {
     const response = await api.getStudentsByClass(classeId)
     students.value = response.data.data.map(s => ({
       id: s._id,
-      name: `${s.prenom} ${s.nom}`,
+      name: `${s.nom} ${s.prenom}`,
       status: 'present',
       observations: ''
     }))

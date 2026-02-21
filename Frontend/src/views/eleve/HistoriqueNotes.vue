@@ -267,21 +267,27 @@ const fetchData = async () => {
       fetchBulletins()
     ]);
     
-    // 4. Derive available periods from data + defaults based on filiere as fallback
-    const distinctPeriods = [...new Set(notes.value.map(n => n.periode))].filter(Boolean).sort();
-    
-    if (distinctPeriods.length > 0) {
-        periods.value = distinctPeriods;
-        // Default to the first found period usually (or last if chronologically sorted, but let's stick to first or all)
-        selectedPeriod.value = periods.value[0];
+    // 4. Set available periods based on filiere
+    if (classe.value) {
+        periods.value = classe.value.filiere === 'Technique'
+            ? ['Semestre 1', 'Semestre 2']
+            : ['Trimestre 1', 'Trimestre 2', 'Trimestre 3'];
+        
+        // Default to the first found period usually
+        if (!selectedPeriod.value) {
+          selectedPeriod.value = periods.value[0];
+        }
     } else {
-         // Fallback if no notes yet
-         if (classe.value && classe.value.filiere === 'Technique') {
-            periods.value = ['Semestre 1', 'Semestre 2'];
-         } else {
+        // Fallback if no class yet
+        const distinctPeriods = [...new Set(notes.value.map(n => n.periode))].filter(Boolean).sort();
+        if (distinctPeriods.length > 0) {
+            periods.value = distinctPeriods;
+        } else {
             periods.value = ['Trimestre 1', 'Trimestre 2', 'Trimestre 3'];
-         }
-         selectedPeriod.value = periods.value[0];
+        }
+        if (!selectedPeriod.value) {
+          selectedPeriod.value = 'all';
+        }
     }
     
     }

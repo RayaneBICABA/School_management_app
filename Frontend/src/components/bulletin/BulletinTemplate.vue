@@ -12,7 +12,7 @@
 
         <div class="header-center w-[40%] flex flex-col items-center text-center">
           <div v-if="schoolConfig.logo" class="h-16 mb-1">
-            <img :src="`http://localhost:5000${schoolConfig.logo}`" class="h-full w-auto object-contain mx-auto" />
+            <img :src="`${BASE_ASSET_URL}${schoolConfig.logo}`" class="h-full w-auto object-contain mx-auto" />
           </div>
           <div v-else class="text-3xl font-black tracking-tighter text-blue-900 leading-none">{{ schoolConfig.shortName }}</div>
           <div v-if="schoolConfig.motto" class="text-[9px] font-bold text-gray-500 mt-1 uppercase tracking-widest leading-none">{{ schoolConfig.motto }}</div>
@@ -99,7 +99,7 @@
               <td class="border border-black p-1 font-bold">{{ (note.notePonderee || 0).toFixed(2) }}</td>
               <td class="border border-black p-1 w-24 italic" :class="getAppreciationColor(getSubjectAppreciation(note.moyenneMatiere || 0))">{{ getSubjectAppreciation(note.moyenneMatiere || 0) }}</td>
               <td class="border border-black p-1 w-16"></td>
-              <td class="border border-black p-1 text-[9px] uppercase">{{ note.professeur ? `${note.professeur.prenom} ${note.professeur.nom}` : '' }}</td>
+              <td class="border border-black p-1 text-[9px] uppercase">{{ note.professeur ? `${note.professeur.nom} ${note.professeur.prenom}` : '' }}</td>
             </tr>
             <!-- Category Totals -->
             <tr class="bg-gray-100 font-bold">
@@ -209,7 +209,7 @@
 import { computed, ref, onMounted } from 'vue';
 import html2canvas from 'html2canvas';
 import { jsPDF } from 'jspdf';
-import api from '@/services/api';
+import api, { BASE_ASSET_URL } from '@/services/api';
 
 const props = defineProps({
   bulletin: { type: Object, required: true },
@@ -383,7 +383,7 @@ const downloadPDF = async () => {
     const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
     
     pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
-    pdf.save(`Bulletin_${props.eleve.nom}_${props.bulletin.periode.replace(' ', '_')}.pdf`);
+    pdf.save(`Bulletin_${props.eleve.nom}_${props.eleve.prenom}_${props.bulletin.periode.replace(' ', '_')}.pdf`);
   } catch (error) {
     console.error('Erreur lors de la génération du PDF:', error);
     alert('Une erreur est survenue lors de la génération du PDF.');

@@ -321,8 +321,16 @@
                 </h3>
                 <button 
                   type="button"
+                  @click="openImportModal"
+                  class="text-xs text-[#4e7397] font-bold flex items-center gap-1 hover:text-primary transition-colors"
+                >
+                  <span class="material-symbols-outlined text-sm">content_copy</span>
+                  Importer
+                </button>
+                <button 
+                  type="button"
                   @click="showAddCourseModal = true"
-                  class="text-xs text-primary font-bold flex items-center gap-1 hover:underline"
+                  class="text-xs text-primary font-bold flex items-center gap-1 hover:underline ml-auto"
                 >
                   <span class="material-symbols-outlined text-sm">add_circle</span>
                   Ajouter une matière
@@ -532,6 +540,96 @@
       </div>
     </div>
   </div>
+
+  <!-- Import Courses Modal -->
+  <div v-if="showImportModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
+    <div class="bg-white dark:bg-slate-900 w-full max-w-lg rounded-xl shadow-2xl flex flex-col max-h-[90vh]">
+      <div class="px-6 py-5 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center">
+        <h3 class="text-xl font-bold text-[#0e141b] dark:text-white">Importer d'une classe</h3>
+        <button @click="closeImportModal" class="text-slate-400 hover:text-slate-600 transition-colors">
+          <span class="material-symbols-outlined">close</span>
+        </button>
+      </div>
+      
+      <div class="p-6 space-y-4 overflow-hidden flex flex-col">
+        <div class="flex flex-col gap-2">
+          <label class="text-sm font-semibold text-[#0e141b] dark:text-slate-200">Classe source</label>
+          <select 
+            v-model="importData.sourceId"
+            @change="fetchSourceMatieres"
+            class="w-full bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 rounded-lg text-sm focus:ring-primary focus:border-primary h-10 px-3"
+          >
+            <option value="">Sélectionner une classe source</option>
+            <optgroup label="Générale">
+              <option v-for="c in filieres.Generale" :key="c.id" :value="c.id" :disabled="c.id === editingClass?.id">
+                {{ c.nom }} ({{ c.niveau }})
+              </option>
+            </optgroup>
+            <optgroup label="Technique">
+              <option v-for="c in filieres.Technique" :key="c.id" :value="c.id" :disabled="c.id === editingClass?.id">
+                {{ c.nom }} ({{ c.specialite }})
+              </option>
+            </optgroup>
+          </select>
+        </div>
+
+        <div v-if="importData.loadingMatieres" class="py-12 text-center">
+          <span class="material-symbols-outlined animate-spin text-primary">progress_activity</span>
+        </div>
+
+        <div v-else-if="sourceMatieres.length > 0" class="flex flex-col flex-1 overflow-hidden">
+          <div class="flex items-center justify-between mb-2">
+            <span class="text-sm font-bold text-slate-500">{{ sourceMatieres.length }} matières trouvées</span>
+            <button @click="toggleSelectAllMatieres" class="text-xs text-primary font-bold hover:underline">
+              {{ importData.selectedIds.length === sourceMatieres.length ? 'Tout désélectionner' : 'Tout sélectionner' }}
+            </button>
+          </div>
+          
+          <div class="overflow-y-auto space-y-2 border border-slate-100 dark:border-slate-800 rounded-lg p-2 bg-slate-50/50 dark:bg-slate-800/20">
+            <label 
+              v-for="m in sourceMatieres" 
+              :key="m.matiere?._id"
+              class="flex items-center gap-3 p-3 bg-white dark:bg-slate-900 rounded-lg border border-slate-200 dark:border-slate-700 cursor-pointer hover:border-primary transition-all group"
+            >
+              <input 
+                type="checkbox" 
+                :value="m.matiere?._id" 
+                v-model="importData.selectedIds"
+                class="form-checkbox h-4 w-4 text-primary rounded border-slate-300 focus:ring-primary"
+              />
+              <div class="flex-1">
+                <p class="text-sm font-bold text-[#0e141b] dark:text-white group-hover:text-primary transition-colors">
+                  {{ m.matiere?.nom }}
+                </p>
+                <p class="text-xs text-slate-500">Coef: {{ m.coefficient }}</p>
+              </div>
+            </label>
+          </div>
+        </div>
+
+        <div v-else-if="importData.sourceId" class="py-12 text-center text-slate-500 italic">
+          Cette classe n'a pas encore de matières configurées.
+        </div>
+      </div>
+
+      <div class="p-6 border-t border-slate-100 dark:border-slate-800 flex gap-3">
+        <button 
+          @click="closeImportModal"
+          class="flex-1 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 font-bold py-2.5 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-700 transition-all font-display"
+        >
+          Annuler
+        </button>
+        <button 
+          @click="confirmImport"
+          :disabled="!importData.selectedIds.length || importData.isImporting"
+          class="flex-1 bg-primary text-white font-bold py-2.5 rounded-lg hover:bg-primary/90 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 font-display"
+        >
+          <span v-if="importData.isImporting" class="material-symbols-outlined animate-spin text-sm">progress_activity</span>
+          {{ importData.isImporting ? 'Importation...' : `Importer (${importData.selectedIds.length})` }}
+        </button>
+      </div>
+    </div>
+  </div>
 </div>
 </template>
 
@@ -578,6 +676,16 @@ const searchQuery = ref('')
 
 const dynamicNiveaux = ref([])
 const dynamicSpecialites = ref([])
+
+// Import Modal variables
+const showImportModal = ref(false)
+const sourceMatieres = ref([])
+const importData = reactive({
+  sourceId: '',
+  selectedIds: [],
+  loadingMatieres: false,
+  isImporting: false
+})
 
 // Manage Modal variables
 const showManageModal = ref(false)
@@ -921,6 +1029,66 @@ const removeCourse = async (courseId) => {
       console.error('Erreur suppression matière:', error)
       alert('Erreur lors de la suppression de la matière')
     }
+  }
+}
+
+// Selective Import functions
+const openImportModal = () => {
+  showImportModal.value = true
+  importData.sourceId = ''
+  importData.selectedIds = []
+  sourceMatieres.value = []
+}
+
+const closeImportModal = () => {
+  showImportModal.value = false
+}
+
+const fetchSourceMatieres = async () => {
+  if (!importData.sourceId) {
+    sourceMatieres.value = []
+    return
+  }
+  
+  importData.loadingMatieres = true
+  try {
+    const response = await api.getClasseMatieres(importData.sourceId)
+    sourceMatieres.value = Array.isArray(response.data.data) ? response.data.data : []
+    // Auto select all by default
+    importData.selectedIds = sourceMatieres.value.map(m => m.matiere?._id).filter(Boolean)
+  } catch (error) {
+    console.error('Erreur chargement matières source:', error)
+  } finally {
+    importData.loadingMatieres = false
+  }
+}
+
+const toggleSelectAllMatieres = () => {
+  if (importData.selectedIds.length === sourceMatieres.value.length) {
+    importData.selectedIds = []
+  } else {
+    importData.selectedIds = sourceMatieres.value.map(m => m.matiere?._id).filter(Boolean)
+  }
+}
+
+const confirmImport = async () => {
+  if (!editingClass.value || !importData.sourceId || importData.selectedIds.length === 0) return
+  
+  importData.isImporting = true
+  try {
+    await api.importClasseMatieres(editingClass.value.id, {
+      sourceClasseId: importData.sourceId,
+      matiereIds: importData.selectedIds
+    })
+    
+    await fetchClasseCourses(editingClass.value.id)
+    alert('Matières importées avec succès !')
+    closeImportModal()
+  } catch (error) {
+    console.error('Erreur import:', error)
+    alert('Erreur lors de l\'importation des matières')
+  } finally {
+    importData.isImporting = false
   }
 }
 

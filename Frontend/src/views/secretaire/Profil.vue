@@ -145,7 +145,13 @@
 
           <!-- Journal d'activité -->
           <section class="bg-white dark:bg-slate-800 rounded-xl border border-[#d0dbe7] dark:border-slate-700 shadow-sm p-6">
-            <h3 class="font-bold text-[#0e141b] dark:text-white mb-4">Historique des dernières connexions</h3>
+            <div class="flex items-center justify-between mb-4">
+              <h3 class="font-bold text-[#0e141b] dark:text-white">Historique des dernières connexions</h3>
+              <button @click="clearHistory" class="text-xs font-bold text-slate-500 hover:text-red-500 transition-colors flex items-center gap-1" title="Vider l'historique de connexion" v-if="user?.lastLogins?.length > 1">
+                <span class="material-symbols-outlined text-sm">delete_sweep</span>
+                Vider
+              </button>
+            </div>
             <div class="space-y-4">
               <div v-for="(login, index) in (user?.lastLogins || [])" :key="index" class="flex items-start gap-3 pb-4 border-b border-[#d0dbe7] dark:border-slate-700">
                 <div class="size-8 rounded-full bg-blue-50 dark:bg-blue-900/30 flex items-center justify-center shrink-0">
@@ -293,6 +299,23 @@ const parseUserAgent = (ua) => {
     if (ua.includes('Safari')) return 'Safari';
     if (ua.includes('Edge')) return 'Edge';
     return 'Navigateur Web';
+};
+
+const clearHistory = async () => {
+    if (!confirm('Êtes-vous sûr de vouloir vider l\'historique de vos connexions ? (La session actuelle sera conservée)')) {
+        return;
+    }
+
+    try {
+        const res = await api.clearConnectionHistory();
+        if (res.data.success) {
+            user.value.lastLogins = res.data.data;
+            success('Historique des connexions vidé avec succès.');
+        }
+    } catch (error) {
+        console.error('Erreur lors du vidage de l\'historique:', error);
+        error('Erreur lors du vidage de l\'historique.');
+    }
 };
 
 onMounted(() => {

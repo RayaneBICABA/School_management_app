@@ -19,7 +19,7 @@
         </router-view>
       </div>
       <footer class="mt-auto p-6 text-center text-slate-400 text-xs">
-        © 2024 Système de Gestion Scolaire Intégré - Dashboard Censeur v2.4.0
+        © 2024 Unica - Dashboard Censeur v2.4.0
       </footer>
     </main>
 

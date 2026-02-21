@@ -121,7 +121,10 @@ exports.getNotifications = async (req, res, next) => {
 // @access  Private
 exports.getSentNotifications = async (req, res, next) => {
     try {
-        const notifications = await Notification.find({ sender: req.user._id })
+        const notifications = await Notification.find({
+            sender: req.user._id,
+            deletedBySender: { $ne: true }
+        })
             .populate('targetClasses', 'niveau section')
             .sort({ createdAt: -1 });
 
@@ -166,6 +169,25 @@ exports.markAsRead = async (req, res, next) => {
         res.status(200).json({ success: true, data: notification });
     } catch (err) {
         console.error('Error marking notification as read:', err);
+        res.status(500).json({ success: false, error: err.message });
+    }
+};
+
+// @desc    Clear sent notification history for logged in user
+// @route   DELETE /api/v1/notifications/history
+// @access  Private
+exports.clearNotificationHistory = async (req, res, next) => {
+    try {
+        await Notification.updateMany(
+            { sender: req.user._id },
+            { $set: { deletedBySender: true } }
+        );
+
+        res.status(200).json({
+            success: true,
+            data: {}
+        });
+    } catch (err) {
         res.status(500).json({ success: false, error: err.message });
     }
 };

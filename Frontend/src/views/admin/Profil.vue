@@ -17,7 +17,7 @@
               </button>
             </div>
             <div class="flex flex-col">
-              <h2 class="text-[#0e141b] dark:text-white text-3xl font-bold tracking-tight">{{ user.prenom }} {{ user.nom }}</h2>
+              <h2 class="text-[#0e141b] dark:text-white text-3xl font-bold tracking-tight">{{ user.nom }} {{ user.prenom }}</h2>
               <div class="flex items-center gap-2 mt-1">
                 <span class="bg-primary/20 text-primary text-xs font-bold px-2 py-0.5 rounded-full uppercase">{{ user.role }}</span>
                 <span class="text-[#4e7397] dark:text-slate-400 text-sm">Personnel administratif</span>
@@ -68,9 +68,15 @@
           
           <!-- Connection History Section -->
           <section class="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-6 shadow-sm">
-            <div class="flex items-center gap-2 mb-6 border-b border-slate-100 dark:border-slate-800 pb-4">
-              <span class="material-symbols-outlined text-primary">history</span>
-              <h3 class="text-lg font-bold text-[#0e141b] dark:text-white">Historique des dernières connexions</h3>
+            <div class="flex items-center justify-between mb-6 border-b border-slate-100 dark:border-slate-800 pb-4">
+              <div class="flex items-center gap-2">
+                <span class="material-symbols-outlined text-primary">history</span>
+                <h3 class="text-lg font-bold text-[#0e141b] dark:text-white">Historique des dernières connexions</h3>
+              </div>
+              <button @click="clearHistory" class="text-xs font-bold text-slate-500 hover:text-red-500 transition-colors flex items-center gap-1" title="Vider l'historique de connexion" v-if="user?.lastLogins?.length > 1">
+                <span class="material-symbols-outlined text-sm">delete_sweep</span>
+                Vider
+              </button>
             </div>
             <div class="overflow-x-auto">
               <table class="w-full text-left text-sm">
@@ -321,6 +327,23 @@ const parseUserAgent = (ua) => {
     if (ua.includes('Safari')) return 'Safari';
     if (ua.includes('Edge')) return 'Edge';
     return 'Navigateur Web';
+};
+
+const clearHistory = async () => {
+    if (!confirm('Êtes-vous sûr de vouloir vider l\'historique de vos connexions ? (La session actuelle sera conservée)')) {
+        return;
+    }
+
+    try {
+        const res = await api.clearConnectionHistory();
+        if (res.data.success) {
+            user.value.lastLogins = res.data.data;
+            alert('Historique des connexions vidé avec succès.');
+        }
+    } catch (error) {
+        console.error('Erreur lors du vidage de l\'historique:', error);
+        alert('Erreur lors du vidage de l\'historique.');
+    }
 };
 
 onMounted(() => {

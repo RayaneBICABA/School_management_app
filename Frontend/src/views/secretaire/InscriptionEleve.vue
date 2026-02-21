@@ -134,8 +134,8 @@ const stats = ref({
 const inscriptions = ref([
   {
     id: 1,
-    nom: 'Alice Martin',
-    initials: 'AM',
+    nom: 'Martin Alice',
+    initials: 'MA',
     email: 'alice.martin@email.com',
     date: '15/10/2023',
     classe: '6ème A',
@@ -143,8 +143,8 @@ const inscriptions = ref([
   },
   {
     id: 2,
-    nom: 'Bob Dupont',
-    initials: 'BD',
+    nom: 'Dupont Bob',
+    initials: 'DB',
     email: 'bob.dupont@email.com',
     date: '14/10/2023',
     classe: '5ème B',
@@ -152,8 +152,8 @@ const inscriptions = ref([
   },
   {
     id: 3,
-    nom: 'Claire Bernard',
-    initials: 'CB',
+    nom: 'Bernard Claire',
+    initials: 'BC',
     email: 'claire.bernard@email.com',
     date: '13/10/2023',
     classe: '4ème A',

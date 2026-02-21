@@ -87,11 +87,11 @@
                 <td class="px-6 py-4">
                   <div class="flex items-center gap-3">
                     <div class="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold">
-                      {{ a.professeur?.prenom?.[0] }}{{ a.professeur?.nom?.[0] }}
+                      {{ a.professeur?.nom?.[0] }}{{ a.professeur?.prenom?.[0] }}
                     </div>
                     <div>
                       <p class="text-sm font-bold text-[#0e141b] dark:text-white">
-                        {{ a.professeur ? `${a.professeur.prenom} ${a.professeur.nom}` : 'Non assigné' }}
+                        {{ a.professeur ? `${a.professeur.nom} ${a.professeur.prenom}` : 'Non assigné' }}
                       </p>
                       <p class="text-xs text-[#4e7397]">ID: {{ a.professeur?.id?.substring(0,8) || 'N/A' }}</p>
                     </div>

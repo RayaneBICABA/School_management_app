@@ -188,6 +188,35 @@ exports.uploadPhoto = async (req, res, next) => {
     }
 };
 
+// @desc    Clear connection history for user
+// @route   DELETE /api/v1/auth/history
+// @access  Private
+exports.clearHistory = async (req, res, next) => {
+    try {
+        const user = await User.findById(req.user._id);
+
+        if (!user) {
+            return res.status(404).json({ success: false, error: 'Utilisateur non trouvé' });
+        }
+
+        // Keep only the current session (the most recent login)
+        if (user.lastLogins && user.lastLogins.length > 0) {
+            user.lastLogins = [user.lastLogins[0]];
+        } else {
+            user.lastLogins = [];
+        }
+
+        await user.save({ validateBeforeSave: false });
+
+        res.status(200).json({
+            success: true,
+            data: user.lastLogins
+        });
+    } catch (err) {
+        res.status(500).json({ success: false, error: err.message });
+    }
+};
+
 // Get token from model, create cookie and send response
 const sendTokenResponse = (user, statusCode, res) => {
     // Create token

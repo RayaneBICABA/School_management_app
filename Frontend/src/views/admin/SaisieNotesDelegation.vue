@@ -46,7 +46,7 @@
             >
               <option value="">— Aucun (saisie en mon nom d'Admin) —</option>
               <option v-for="prof in professeurs" :key="prof._id" :value="prof._id">
-                {{ prof.prenom }} {{ prof.nom }}
+                {{ prof.nom }} {{ prof.prenom }}
               </option>
             </select>
           </div>
@@ -56,7 +56,7 @@
             <span class="material-symbols-outlined" :class="selectedProf ? 'text-blue-600' : 'text-slate-400'">info</span>
             <p class="text-sm" :class="selectedProf ? 'text-blue-800 dark:text-blue-200' : 'text-slate-500 dark:text-slate-400'">
               <template v-if="selectedProf">
-                Notes enregistrées <strong>au nom de {{ profSelectionne?.prenom }} {{ profSelectionne?.nom }}</strong>,
+                Notes enregistrées <strong>au nom de {{ profSelectionne?.nom }} {{ profSelectionne?.prenom }}</strong>,
                 validées par vous (Admin).
               </template>
               <template v-else>
@@ -199,7 +199,7 @@
             <tbody class="divide-y divide-slate-200 dark:divide-slate-800">
               <tr v-for="eleve in eleves" :key="eleve._id" class="hover:bg-slate-50 dark:hover:bg-slate-800/30 transition-colors">
                 <td class="px-4 py-3 text-sm font-medium text-[#0e141b] dark:text-white sticky left-0 bg-white dark:bg-slate-900">
-                  <p>{{ eleve.prenom }} {{ eleve.nom }}</p>
+                  <p>{{ eleve.nom }} {{ eleve.prenom }}</p>
                   <p class="text-xs text-[#4e7397]">{{ eleve.matricule }}</p>
                 </td>
                 <td
@@ -231,7 +231,7 @@
             <span class="material-symbols-outlined text-sm mt-0.5">warning</span>
             <p>
               Ces notes seront immédiatement enregistrées en statut <strong>VALIDÉE</strong>
-              <template v-if="selectedProf"> au nom de <strong>{{ profSelectionne?.prenom }} {{ profSelectionne?.nom }}</strong></template>
+              <template v-if="selectedProf"> au nom de <strong>{{ profSelectionne?.nom }} {{ profSelectionne?.prenom }}</strong></template>
               <template v-else>. Le bulletin affichera le <strong>professeur officiel de la matière</strong> tel qu'il est affecté dans la classe</template>.
               Cette action ne peut être annulée que par un administrateur.
             </p>
@@ -515,7 +515,7 @@ const saveAndValidateAllNotes = () => {
     return;
   }
   const auteur = selectedProf.value
-    ? `au nom de ${profSelectionne.value?.prenom} ${profSelectionne.value?.nom}`
+    ? `au nom de ${profSelectionne.value?.nom} ${profSelectionne.value?.prenom}`
     : 'en votre nom (Administrateur)';
   confirmModalTitle.value = 'Enregistrer et valider les notes ?';
   confirmModalMessage.value = `Ces notes seront enregistrées ${auteur} et immédiatement validées. Elles seront incluses dans les bulletins. Confirmez-vous ?`;

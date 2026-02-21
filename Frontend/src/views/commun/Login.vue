@@ -15,7 +15,7 @@
           <div class="size-10 rounded-lg bg-white p-2 flex items-center justify-center">
             <span class="material-symbols-outlined text-primary text-2xl">school</span>
           </div>
-          <span class="text-2xl font-bold tracking-tight">Academia Plus</span>
+          <span class="text-2xl font-bold tracking-tight">Unica</span>
         </div>
       </div>
       <div class="relative z-10 p-12 text-white">
@@ -36,13 +36,13 @@
       </div>
     </div>
     
-    <!-- Right Side: Form Section -->
+    <!-- Form Section -->
     <div class="flex flex-1 flex-col items-center justify-center px-6 py-12 dark:bg-background-dark sm:px-12 lg:w-1/2">
       <div class="mb-8 flex items-center gap-3 lg:hidden">
         <div class="size-8 rounded-lg bg-primary p-1.5 flex items-center justify-center text-white">
           <span class="material-symbols-outlined">school</span>
         </div>
-        <h2 class="text-[#0e141b] dark:text-slate-50 text-xl font-bold">Système de gestion scolaire</h2>
+        <h2 class="text-[#0e141b] dark:text-slate-50 text-xl font-bold">Unica</h2>
       </div>
       <div class="w-full max-w-[440px] space-y-8">
         <!-- Success Message -->
@@ -130,7 +130,7 @@
         </div>
       </div>
       <footer class="mt-auto pt-8 text-center text-xs text-[#4e7397] dark:text-slate-500">
-        <p>© 2024 Academia Plus. Tous droits réservés.</p>
+        <p>© 2024 Unica. Tous droits réservés.</p>
         <div class="mt-2 flex justify-center gap-4">
           <a class="hover:underline" href="#">Mentions Légales</a>
           <a class="hover:underline" href="#">Confidentialité</a>

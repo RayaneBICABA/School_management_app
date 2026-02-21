@@ -13,7 +13,7 @@
       <div v-else>
         <!-- Breadcrumbs -->
         <nav class="flex items-center gap-2 text-sm text-slate-500 mb-4 font-display">
-          <router-link :to="returnPath" class="hover:text-primary transition-colors">Supervision des Notes</router-link>
+          <router-link :to="returnLocation" class="hover:text-primary transition-colors">Supervision des Notes</router-link>
           <span class="material-symbols-outlined text-sm">chevron_right</span>
           <span class="font-medium text-slate-900 dark:text-white">{{ info.matiereNom || 'Détails' }}</span>
         </nav>
@@ -21,7 +21,7 @@
         <!-- Page Heading -->
         <div class="flex flex-wrap justify-between items-start gap-4 mb-8">
           <div class="flex items-center gap-3">
-            <button @click="$router.push(returnPath)" class="flex items-center gap-2 px-3 py-2 text-slate-600 dark:text-slate-400 hover:text-primary dark:hover:text-primary hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors font-medium">
+            <button @click="$router.push(returnLocation)" class="flex items-center gap-2 px-3 py-2 text-slate-600 dark:text-slate-400 hover:text-primary dark:hover:text-primary hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors font-medium">
               <span class="material-symbols-outlined">arrow_back</span>
               <span>Retour</span>
             </button>
@@ -120,8 +120,20 @@ const userRole = computed(() => {
   return user.role || '';
 });
 
-const returnPath = computed(() => {
-  return userRole.value === 'CENSEUR' ? '/censeur/notes' : '/admin/notes';
+const returnLocation = computed(() => {
+  let path = '/admin/notes';
+  if (userRole.value === 'PROVISEUR') path = '/proviseur/notes';
+  else if (userRole.value === 'CENSEUR') path = '/censeur/notes';
+  
+  return {
+    path,
+    query: {
+      classe: route.query.classe,
+      periode: route.query.periode,
+      matiere: route.query.matiere,
+      tab: route.query.tab
+    }
+  };
 });
 
 const classeId = route.query.classe;
@@ -140,7 +152,7 @@ const info = ref({
 const loadNotes = async () => {
   if (!classeId || !matiereId || !periode) {
     showError('Paramètres manquants');
-    router.push(returnPath.value);
+    router.push(returnLocation.value);
     return;
   }
 

@@ -310,7 +310,7 @@ const confirmReject = async () => {
   if (!rejectMotif.value) return;
 
   try {
-    await api.rejectNote(selectedNote.value._id, rejectMotif.value);
+    await api.rejectNote(selectedNote.value._id, { motifRejet: rejectMotif.value });
     alert('Note rejetée avec succès !');
     closeRejectModal();
     loadNotes();

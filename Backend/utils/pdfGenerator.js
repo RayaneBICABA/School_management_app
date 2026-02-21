@@ -761,12 +761,17 @@ const generateBulletinContent = (bulletinData, schoolConfig = {}) => {
                         <tr>
                             <td class="text-left bold uppercase" style="padding: 8px;">${note.matiere?.nom || 'N/A'}</td>
                             <td>${(note.coeff || note.matiere?.coefficient || 0).toFixed(1)}</td>
-                            ${Array.from({ length: maxInt }, (_, i) => `<td>${noteInts[i] !== undefined ? noteInts[i].toFixed(2) : ''}</td>`).join('')}
-                            ${Array.from({ length: maxDev }, (_, i) => `<td>${noteDevs[i] !== undefined ? noteDevs[i].toFixed(2) : ''}</td>`).join('')}
-                            ${Array.from({ length: maxCompo }, (_, i) => `<td>${noteCompos[i] !== undefined ? noteCompos[i].toFixed(2) : ''}</td>`).join('')}
-                            <td>${(note.moyenneMatiere || 0).toFixed(2)}</td>
-                            <td class="bold">${(note.notePonderee || 0).toFixed(2)}</td>
-                            <td class="italic" style="${getAppreciationColor(getSubjectAppreciation(note.moyenneMatiere || 0))}">${getSubjectAppreciation(note.moyenneMatiere || 0)}</td>
+                            ${note.isDispensed ?
+                `<td colspan="${maxInt + maxDev + maxCompo + 1}" class="bold italic" style="color: #dc2626;">DISPENSÉ</td>` :
+                `
+                                ${Array.from({ length: maxInt }, (_, i) => `<td>${noteInts[i] !== undefined ? noteInts[i].toFixed(2) : ''}</td>`).join('')}
+                                ${Array.from({ length: maxDev }, (_, i) => `<td>${noteDevs[i] !== undefined ? noteDevs[i].toFixed(2) : ''}</td>`).join('')}
+                                ${Array.from({ length: maxCompo }, (_, i) => `<td>${noteCompos[i] !== undefined ? noteCompos[i].toFixed(2) : ''}</td>`).join('')}
+                                <td>${(note.moyenneMatiere || 0).toFixed(2)}</td>
+                                `
+            }
+                            <td class="bold">${note.isDispensed ? '-' : (note.notePonderee || 0).toFixed(2)}</td>
+                            <td class="italic" style="${note.isDispensed ? 'color: #dc2626;' : getAppreciationColor(getSubjectAppreciation(note.moyenneMatiere || 0))}">${note.isDispensed ? 'DISPENSÉ' : getSubjectAppreciation(note.moyenneMatiere || 0)}</td>
                             <td class="signature-cell" style="width: 60px; border: 1px solid black;"></td>
                             <td class="text-xs uppercase">${note.professeur ? `${note.professeur.prenom} ${note.professeur.nom}` : ''}</td>
                         </tr>

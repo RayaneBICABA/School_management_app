@@ -165,7 +165,13 @@
                   :key="evaluation._id" 
                   class="px-4 py-3 text-center"
                 >
+                  <template v-if="isDispensed(eleve._id)">
+                    <div class="flex flex-col items-center justify-center">
+                      <span class="text-xs font-bold text-rose-500 bg-rose-50 dark:bg-rose-900/20 px-2 py-1 rounded">DISPENSÉ</span>
+                    </div>
+                  </template>
                   <input 
+                    v-else
                     v-model.number="notesData[eleve._id][evaluation.nom]" 
                     type="number" 
                     min="0" 
@@ -323,6 +329,7 @@ const eleves = ref([]);
 const evaluations = ref([]);
 const periodes = ref([]);
 const notesData = ref({});
+const dispensations = ref([]);
 
 const selectedClasse = ref('');
 const selectedMatiere = ref('');
@@ -501,6 +508,19 @@ const loadData = async () => {
       });
     });
 
+    // Charger les dispensations pour cette classe et matière
+    try {
+      const dispRes = await api.getDispensations({ 
+        classe: selectedClasse.value, 
+        matiere: selectedMatiere.value 
+      });
+      if (dispRes.data.success) {
+        dispensations.value = dispRes.data.data;
+      }
+    } catch (dispErr) {
+      console.error('Erreur chargement dispensations:', dispErr);
+    }
+
     // Remplir avec les notes existantes et récupérer le statut
     if (notesRes.data.success && notesRes.data.data.length > 0) {
       // Récupérer le statut et l'ID de la première note (toutes ont le même statut pour une classe/matière/période)
@@ -530,7 +550,13 @@ const loadData = async () => {
   }
 };
 
+const isDispensed = (eleveId) => {
+  return dispensations.value.some(d => d.eleve._id === eleveId || d.eleve === eleveId);
+};
+
 const calculateMoyenne = (eleveId) => {
+  if (isDispensed(eleveId)) return 'DISP';
+  
   const notes = notesData.value[eleveId];
   if (!notes) return '-';
 

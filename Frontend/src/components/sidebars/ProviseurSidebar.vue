@@ -40,6 +40,7 @@
           <span class="material-symbols-outlined transition-transform group-hover:scale-110">table_chart</span>
           <span class="text-sm font-medium">Récapitulatif des Notes</span>
         </router-link>
+
         <router-link to="/proviseur/classes" 
           class="flex items-center gap-3 px-4 py-2.5 rounded-xl transition-all duration-300 ease-out-expo group" 
           :class="isActive('ProviseurClasses') ? 'sidebar-active' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/50 hover:text-primary transition-all'"

@@ -148,7 +148,7 @@
                       Rejeter
                     </button>
                     <router-link
-                      :to="{ name: 'CenseurDetailNotesMatiere', query: { classe: note.classe?._id, matiere: note.matiere?._id, periode: note.periode } }"
+                      :to="{ name: getDetailRouteName(), query: { classe: note.classe?._id, matiere: note.matiere?._id, periode: note.periode } }"
                       class="px-4 py-2 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 rounded-lg font-bold hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors flex items-center justify-center gap-2"
                       title="Voir les détails"
                     >
@@ -198,7 +198,7 @@
 
                   <div class="flex gap-3">
                     <router-link
-                      :to="{ name: 'CenseurDetailNotesMatiere', query: { classe: note.classe?._id, matiere: note.matiere?._id, periode: note.periode } }"
+                      :to="{ name: getDetailRouteName(), query: { classe: note.classe?._id, matiere: note.matiere?._id, periode: note.periode } }"
                       class="px-4 py-2 bg-slate-100 dark:bg-slate-800 text-primary border border-slate-200 dark:border-slate-700 rounded-lg font-bold hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors flex items-center justify-center gap-2 w-full"
                       title="Voir les détails et/ou débloquer"
                     >
@@ -256,8 +256,21 @@
 
 
 <script setup>
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, watch } from 'vue';
+import { useRoute, useRouter } from 'vue-router';
 import api from '@/services/api';
+
+const user = JSON.parse(localStorage.getItem('user') || '{}');
+const userRole = user.role;
+
+const getDetailRouteName = () => {
+  if (userRole === 'PROVISEUR') return 'ProviseurDetailNotesMatiere';
+  if (userRole === 'CENSEUR') return 'CenseurDetailNotesMatiere';
+  return 'AdminDetailNotesMatiere';
+};
+
+const route = useRoute();
+const router = useRouter();
 
 const classes = ref([]);
 const matieres = ref([]);
@@ -266,21 +279,37 @@ const validatedNotes = ref([]);
 const allPendingNotes = ref([]); // Toutes les notes en attente pour filtrage
 const allValidatedNotes = ref([]); // Toutes les notes pour extraire filtres
 
-const activeTab = ref('pending');
+const activeTab = ref(route.query.tab || 'pending');
 
 // Options de filtres disponibles (filtrées dynamiquement)
 const availableMatieres = ref([]);
 const availablePeriodes = ref([]);
 
-const selectedClasse = ref('');
-const selectedMatiere = ref('');
-const selectedPeriode = ref('');
+const selectedClasse = ref(route.query.classe || '');
+const selectedMatiere = ref(route.query.matiere || '');
+const selectedPeriode = ref(route.query.periode || '');
 
 const isLoading = ref(false);
 const isValidatingAll = ref(false);
 const showRejectModal = ref(false);
 const rejectReason = ref('');
 const selectedNoteForReject = ref(null);
+
+// Mettre à jour l'URL quand les filtres ou l'onglet changent
+const updateQueryParams = () => {
+  const query = {
+    ...route.query,
+    tab: activeTab.value,
+    classe: selectedClasse.value || undefined,
+    matiere: selectedMatiere.value || undefined,
+    periode: selectedPeriode.value || undefined
+  };
+  router.replace({ query });
+};
+
+watch([activeTab, selectedClasse, selectedMatiere, selectedPeriode], () => {
+  updateQueryParams();
+});
 
 const loadClasses = async () => {
   try {

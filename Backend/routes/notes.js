@@ -35,7 +35,7 @@ router.route('/:id')
     .put(checkGradeDeadline, updateNote)
     .delete(deleteNote);
 
-router.post('/unblock', authorize('ADMIN', 'CENSEUR'), unblockNotes);
+router.post('/unblock', authorize('ADMIN', 'CENSEUR', 'PROVISEUR'), unblockNotes);
 router.post('/:id/validate', validateNote);
 router.post('/:id/reject', rejectNote);
 router.post('/:id/submit', checkGradeDeadline, submitNote);

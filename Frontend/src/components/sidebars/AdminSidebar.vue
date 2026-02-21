@@ -96,6 +96,18 @@
         <span class="material-symbols-outlined text-xl transition-transform group-hover:scale-110">description</span>
         <span class="text-sm font-medium">Gestion des Notes</span>
       </router-link>
+      <router-link to="/admin/supervision-notes" class="flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-300 ease-out-expo group" :class="isActive('AdminSupervisionNotes') ? 'sidebar-active' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/50 hover:text-primary transition-all'">
+        <span class="material-symbols-outlined text-xl transition-transform group-hover:scale-110">task_alt</span>
+        <span class="text-sm font-medium">Supervision Active</span>
+      </router-link>
+      <router-link to="/admin/deblocage-notes" class="flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-300 ease-out-expo group" :class="isActive('AdminDeblocageNotes') ? 'sidebar-active' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/50 hover:text-primary transition-all'">
+        <span class="material-symbols-outlined text-xl transition-transform group-hover:scale-110">lock_open</span>
+        <span class="text-sm font-medium">Déblocage des Notes</span>
+      </router-link>
+      <router-link to="/admin/dispensations" class="flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-300 ease-out-expo group" :class="isActive('AdminDispensations') ? 'sidebar-active' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/50 hover:text-primary transition-all'">
+        <span class="material-symbols-outlined text-xl transition-transform group-hover:scale-110">person_off</span>
+        <span class="text-sm font-medium">Gestion des Dispensations</span>
+      </router-link>
       <router-link to="/admin/validation-bulletins" class="flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-300 ease-out-expo group" :class="isActive('AdminValidation') ? 'sidebar-active' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/50 hover:text-primary transition-all'">
         <span class="material-symbols-outlined text-xl transition-transform group-hover:scale-110">verified</span>
         <span class="text-sm font-medium">Validation Bulletins</span>

@@ -182,7 +182,7 @@ exports.updateNote = asyncHandler(async (req, res, next) => {
     }
 
     // Vérifier que c'est le professeur qui a créé la note
-    if (note.professeur.toString() !== req.user.id && req.user.role !== 'ADMIN') {
+    if (note.professeur.toString() !== req.user.id && req.user.role !== 'ADMIN' && req.user.role !== 'PROVISEUR' && req.user.role !== 'CENSEUR') {
         return next(new ErrorResponse('Non autorisé à modifier cette note', 403));
     }
 
@@ -216,7 +216,7 @@ exports.deleteNote = asyncHandler(async (req, res, next) => {
     }
 
     // Vérifier les permissions
-    if (note.professeur.toString() !== req.user.id && req.user.role !== 'ADMIN') {
+    if (note.professeur.toString() !== req.user.id && req.user.role !== 'ADMIN' && req.user.role !== 'PROVISEUR' && req.user.role !== 'CENSEUR') {
         return next(new ErrorResponse('Non autorisé à supprimer cette note', 403));
     }
 
@@ -238,8 +238,8 @@ exports.deleteNote = asyncHandler(async (req, res, next) => {
 // @access  Private (Censeur/Admin)
 exports.validateNote = asyncHandler(async (req, res, next) => {
     // Vérifier le rôle
-    if (req.user.role !== 'CENSEUR' && req.user.role !== 'ADMIN') {
-        return next(new ErrorResponse('Seul le censeur peut valider les notes', 403));
+    if (req.user.role !== 'CENSEUR' && req.user.role !== 'ADMIN' && req.user.role !== 'PROVISEUR') {
+        return next(new ErrorResponse('Seul le censeur ou le proviseur peut valider les notes', 403));
     }
 
     const note = await Note.findById(req.params.id);
@@ -272,14 +272,14 @@ exports.validateNote = asyncHandler(async (req, res, next) => {
 // @route   POST /api/v1/notes/:id/reject
 // @access  Private (Censeur/Admin)
 exports.rejectNote = asyncHandler(async (req, res, next) => {
-    const { motif } = req.body;
+    const { motifRejet } = req.body;
 
     // Vérifier le rôle
-    if (req.user.role !== 'CENSEUR' && req.user.role !== 'ADMIN') {
-        return next(new ErrorResponse('Seul le censeur peut rejeter les notes', 403));
+    if (req.user.role !== 'CENSEUR' && req.user.role !== 'ADMIN' && req.user.role !== 'PROVISEUR') {
+        return next(new ErrorResponse('Seul le censeur ou le proviseur peut rejeter les notes', 403));
     }
 
-    if (!motif) {
+    if (!motifRejet) {
         return next(new ErrorResponse('Le motif de rejet est requis', 400));
     }
 
@@ -290,7 +290,7 @@ exports.rejectNote = asyncHandler(async (req, res, next) => {
     }
 
     note.statut = 'REJETEE';
-    note.motifRejet = motif;
+    note.motifRejet = motifRejet;
     note.validePar = req.user.id;
     note.dateValidation = Date.now();
 
@@ -308,7 +308,7 @@ exports.rejectNote = asyncHandler(async (req, res, next) => {
 // @access  Private (Censeur/Admin)
 exports.getPendingNotes = asyncHandler(async (req, res, next) => {
     // Vérifier le rôle
-    if (req.user.role !== 'CENSEUR' && req.user.role !== 'ADMIN') {
+    if (req.user.role !== 'CENSEUR' && req.user.role !== 'ADMIN' && req.user.role !== 'PROVISEUR') {
         return next(new ErrorResponse('Accès non autorisé', 403));
     }
 
@@ -374,8 +374,8 @@ exports.unblockNotes = asyncHandler(async (req, res, next) => {
     const { classe, matiere, periode } = req.body;
 
     // Vérifier le rôle
-    if (req.user.role !== 'ADMIN' && req.user.role !== 'CENSEUR') {
-        return next(new ErrorResponse('Seuls l\'administrateur et le censeur peuvent débloquer les notes', 403));
+    if (req.user.role !== 'ADMIN' && req.user.role !== 'CENSEUR' && req.user.role !== 'PROVISEUR') {
+        return next(new ErrorResponse('Seuls l\'administration (Proviseur, Censeur, Admin) peut débloquer les notes', 403));
     }
 
     if (!classe || !matiere || !periode) {

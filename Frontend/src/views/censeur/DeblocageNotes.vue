@@ -3,14 +3,14 @@
     <div class="p-8 max-w-7xl mx-auto w-full space-y-8">
       <!-- Breadcrumbs -->
       <nav class="flex items-center gap-2 text-sm">
-        <router-link to="/censeur" class="text-[#4e7397] hover:text-primary font-medium">Censeur</router-link>
+        <router-link :to="dashboardPath" class="text-[#4e7397] hover:text-primary font-medium">{{ roleLabel }}</router-link>
         <span class="text-[#4e7397] material-symbols-outlined text-sm">chevron_right</span>
         <span class="font-medium">Déblocage des Notes</span>
       </nav>
 
       <!-- Back Button -->
       <div class="mb-4">
-        <button @click="$router.push('/censeur')" class="flex items-center gap-2 px-3 py-2 text-slate-600 dark:text-slate-400 hover:text-primary dark:hover:text-primary hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors font-medium">
+        <button @click="$router.push(dashboardPath)" class="flex items-center gap-2 px-3 py-2 text-slate-600 dark:text-slate-400 hover:text-primary dark:hover:text-primary hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors font-medium">
           <span class="material-symbols-outlined">arrow_back</span>
           <span>Retour au tableau de bord</span>
         </button>
@@ -202,6 +202,21 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue';
 import api from '@/services/api';
+
+const user = JSON.parse(localStorage.getItem('user') || '{}');
+const userRole = user.role;
+
+const dashboardPath = computed(() => {
+  if (userRole === 'PROVISEUR') return '/proviseur';
+  if (userRole === 'CENSEUR') return '/censeur';
+  return '/admin';
+});
+
+const roleLabel = computed(() => {
+  if (userRole === 'PROVISEUR') return 'Proviseur';
+  if (userRole === 'CENSEUR') return 'Censeur';
+  return 'Admin';
+});
 
 const unlockRequests = ref([]);
 const isLoading = ref(false);

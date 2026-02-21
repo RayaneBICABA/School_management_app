@@ -474,8 +474,8 @@ export default {
     validateNote(id) {
         return api.post(`/notes/${id}/validate`);
     },
-    rejectNote(id, motif) {
-        return api.post(`/notes/${id}/reject`, { motif });
+    rejectNote(id, data) {
+        return api.post(`/notes/${id}/reject`, data);
     },
     submitNote(id) {
         return api.post(`/notes/${id}/submit`);
@@ -761,5 +761,16 @@ export default {
     },
     getSchoolConfig() {
         return api.get('/settings/school_config');
+    },
+
+    // Dispensations
+    getDispensations(params) {
+        return api.get('/dispensations', { params });
+    },
+    createDispensation(data) {
+        return api.post('/dispensations', data);
+    },
+    deleteDispensation(id) {
+        return api.delete(`/dispensations/${id}`);
     }
 };

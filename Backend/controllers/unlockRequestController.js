@@ -46,8 +46,8 @@ exports.getUnlockRequests = asyncHandler(async (req, res, next) => {
     if (req.user.role === 'PROFESSEUR') {
         filter.professeur = req.user.id;
     }
-    // Si censeur ou admin, voir toutes les demandes
-    else if (req.user.role !== 'CENSEUR' && req.user.role !== 'ADMIN') {
+    // Si censeur, proviseur ou admin, voir toutes les demandes
+    else if (req.user.role !== 'CENSEUR' && req.user.role !== 'ADMIN' && req.user.role !== 'PROVISEUR') {
         return next(new ErrorResponse('Accès non autorisé', 403));
     }
 
@@ -101,13 +101,15 @@ exports.getUnlockRequest = asyncHandler(async (req, res, next) => {
     });
 });
 
+const Note = require('../models/Note');
+
 // @desc    Approuver une demande de déblocage
 // @route   PUT /api/v1/unlock-requests/:id/approve
 // @access  Private (Censeur/Admin)
 exports.approveUnlockRequest = asyncHandler(async (req, res, next) => {
     // Vérifier le rôle
-    if (req.user.role !== 'CENSEUR' && req.user.role !== 'ADMIN') {
-        return next(new ErrorResponse('Seul le censeur peut approuver les demandes', 403));
+    if (req.user.role !== 'CENSEUR' && req.user.role !== 'ADMIN' && req.user.role !== 'PROVISEUR') {
+        return next(new ErrorResponse('Seul le censeur ou le proviseur peut approuver les demandes', 403));
     }
 
     const unlockRequest = await UnlockRequest.findById(req.params.id);
@@ -124,7 +126,27 @@ exports.approveUnlockRequest = asyncHandler(async (req, res, next) => {
     unlockRequest.traitePar = req.user.id;
     unlockRequest.dateTraitement = Date.now();
 
+    // 1. Sauvegarder l'approbation de la demande
     await unlockRequest.save();
+
+    // 2. Débloquer réellement les notes correspondantes
+    // On repasse les notes de VALIDEE à BROUILLON
+    await Note.updateMany(
+        {
+            professeur: unlockRequest.professeur,
+            classe: unlockRequest.classe,
+            matiere: unlockRequest.matiere,
+            periode: unlockRequest.periode,
+            statut: 'VALIDEE'
+        },
+        {
+            $set: {
+                statut: 'BROUILLON',
+                updatedAt: Date.now()
+            }
+        }
+    );
+
     await unlockRequest.populate(['professeur', 'classe', 'matiere', 'traitePar']);
 
     res.status(200).json({
@@ -138,8 +160,8 @@ exports.approveUnlockRequest = asyncHandler(async (req, res, next) => {
 // @access  Private (Censeur/Admin)
 exports.rejectUnlockRequest = asyncHandler(async (req, res, next) => {
     // Vérifier le rôle
-    if (req.user.role !== 'CENSEUR' && req.user.role !== 'ADMIN') {
-        return next(new ErrorResponse('Seul le censeur peut rejeter les demandes', 403));
+    if (req.user.role !== 'CENSEUR' && req.user.role !== 'ADMIN' && req.user.role !== 'PROVISEUR') {
+        return next(new ErrorResponse('Seul le censeur ou le proviseur peut rejeter les demandes', 403));
     }
 
     const unlockRequest = await UnlockRequest.findById(req.params.id);

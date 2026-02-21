@@ -68,6 +68,7 @@ import CenseurFicheEleve from '@/views/censeur/FicheEleve.vue'
 import CenseurClassesListeEleves from '@/views/censeur/classes/ListeElevesClasse.vue'
 import CenseurClassesFicheEleve from '@/views/censeur/classes/FicheEleve.vue'
 import CenseurProfil from '@/views/censeur/Profil.vue'
+import GestionDispensations from '@/views/censeur/GestionDispensations.vue'
 
 // Pages CPE
 import CPEDashboard from '@/views/cpe/Dashboard.vue'
@@ -130,8 +131,11 @@ const routes = [
       { path: 'cloture-administrative', name: 'AdminClotureAdministrative', component: AdminClotureAdministrative },
       { path: 'notes', name: 'AdminNotes', component: AdminNotes },
       { path: 'notes/detail', name: 'AdminDetailNotesMatiere', component: AdminDetailNotesMatiere },
+      { path: 'supervision-notes', name: 'AdminSupervisionNotes', component: CenseurNotes },
+      { path: 'deblocage-notes', name: 'AdminDeblocageNotes', component: CenseurDeblocage },
       { path: 'notes/delegation', name: 'AdminSaisieNotesDelegation', component: AdminSaisieNotesDelegation },
       { path: 'configuration', name: 'AdminConfig', component: AdminConfig },
+      { path: 'dispensations', name: 'AdminDispensations', component: GestionDispensations },
       { path: 'droits', name: 'AdminDroits', component: AdminDroits },
       { path: 'notifications', name: 'AdminNotifications', component: () => import('@/views/common/GlobalNotifications.vue') },
       { path: 'master-sheet', name: 'AdminMasterSheet', component: () => import('@/views/common/MasterGradeSheet.vue') },
@@ -212,6 +216,7 @@ const routes = [
       { path: 'ajouter-utilisateur', name: 'CenseurAjouterUtilisateur', component: () => import('@/views/admin/AjouterUtilisateur.vue') },
       { path: 'notifications', name: 'CenseurNotifications', component: () => import('@/views/common/GlobalNotifications.vue') },
       { path: 'master-sheet', name: 'CenseurMasterSheet', component: () => import('@/views/common/MasterGradeSheet.vue') },
+      { path: 'dispensations', name: 'CenseurDispensations', component: GestionDispensations },
       { path: 'profil', name: 'CenseurProfil', component: CenseurProfil },
       { path: 'notes/detail', name: 'CenseurDetailNotesMatiere', component: () => import('@/views/admin/DetailNotesMatiere.vue') }
     ]
@@ -252,6 +257,7 @@ const routes = [
       { path: 'emploi-temps', name: 'ProviseurEmploiTemps', component: () => import('@/views/proviseur/GestionEmploiTemps.vue') },
       { path: 'notifications', name: 'ProviseurNotifications', component: () => import('@/views/common/GlobalNotifications.vue') },
       { path: 'master-sheet', name: 'ProviseurMasterSheet', component: () => import('@/views/common/MasterGradeSheet.vue') },
+      { path: 'notes/detail', name: 'ProviseurDetailNotesMatiere', component: () => import('@/views/admin/DetailNotesMatiere.vue') },
       { path: 'profil', name: 'ProviseurProfil', component: ProviseurProfil }
     ]
   },

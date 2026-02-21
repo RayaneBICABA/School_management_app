@@ -44,7 +44,11 @@ const BulletinSchema = new mongoose.Schema({
             default: 0
         },
         appreciation: String,
-        categorie: String
+        categorie: String,
+        isDispensed: {
+            type: Boolean,
+            default: false
+        }
     }],
     moyenneGenerale: {
         type: Number,
@@ -158,6 +162,8 @@ BulletinSchema.methods.calculerMoyenneGenerale = async function () {
         let totalCoefficients = 0;
 
         for (const note of this.notes) {
+            if (note.isDispensed) continue; // Skip dispensed subjects
+
             const coefficient = note.coeff || 1;
             const moyenne = note.moyenneMatiere || 0;
 

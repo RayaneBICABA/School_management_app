@@ -643,7 +643,7 @@ exports.getSuiviAvancementCenseur = async (req, res, next) => {
         const classes = await Classe.find(classesQuery).sort({ niveau: 1, section: 1 });
 
         // 2. Fetch all relevant data for calculation
-        const allEleves = await User.find({ role: 'ELEVE' }).select('classe');
+        const allEleves = await User.find({ role: 'ELEVE', status: 'ACTIF' }).select('classe');
         const allCMs = await ClasseMatiere.find().populate('professeur', 'nom prenom').populate('matiere', 'nom');
 
         // Count notes per class/matiere for the period
@@ -657,42 +657,66 @@ exports.getSuiviAvancementCenseur = async (req, res, next) => {
             noteMap.set(`${n._id.classe}-${n._id.matiere}`, n.count);
         });
 
+        // 2b. Fetch dispensations for the period
+        const Dispensation = require('../models/Dispensation');
+        const dispensationsAggr = await Dispensation.aggregate([
+            { $match: { anneeScolaire: currentYear } },
+            { $group: { _id: { eleve: "$eleve", matiere: "$matiere" }, count: { $sum: 1 } } }
+        ]);
+
+        const dispensationMap = new Map();
+        dispensationsAggr.forEach(d => {
+            dispensationMap.set(`${d._id.eleve}-${d._id.matiere}`, 1);
+        });
+
         // 3. Process each class
         const processedClasses = [];
-        let totalNotesSaisies = 0;
-        let totalNotesAttendues = 0;
+        let totalGlobalNotesSaisies = 0;
+        let totalGlobalNotesAttendues = 0;
         let classesCompletees = 0;
         const professorsBehindMap = new Map();
 
         for (const classe of classes) {
-            const classElevesCount = allEleves.filter(e => e.classe && e.classe.toString() === classe._id.toString()).length;
+            const classEleves = allEleves.filter(e => e.classe && e.classe.toString() === classe._id.toString());
+            const classElevesCount = classEleves.length;
             let classCMs = allCMs.filter(cm => cm.classe.toString() === classe._id.toString());
 
-            // Pour les filières techniques, exclure les matières sans notes validées dans la période
+            // Pour les filières techniques, inclure les matières ayant au moins une note (statut EN_ATTENTE ou VALIDEE)
             if (classe.filiere === 'Technique' && classCMs.length > 0) {
                 const matieresWithNotes = await Note.distinct('matiere', {
                     classe: classe._id,
                     periode: selectedPeriod,
                     anneeScolaire: currentYear,
-                    statut: 'VALIDEE'
+                    statut: { $in: ['EN_ATTENTE', 'VALIDEE'] }
                 });
                 classCMs = classCMs.filter(cm =>
                     matieresWithNotes.some(mw => mw.toString() === cm.matiere._id.toString())
                 );
             }
 
-            let matieresSaisiesCount = 0;
+            let classNotesSaisies = 0;
+            let classTotalExpected = 0;
+            let matieresCompletesCount = 0;
             const totalMatieres = classCMs.length;
 
             classCMs.forEach(cm => {
                 const notesCount = noteMap.get(`${classe._id}-${cm.matiere._id}`) || 0;
-                const isComplete = classElevesCount > 0 && notesCount >= classElevesCount;
 
-                totalNotesSaisies += notesCount;
-                totalNotesAttendues += classElevesCount;
+                // Calculer le nombre d'élèves dispensés pour cette classe/matière
+                const dispensationsCount = classEleves.filter(e =>
+                    dispensationMap.has(`${e._id}-${cm.matiere._id}`)
+                ).length;
+
+                const expectedNotesForMatiere = Math.max(0, classElevesCount - dispensationsCount);
+                const isComplete = expectedNotesForMatiere > 0
+                    ? notesCount >= expectedNotesForMatiere
+                    : true; // Si tous dispensés, c'est complet
+
+                classNotesSaisies += notesCount;
+                classTotalExpected += expectedNotesForMatiere;
 
                 if (isComplete) {
-                    matieresSaisiesCount++;
+                    matieresCompletesCount++;
                 } else if (cm.professeur) {
                     // Track professors behind
                     const profId = cm.professeur._id.toString();
@@ -709,7 +733,7 @@ exports.getSuiviAvancementCenseur = async (req, res, next) => {
                 }
             });
 
-            const progression = totalMatieres > 0 ? Math.round((matieresSaisiesCount / totalMatieres) * 100) : 0;
+            const progression = classTotalExpected > 0 ? Math.round((classNotesSaisies / classTotalExpected) * 100) : 0;
             let classStatut = 'En cours';
             if (progression === 100) {
                 classStatut = 'Validé';
@@ -718,12 +742,15 @@ exports.getSuiviAvancementCenseur = async (req, res, next) => {
                 classStatut = 'Retard';
             }
 
+            totalGlobalNotesSaisies += classNotesSaisies;
+            totalGlobalNotesAttendues += classTotalExpected;
+
             const classeData = {
                 id: classe._id,
                 nom: `${classe.niveau} ${classe.section}`,
                 niveau: classe.niveau,
                 progression,
-                matieresSaisies: matieresSaisiesCount,
+                matieresSaisies: matieresCompletesCount,
                 totalMatieres,
                 statut: classStatut
             };
@@ -742,13 +769,13 @@ exports.getSuiviAvancementCenseur = async (req, res, next) => {
 
         // 5. Global Stats
         const stats = {
-            progressionTotale: totalNotesAttendues > 0 ? Math.round((totalNotesSaisies / totalNotesAttendues) * 1000) / 10 : 0,
+            progressionTotale: totalGlobalNotesAttendues > 0 ? Math.round((totalGlobalNotesSaisies / totalGlobalNotesAttendues) * 1000) / 10 : 0,
             progressionHebdomadaire: 2.1, // Hardcoded for now, would need historical data
             classesCompletees: classesCompletees,
             totalClasses: classes.length,
             classesEnAttente: classes.length - classesCompletees,
-            notesSaisies: totalNotesSaisies,
-            notesAttendues: totalNotesAttendues,
+            notesSaisies: totalGlobalNotesSaisies,
+            notesAttendues: totalGlobalNotesAttendues,
             profsEnRetard: professorsBehindMap.size
         };
 

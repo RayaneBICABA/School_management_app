@@ -9,11 +9,11 @@
       <span class="font-medium">Détails Classe</span>
     </nav>
 
-    <!-- Page Heading -->
+    <!-- Back Button -->
     <div class="mb-4">
-      <button @click="$router.push('/censeur/classes')" class="flex items-center gap-2 px-3 py-2 text-slate-600 dark:text-slate-400 hover:text-primary dark:hover:text-primary hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors font-medium">
+      <button @click="$router.go(-1)" class="flex items-center gap-2 px-3 py-2 text-slate-600 dark:text-slate-400 hover:text-primary dark:hover:text-primary hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors font-medium">
         <span class="material-symbols-outlined">arrow_back</span>
-        <span>Retour aux classes</span>
+        <span>Retour</span>
       </button>
     </div>
 

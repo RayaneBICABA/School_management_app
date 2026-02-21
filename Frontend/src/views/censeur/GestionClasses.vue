@@ -394,11 +394,12 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted, computed } from 'vue'
+import { ref, reactive, onMounted, computed, watch } from 'vue'
 import api from '@/services/api'
-import { useRouter } from 'vue-router'
+import { useRouter, useRoute } from 'vue-router'
 
 const router = useRouter()
+const route = useRoute()
 
 // Déclarer les props
 const props = defineProps({
@@ -418,7 +419,14 @@ const filieres = reactive({
 })
 
 const isLoading = ref(false)
-const searchQuery = ref('')
+const searchQuery = ref(route.query.q || '')
+
+// Mettre à jour l'URL quand la recherche change
+watch(searchQuery, (newQuery) => {
+  router.replace({
+    query: { ...route.query, q: newQuery || undefined }
+  })
+})
 
 const filteredGenerale = computed(() => {
   if (!searchQuery.value) return filieres.Generale;

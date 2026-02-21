@@ -78,6 +78,7 @@ const examenRoutes = require('./routes/examenRoutes');
 const studentProfileRoutes = require('./routes/studentProfileRoutes');
 const absenceJourRoutes = require('./routes/absenceJourRoutes');
 const printHistoryRoutes = require('./routes/printHistoryRoutes');
+const dispensationRoutes = require('./routes/dispensationRoutes');
 
 // Mount routers
 app.use('/api/v1/auth', authRoutes);
@@ -108,6 +109,7 @@ app.use('/api/v1/examens', examenRoutes);
 app.use('/api/v1/student-profile', studentProfileRoutes);
 app.use('/api/v1/absences-jour', absenceJourRoutes);
 app.use('/api/v1/print-history', printHistoryRoutes);
+app.use('/api/v1/dispensations', dispensationRoutes);
 
 // Error Handler Middleware
 const errorHandler = require('./middleware/error');

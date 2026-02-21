@@ -25,6 +25,13 @@
           <span class="material-symbols-outlined transition-transform group-hover:scale-110">analytics</span>
           <p class="text-sm">Suivi Avancement</p>
         </router-link>
+        <router-link to="/censeur/dispensations" 
+          class="flex items-center gap-3 px-4 py-2.5 rounded-xl transition-all duration-300 ease-out-expo group" 
+          :class="isActive('CenseurDispensations') ? 'sidebar-active' : 'hover:bg-slate-100 dark:hover:bg-slate-800/50 text-slate-600 dark:text-slate-400 hover:text-primary dark:hover:text-slate-200'"
+        >
+          <span class="material-symbols-outlined transition-transform group-hover:scale-110">person_off</span>
+          <p class="text-sm">Gestion des Dispensations</p>
+        </router-link>
         <router-link to="/censeur/master-sheet" 
           class="flex items-center gap-3 px-4 py-2.5 rounded-xl transition-all duration-300 ease-out-expo group" 
           :class="isActive('CenseurMasterSheet') ? 'sidebar-active' : 'hover:bg-slate-100 dark:hover:bg-slate-800/50 text-slate-600 dark:text-slate-400 hover:text-primary dark:hover:text-slate-200'"

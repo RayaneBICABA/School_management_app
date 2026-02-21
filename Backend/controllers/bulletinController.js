@@ -122,8 +122,14 @@ exports.generateBulletin = asyncHandler(async (req, res, next) => {
         if (a.professeur) assignmentMap[a.matiere.toString()] = a.professeur;
     });
 
+    // Récupérer les dispensations de l'élève
+    const Dispensation = require('../models/Dispensation');
+    const dispensations = await Dispensation.find({ eleve, anneeScolaire: anneeScolaire || '2025-2026' });
+    const dispensedMatiereIds = dispensations.map(d => d.matiere.toString());
+
     // Mapper les notes pour le bulletin
     const mappedNotes = notesDocs.map(noteDoc => {
+        const isDispensed = dispensedMatiereIds.includes(noteDoc.matiere._id.toString());
         const intNotes = noteDoc.notes.filter(n => n.type.toLowerCase().includes('interro'));
         const devNotes = noteDoc.notes.filter(n => n.type.toLowerCase().includes('devoir'));
         const compoNotes = noteDoc.notes.filter(n => n.type.toLowerCase().includes('compo'));
@@ -153,9 +159,10 @@ exports.generateBulletin = asyncHandler(async (req, res, next) => {
             compoGrades,
             moyenneMatiere: average,
             coeff: coeff,
-            notePonderee: average * coeff,
-            appreciation: noteDoc.appreciation,
-            categorie: noteDoc.matiere?.categorie || 'AUTRES'
+            notePonderee: isDispensed ? 0 : average * coeff,
+            appreciation: isDispensed ? 'DISPENSÉ' : noteDoc.appreciation,
+            categorie: noteDoc.matiere?.categorie || 'AUTRES',
+            isDispensed: isDispensed
         };
     });
 
@@ -237,16 +244,13 @@ exports.generateBulletinsClasse = asyncHandler(async (req, res, next) => {
                 anneeScolaire: anneeScolaire || '2025-2026'
             }).populate('matiere');
 
-            /* 
-            if (notesDocs.length === 0) {
-                erreurs.push({
-                    eleve: `${eleve.prenom} ${eleve.nom}`,
-                    erreur: 'Aucune note validée'
-                });
-                continue;
-            }
-            */
+            // Récupérer les dispensations de l'élève
+            const Dispensation = require('../models/Dispensation');
+            const dispensations = await Dispensation.find({ eleve: eleve._id, anneeScolaire: anneeScolaire || '2025-2026' });
+            const dispensedMatiereIds = dispensations.map(d => d.matiere.toString());
+
             const mappedNotes = notesDocs.length === 0 ? [] : notesDocs.map(noteDoc => {
+                const isDispensed = dispensedMatiereIds.includes(noteDoc.matiere._id.toString());
                 const intNotes = noteDoc.notes.filter(n => n.type.toLowerCase().includes('interro'));
                 const devNotes = noteDoc.notes.filter(n => n.type.toLowerCase().includes('devoir'));
                 const compoNotes = noteDoc.notes.filter(n => n.type.toLowerCase().includes('compo'));
@@ -276,9 +280,10 @@ exports.generateBulletinsClasse = asyncHandler(async (req, res, next) => {
                     compoGrades,
                     moyenneMatiere: average,
                     coeff: coeff,
-                    notePonderee: average * coeff,
-                    appreciation: noteDoc.appreciation,
-                    categorie: noteDoc.matiere?.categorie || 'AUTRES'
+                    notePonderee: isDispensed ? 0 : average * coeff,
+                    appreciation: isDispensed ? 'DISPENSÉ' : noteDoc.appreciation,
+                    categorie: noteDoc.matiere?.categorie || 'AUTRES',
+                    isDispensed: isDispensed
                 };
             });
 

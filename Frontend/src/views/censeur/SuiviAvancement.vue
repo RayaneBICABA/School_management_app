@@ -85,6 +85,13 @@
             <option>En cours</option>
             <option>Retard</option>
           </select>
+          <select v-model="selectedPeriode" class="bg-slate-50 dark:bg-slate-900 border-none rounded-lg text-sm px-3 py-2 text-slate-600 dark:text-slate-300 focus:ring-2 focus:ring-primary/20">
+            <option>Trimestre 1</option>
+            <option>Trimestre 2</option>
+            <option>Trimestre 3</option>
+            <option>Semestre 1</option>
+            <option>Semestre 2</option>
+          </select>
         </div>
       </div>
       <div class="flex items-center gap-2">
@@ -206,17 +213,19 @@
 
 <script setup>
 import { ref, computed, onMounted, watch } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRouter, useRoute } from 'vue-router'
 import api from '@/services/api'
 import { useToast } from '@/composables/useToast'
 
 const router = useRouter()
+const route = useRoute()
 const { success, error: toastError } = useToast()
 
-// Données réactives
-const searchQuery = ref('')
-const selectedNiveau = ref('Tous les niveaux')
-const selectedStatut = ref('Tous les statuts')
+// Données réactives - Initialiser à partir de l'URL si présent
+const searchQuery = ref(route.query.q || '')
+const selectedNiveau = ref(route.query.niveau || 'Tous les niveaux')
+const selectedStatut = ref(route.query.statut || 'Tous les statuts')
+const selectedPeriode = ref(route.query.periode || 'Trimestre 1')
 const sortAscending = ref(true)
 const loading = ref(false)
 
@@ -244,7 +253,8 @@ const fetchSuiviData = async () => {
   try {
     const params = {
       niveau: selectedNiveau.value,
-      statut: selectedStatut.value
+      statut: selectedStatut.value,
+      periode: selectedPeriode.value
     }
     const response = await api.getSuiviAvancement(params)
     if (response.data.success) {
@@ -264,9 +274,26 @@ onMounted(() => {
   fetchSuiviData()
 })
 
+// Mettre à jour l'URL quand les filtres changent
+const updateQueryParams = () => {
+  const query = {}
+  if (searchQuery.value) query.q = searchQuery.value
+  if (selectedNiveau.value !== 'Tous les niveaux') query.niveau = selectedNiveau.value
+  if (selectedStatut.value !== 'Tous les statuts') query.statut = selectedStatut.value
+  if (selectedPeriode.value !== 'Trimestre 1') query.periode = selectedPeriode.value
+
+  router.replace({ query })
+}
+
 // Surveiller les filtres
-watch([selectedNiveau, selectedStatut], () => {
+watch([selectedNiveau, selectedStatut, selectedPeriode], () => {
+  updateQueryParams()
   fetchSuiviData()
+})
+
+// Surveiller la recherche avec un petit délai (debounce non implémenté ici pour rester simple)
+watch(searchQuery, () => {
+  updateQueryParams()
 })
 
 // Computed properties

@@ -33,14 +33,16 @@ router.get('/pending', getPendingNotes);
 router.get('/master-sheet/:classeId', getMasterSheetData);
 router.get('/master-sheet/:classeId/pdf', getMasterSheetPDF);
 
+router.post('/bulk-submit', checkGradeDeadline, submitNotesBulk);
+router.post('/bulk-validate', authorize('ADMIN', 'CENSEUR', 'PROVISEUR'), validateNotesBulk);
+router.post('/bulk-reject', authorize('ADMIN', 'CENSEUR', 'PROVISEUR'), rejectNotesBulk);
+router.post('/unblock', authorize('ADMIN', 'PROVISEUR', 'CENSEUR'), unblockNotes);
+
 router.route('/:id')
     .get(getNote)
     .put(checkGradeDeadline, updateNote)
     .delete(deleteNote);
 
-router.post('/bulk-submit', checkGradeDeadline, submitNotesBulk);
-router.post('/bulk-validate', authorize('ADMIN', 'CENSEUR', 'PROVISEUR'), validateNotesBulk);
-router.post('/bulk-reject', authorize('ADMIN', 'CENSEUR', 'PROVISEUR'), rejectNotesBulk);
 router.post('/:id/validate', validateNote);
 router.post('/:id/reject', rejectNote);
 router.post('/:id/submit', checkGradeDeadline, submitNote);

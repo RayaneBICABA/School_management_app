@@ -7,9 +7,12 @@ const {
     deleteNote,
     validateNote,
     rejectNote,
+    validateNotesBulk,
+    rejectNotesBulk,
     getPendingNotes,
     unblockNotes,
     submitNote,
+    submitNotesBulk,
     getMasterSheetData,
     getMasterSheetPDF
 } = require('../controllers/noteController');
@@ -35,7 +38,9 @@ router.route('/:id')
     .put(checkGradeDeadline, updateNote)
     .delete(deleteNote);
 
-router.post('/unblock', authorize('ADMIN', 'CENSEUR', 'PROVISEUR'), unblockNotes);
+router.post('/bulk-submit', checkGradeDeadline, submitNotesBulk);
+router.post('/bulk-validate', authorize('ADMIN', 'CENSEUR', 'PROVISEUR'), validateNotesBulk);
+router.post('/bulk-reject', authorize('ADMIN', 'CENSEUR', 'PROVISEUR'), rejectNotesBulk);
 router.post('/:id/validate', validateNote);
 router.post('/:id/reject', rejectNote);
 router.post('/:id/submit', checkGradeDeadline, submitNote);

@@ -704,20 +704,19 @@ const deleteEvaluation = (evalId) => {
 };
 
 const submitForValidation = async () => {
-  if (!currentNoteId.value) {
-    warning('Veuillez d\'abord enregistrer les notes avant de les soumettre');
-    return;
-  }
-
   openConfirmModal(
     'Soumettre les notes',
-    'Soumettre ces notes pour validation par le censeur ?',
+    'Soumettre toutes les notes de cette classe pour validation par le censeur ?',
     'Soumettre',
     async () => {
       isSubmitting.value = true;
 
       try {
-        await api.submitNote(currentNoteId.value);
+        await api.submitNotesBulk({
+          classe: selectedClasse.value,
+          matiere: selectedMatiere.value,
+          periode: selectedPeriode.value
+        });
         notesStatus.value = 'EN_ATTENTE';
         success('Notes soumises avec succès ! Le censeur sera notifié.');
       } catch (err) {

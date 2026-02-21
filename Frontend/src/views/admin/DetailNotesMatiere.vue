@@ -42,8 +42,18 @@
             </div>
           </div>
           
-          <div v-if="hasValidatedNotes" class="flex items-center gap-3">
-            <button @click="handleUnblock" :disabled="isUnblocking" class="flex items-center gap-2 px-5 py-2.5 bg-orange-500 text-white font-bold rounded-lg hover:bg-orange-600 shadow-md transition-colors disabled:opacity-50">
+          <div class="flex items-center gap-3">
+            <template v-if="hasPendingNotes">
+              <button @click="handleBulkValidate" :disabled="isUnblocking" class="flex items-center gap-2 px-5 py-2.5 bg-green-600 text-white font-bold rounded-lg hover:bg-green-700 shadow-md transition-colors disabled:opacity-50">
+                <span class="material-symbols-outlined text-[20px]">done_all</span>
+                <span>Valider tout le lot</span>
+              </button>
+              <button @click="handleBulkReject" :disabled="isUnblocking" class="flex items-center gap-2 px-5 py-2.5 bg-red-600 text-white font-bold rounded-lg hover:bg-red-700 shadow-md transition-colors disabled:opacity-50">
+                <span class="material-symbols-outlined text-[20px]">block</span>
+                <span>Rejeter tout</span>
+              </button>
+            </template>
+            <button v-if="hasValidatedNotes" @click="handleUnblock" :disabled="isUnblocking" class="flex items-center gap-2 px-5 py-2.5 bg-orange-500 text-white font-bold rounded-lg hover:bg-orange-600 shadow-md transition-colors disabled:opacity-50">
               <span class="material-symbols-outlined text-[20px]">lock_open</span>
               <span>{{ isUnblocking ? 'Déblocage...' : 'Débloquer les Notes' }}</span>
             </button>
@@ -192,6 +202,43 @@ const loadNotes = async () => {
 const hasValidatedNotes = computed(() => {
   return notes.value.some(n => n.statut === 'VALIDEE');
 });
+
+const hasPendingNotes = computed(() => {
+  return notes.value.some(n => n.statut === 'EN_ATTENTE');
+});
+
+const handleBulkValidate = async () => {
+  if (!confirm(`Valider toutes les notes en attente pour ${info.value.matiereNom} ?`)) return;
+  try {
+    await api.validateNotesBulk({
+      classe: classeId,
+      matiere: matiereId,
+      periode: periode
+    });
+    success('Notes validées avec succès');
+    await loadNotes();
+  } catch (err) {
+    console.error('Erreur validation:', err);
+  }
+};
+
+const handleBulkReject = async () => {
+  const motif = prompt('Veuillez saisir un motif de rejet pour tout le lot :');
+  if (!motif || !motif.trim()) return;
+
+  try {
+    await api.rejectNotesBulk({
+      classe: classeId,
+      matiere: matiereId,
+      periode: periode,
+      motifRejet: motif
+    });
+    success('Lot de notes rejeté');
+    await loadNotes();
+  } catch (err) {
+    console.error('Erreur rejet:', err);
+  }
+};
 
 const handleUnblock = async () => {
   if (!confirm('Voulez-vous vraiment débloquer ces notes ? Les professeurs pourront à nouveau les modifier.')) return;

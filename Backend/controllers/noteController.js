@@ -367,6 +367,107 @@ exports.submitNote = asyncHandler(async (req, res, next) => {
     });
 });
 
+// @desc    Soumettre toutes les notes d'une classe/matière en masse
+// @route   POST /api/v1/notes/bulk-submit
+// @access  Private (Professeur)
+exports.submitNotesBulk = asyncHandler(async (req, res, next) => {
+    const { classe, matiere, periode } = req.body;
+
+    if (!classe || !matiere || !periode) {
+        return next(new ErrorResponse('Veuillez fournir la classe, la matière et la période', 400));
+    }
+
+    // Mettre à jour toutes les notes correspondantes de BROUILLON ou REJETEE à EN_ATTENTE
+    const result = await Note.updateMany(
+        {
+            classe,
+            matiere,
+            periode,
+            professeur: req.user.id,
+            statut: { $in: ['BROUILLON', 'REJETEE'] }
+        },
+        {
+            $set: {
+                statut: 'EN_ATTENTE',
+                updatedAt: Date.now()
+            }
+        }
+    );
+
+    res.status(200).json({
+        success: true,
+        message: `${result.modifiedCount} notes soumises pour validation`,
+        count: result.modifiedCount
+    });
+});
+
+// @desc    Valider des notes par lot
+// @route   POST /api/v1/notes/bulk-validate
+// @access  Private (Admin, Censeur, Proviseur)
+exports.validateNotesBulk = asyncHandler(async (req, res, next) => {
+    const { classe, matiere, periode } = req.body;
+
+    if (!classe || !matiere || !periode) {
+        return next(new ErrorResponse('Veuillez fournir la classe, la matière et la période', 400));
+    }
+
+    const result = await Note.updateMany(
+        {
+            classe,
+            matiere,
+            periode,
+            statut: 'EN_ATTENTE'
+        },
+        {
+            $set: {
+                statut: 'VALIDEE',
+                validePar: req.user.id,
+                dateValidation: Date.now(),
+                updatedAt: Date.now()
+            }
+        }
+    );
+
+    res.status(200).json({
+        success: true,
+        message: `${result.modifiedCount} notes validées avec succès`,
+        count: result.modifiedCount
+    });
+});
+
+// @desc    Rejeter des notes par lot
+// @route   POST /api/v1/notes/bulk-reject
+// @access  Private (Admin, Censeur, Proviseur)
+exports.rejectNotesBulk = asyncHandler(async (req, res, next) => {
+    const { classe, matiere, periode, motifRejet } = req.body;
+
+    if (!classe || !matiere || !periode || !motifRejet) {
+        return next(new ErrorResponse('Veuillez fournir la classe, la matière, la période et le motif de rejet', 400));
+    }
+
+    const result = await Note.updateMany(
+        {
+            classe,
+            matiere,
+            periode,
+            statut: 'EN_ATTENTE'
+        },
+        {
+            $set: {
+                statut: 'REJETEE',
+                motifRejet,
+                updatedAt: Date.now()
+            }
+        }
+    );
+
+    res.status(200).json({
+        success: true,
+        message: `${result.modifiedCount} notes rejetées`,
+        count: result.modifiedCount
+    });
+});
+
 // @desc    Débloquer des notes validées (Admin)
 // @route   POST /api/v1/notes/unblock
 // @access  Private (Admin)

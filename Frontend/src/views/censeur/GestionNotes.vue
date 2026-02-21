@@ -89,10 +89,10 @@
 
         <!-- Notes List (Pending) -->
         <template v-if="activeTab === 'pending'">
-          <div v-if="pendingNotes.length > 0">
+          <div v-if="groupedPendingNotes.length > 0">
             <!-- Header with bulk actions -->
             <div class="flex justify-between items-center mb-4">
-              <p class="text-[#4e7397] font-semibold">{{ pendingNotes.length }} note(s) en attente</p>
+              <p class="text-[#4e7397] font-semibold">{{ groupedPendingNotes.length }} lot(s) de notes en attente</p>
               <button 
                 @click="validateAllNotes"
                 :disabled="isValidatingAll"
@@ -103,56 +103,63 @@
               </button>
             </div>
 
-            <!-- Notes cards -->
-            <div class="space-y-4">
-              <div v-for="note in pendingNotes" :key="note._id" class="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-slate-200 dark:border-slate-800 overflow-hidden">
+            <!-- Notes cards grouped -->
+            <div class="space-y-6">
+              <div v-for="group in groupedPendingNotes" :key="group.id" class="bg-white dark:bg-slate-900 rounded-xl shadow-md border border-slate-200 dark:border-slate-800 overflow-hidden border-l-4 border-l-amber-500">
                 <div class="p-6">
                   <div class="flex justify-between items-start mb-4">
                     <div>
-                      <h3 class="text-lg font-bold text-[#0e141b] dark:text-white">
-                        {{ note.classe?.niveau }} {{ note.classe?.section }} - {{ note.matiere?.nom }}
-                      </h3>
-                      <p class="text-sm text-[#4e7397] mt-1">
-                        Professeur: {{ note.professeur?.prenom }} {{ note.professeur?.nom }} • {{ note.periode }}
+                      <div class="flex items-center gap-2 mb-1">
+                        <span class="material-symbols-outlined text-amber-500">folder_open</span>
+                        <h3 class="text-xl font-bold text-[#0e141b] dark:text-white">
+                          {{ group.classe?.niveau }} {{ group.classe?.section }} - {{ group.matiere?.nom }}
+                        </h3>
+                      </div>
+                      <p class="text-sm text-[#4e7397]">
+                        Professeur: {{ group.professeur?.prenom }} {{ group.professeur?.nom }} • {{ group.periode }}
                       </p>
                     </div>
-                    <span class="px-3 py-1 bg-amber-100 text-amber-700 dark:bg-amber-900/20 dark:text-amber-400 rounded-full text-xs font-bold">
-                      ⏳ En attente
-                    </span>
+                    <div class="flex flex-col items-end gap-2">
+                       <span class="px-3 py-1 bg-amber-100 text-amber-700 dark:bg-amber-900/20 dark:text-amber-400 rounded-full text-xs font-bold">
+                        ⏳ {{ group.count }} élève(s) en attente
+                      </span>
+                    </div>
                   </div>
 
-                  <div class="mb-4">
-                    <p class="text-sm font-semibold text-[#0e141b] dark:text-white mb-2">Élève: {{ note.eleve?.prenom }} {{ note.eleve?.nom }}</p>
-                    <p v-if="note.eleve?.matricule" class="text-xs text-[#4e7397] dark:text-slate-400">Matricule: {{ note.eleve?.matricule }}</p>
-                    <div class="flex gap-4 flex-wrap">
-                      <div v-for="(noteItem, index) in note.notes" :key="index" class="bg-slate-50 dark:bg-slate-800 px-3 py-2 rounded-lg">
-                        <span class="text-xs text-[#4e7397]">{{ noteItem.type }}</span>
-                        <p class="text-lg font-bold text-primary">{{ noteItem.valeur }}/20</p>
-                      </div>
+                  <div class="bg-slate-50 dark:bg-slate-800/50 rounded-lg p-4 mb-4">
+                    <p class="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">Aperçu des élèves</p>
+                    <div class="flex flex-wrap gap-2">
+                      <span v-for="(eleve, idx) in group.eleves.slice(0, 5)" :key="eleve?._id" class="px-2 py-1 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded text-xs text-slate-600 dark:text-slate-300">
+                        {{ eleve?.nom }} {{ eleve?.prenom }}
+                      </span>
+                      <span v-if="group.count > 5" class="px-2 py-1 text-xs text-slate-400 font-medium">
+                        + {{ group.count - 5 }} autres...
+                      </span>
                     </div>
                   </div>
 
                   <div class="flex gap-3 mt-4">
                     <button 
-                      @click="validateNote(note._id)"
-                      class="flex-1 px-4 py-2 bg-green-600 text-white rounded-lg font-bold hover:bg-green-700 transition-colors flex items-center justify-center gap-2"
+                      @click="validateBulk(group)"
+                      class="flex-1 px-4 py-2 bg-green-600 text-white rounded-lg font-bold hover:bg-green-700 transition-colors flex items-center justify-center gap-2 shadow-sm"
                     >
-                      <span class="material-symbols-outlined text-[18px]">check_circle</span>
-                      Valider
+                      <span class="material-symbols-outlined text-[18px]">done_all</span>
+                      Valider le lot
                     </button>
                     <button 
-                      @click="openRejectModal(note)"
-                      class="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg font-bold hover:bg-red-700 transition-colors flex items-center justify-center gap-2"
+                      @click="openRejectModal(group, true)"
+                      class="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg font-bold hover:bg-red-700 transition-colors flex items-center justify-center gap-2 shadow-sm"
                     >
-                      <span class="material-symbols-outlined text-[18px]">cancel</span>
-                      Rejeter
+                      <span class="material-symbols-outlined text-[18px]">block</span>
+                      Rejeter le lot
                     </button>
                     <router-link
-                      :to="{ name: getDetailRouteName(), query: { classe: note.classe?._id, matiere: note.matiere?._id, periode: note.periode } }"
-                      class="px-4 py-2 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 rounded-lg font-bold hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors flex items-center justify-center gap-2"
-                      title="Voir les détails"
+                      :to="{ name: getDetailRouteName(), query: { classe: group.classe?._id, matiere: group.matiere?._id, periode: group.periode } }"
+                      class="px-4 py-2 bg-primary text-white rounded-lg font-bold hover:bg-primary/90 transition-colors flex items-center justify-center gap-2"
+                      title="Voir les détails complets"
                     >
                       <span class="material-symbols-outlined text-[18px]">visibility</span>
+                      Voir détails
                     </router-link>
                   </div>
                 </div>
@@ -294,6 +301,29 @@ const isValidatingAll = ref(false);
 const showRejectModal = ref(false);
 const rejectReason = ref('');
 const selectedNoteForReject = ref(null);
+const isBulkReject = ref(false);
+
+const groupedPendingNotes = computed(() => {
+  const groups = new Map();
+  pendingNotes.value.forEach(note => {
+    const key = `${note.classe?._id}-${note.matiere?._id}-${note.periode}`;
+    if (!groups.has(key)) {
+      groups.set(key, {
+        id: key,
+        classe: note.classe,
+        matiere: note.matiere,
+        professeur: note.professeur,
+        periode: note.periode,
+        count: 0,
+        eleves: []
+      });
+    }
+    const group = groups.get(key);
+    group.count++;
+    group.eleves.push(note.eleve);
+  });
+  return Array.from(groups.values());
+});
 
 // Mettre à jour l'URL quand les filtres ou l'onglet changent
 const updateQueryParams = () => {
@@ -468,6 +498,25 @@ const validateNote = async (noteId) => {
   }
 };
 
+const validateBulk = async (group) => {
+  if (!confirm(`Valider les notes de ${group.count} élèves pour ${group.matiere.nom} (${group.classe.niveau} ${group.classe.section}) ?`)) {
+    return;
+  }
+
+  try {
+    await api.validateNotesBulk({
+      classe: group.classe._id,
+      matiere: group.matiere._id,
+      periode: group.periode
+    });
+    alert('Notes validées avec succès !');
+    loadPendingNotes();
+  } catch (err) {
+    console.error('Erreur validation en masse:', err);
+    alert('Erreur lors de la validation en masse');
+  }
+};
+
 const validateAllNotes = async () => {
   if (!pendingNotes.value.length) {
     return;
@@ -509,8 +558,9 @@ const validateAllNotes = async () => {
   }
 };
 
-const openRejectModal = (note) => {
+const openRejectModal = (note, bulk = false) => {
   selectedNoteForReject.value = note;
+  isBulkReject.value = bulk;
   rejectReason.value = '';
   showRejectModal.value = true;
 };
@@ -521,15 +571,24 @@ const confirmReject = async () => {
   }
 
   try {
-    await api.rejectNote(selectedNoteForReject.value._id, {
-      motifRejet: rejectReason.value
-    });
-    alert('Note rejetée. Le professeur sera notifié.');
+    if (isBulkReject.value) {
+      await api.rejectNotesBulk({
+        classe: selectedNoteForReject.value.classe._id,
+        matiere: selectedNoteForReject.value.matiere._id,
+        periode: selectedNoteForReject.value.periode,
+        motifRejet: rejectReason.value
+      });
+    } else {
+      await api.rejectNote(selectedNoteForReject.value._id, {
+        motifRejet: rejectReason.value
+      });
+    }
+    alert('Lot rejeté. Le professeur sera notifié.');
     showRejectModal.value = false;
     loadPendingNotes();
   } catch (error) {
-    console.error('Erreur rejet note:', error);
-    alert('Erreur lors du rejet de la note');
+    console.error('Erreur rejet:', error);
+    alert('Erreur lors du rejet');
   }
 };
 

@@ -474,11 +474,20 @@ export default {
     validateNote(id) {
         return api.post(`/notes/${id}/validate`);
     },
+    validateNotesBulk(data) {
+        return api.post('/notes/bulk-validate', data);
+    },
     rejectNote(id, data) {
         return api.post(`/notes/${id}/reject`, data);
     },
+    rejectNotesBulk(data) {
+        return api.post('/notes/bulk-reject', data);
+    },
     submitNote(id) {
         return api.post(`/notes/${id}/submit`);
+    },
+    submitNotesBulk(data) {
+        return api.post('/notes/bulk-submit', data);
     },
     getPendingNotes() {
         return api.get('/notes/pending');

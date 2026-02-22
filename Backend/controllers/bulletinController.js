@@ -345,6 +345,26 @@ exports.getBulletinsByClasse = asyncHandler(async (req, res, next) => {
         .populate('notes.professeur', 'nom prenom')
         .sort({ moyenneGenerale: -1 });
 
+    // Proactive Refresh: Ensure ALL draft bulletins have the latest data/averages
+    // This addresses the discrepancy between local and production data
+    for (let i = 0; i < bulletins.length; i++) {
+        const b = bulletins[i];
+        if (b.statut === 'BROUILLON') {
+            await createOrUpdateBulletin(b.eleve._id, b.classe, b.periode, b.anneeScolaire);
+        }
+    }
+
+    // Refresh the list after updates if any drafts were found
+    if (bulletins.some(b => b.statut === 'BROUILLON')) {
+        bulletins = await Bulletin.find(query)
+            .populate('eleve', 'nom prenom matricule dateNaissance lieuNaissance photo redoublant')
+            .populate('classe', 'niveau section filiere')
+            .populate('genereePar', 'nom prenom')
+            .populate('notes.matiere', 'nom coefficient')
+            .populate('notes.professeur', 'nom prenom')
+            .sort({ moyenneGenerale: -1 });
+    }
+
     // Auto-population: Si certains élèves manquent, on les génère à la volée
     if (periode && anneeScolaire) {
         const studentsInClass = await User.find({ classe: req.params.classeId, role: 'ELEVE' });
@@ -418,6 +438,25 @@ exports.getBulletinsByEleve = asyncHandler(async (req, res, next) => {
                     .sort('-anneeScolaire -periode');
             }
         }
+    }
+
+    // Proactive Refresh: Refresh draft bulletins before returning to ensure data consistency
+    let updatedCount = 0;
+    for (let i = 0; i < bulletins.length; i++) {
+        const b = bulletins[i];
+        if (b.statut === 'BROUILLON') {
+            await createOrUpdateBulletin(b.eleve._id, b.classe, b.periode, b.anneeScolaire);
+            updatedCount++;
+        }
+    }
+
+    if (updatedCount > 0) {
+        bulletins = await Bulletin.find({ eleve: req.params.eleveId })
+            .populate('eleve', 'nom prenom matricule dateNaissance lieuNaissance photo redoublant')
+            .populate('classe', 'niveau section filiere anneeScolaire')
+            .populate('notes.matiere', 'nom coefficient categorie')
+            .populate('notes.professeur', 'nom prenom')
+            .sort('-anneeScolaire -periode');
     }
 
     res.status(200).json({

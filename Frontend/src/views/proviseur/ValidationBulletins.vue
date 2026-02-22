@@ -41,7 +41,7 @@
           <p class="text-[#0e141b] dark:text-white tracking-tight text-3xl font-black">{{ stats.classesPretes }}</p>
           <div class="flex items-center gap-1 text-green-600 font-bold text-sm">
             <span class="material-symbols-outlined text-sm font-bold">trending_up</span>
-            <span>Prêtes à être validées (Toutes matières ont min 2 évals)</span>
+            <span>Prêtes à être validées (Toutes matières ont min 1 éval)</span>
           </div>
         </div>
         <!-- Removed "Élèves concernés" and "Moyenne Générale" cards as requested -->

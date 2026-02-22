@@ -145,7 +145,7 @@
               <td class="border border-black p-2">Meilleure moyenne</td>
               <td class="border border-black p-2 font-bold">{{ (bulletin.meilleureMoyenneClasse || 0).toFixed(2) }}</td>
               <td class="border border-black p-2 uppercase">Rang du trimestre</td>
-              <td class="border border-black p-2 font-bold">{{ bulletin.rang || '-' }}</td>
+              <td class="border border-black p-2 font-bold">{{ bulletin.rang ? bulletin.rang + (bulletin.rang === 1 ? 'er' : 'e') : '-' }}</td>
               <td class="border border-black p-2 text-center uppercase font-bold">Conduite</td>
               <td colspan="3" class="border border-black p-2 font-bold">{{ bulletin.conduite }}</td>
             </tr>

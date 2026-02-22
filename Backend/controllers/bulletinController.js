@@ -796,7 +796,7 @@ exports.getValidationPageStats = asyncHandler(async (req, res, next) => {
             continue;
         }
 
-        // Check if all subjects have >= 2 validated evaluations
+        // Check if all subjects have >= 1 validated evaluation
         let allSubjectsReady = true;
         // Optimization: Aggregate validated Notes count by matiere for this class/period
         const validedNotesCounts = await Note.aggregate([
@@ -847,7 +847,7 @@ exports.getValidationPageStats = asyncHandler(async (req, res, next) => {
         const classStats = stats.length > 0 ? stats[0] : { moyenne: 0, min: 0, max: 0, count: 0, signedCount: 0 };
 
         // Refine Status: If all bulletins FINALISE, status could be different? 
-        // User requirements: "Classes prêtes affiche bien le nombre de classe où toute les matieres aurait minimum 2 evaluations validés"
+        // User requirements: "Classes prêtes affiche bien le nombre de classe où toute les matieres aurait minimum 1 evaluation validée"
         // So Status 'Prêt' is strictly about Eval count. 
 
         if (statut === 'Prêt') classesPretesCount++;

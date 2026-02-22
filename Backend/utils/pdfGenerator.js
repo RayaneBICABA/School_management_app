@@ -2,6 +2,98 @@ const puppeteer = require('puppeteer');
 const path = require('path');
 const fs = require('fs');
 
+const bulletinStyles = `
+        @page {
+            size: A4;
+            margin: 10mm;
+        }
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: Arial, Helvetica, sans-serif;
+            font-size: 11px;
+            line-height: 1.3;
+            color: #333;
+            background: white;
+            -webkit-print-color-adjust: exact;
+        }
+        
+        .bulletin-container {
+            width: 210mm;
+            padding: 10px;
+            margin: 0 auto;
+            position: relative;
+        }
+
+        /* Header */
+        .header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 20px; border-bottom: 2px solid #333; padding-bottom: 10px; }
+        .header-left, .header-right { width: 30%; font-size: 11px; font-weight: bold; text-transform: uppercase; line-height: 1.3; }
+        .header-left p, .header-right p { margin: 0 0 3px 0; }
+        .header-right { text-align: right; }
+        .sub-motto { font-size: 10px; font-style: italic; text-transform: none; font-weight: normal; }
+        .header-center { width: 40%; display: flex; flex-direction: column; align-items: center; text-align: center; }
+        .logo-text { font-size: 28px; font-weight: 900; color: #1e3a8a; letter-spacing: -0.05em; }
+        .motto { font-size: 10px; font-weight: bold; color: #666; text-transform: uppercase; letter-spacing: 0.05em; margin-top: 4px; }
+
+        /* Title */
+        .title-section { text-align: center; margin: 16px 0; }
+        .title-section h1 { font-family: serif; font-size: 26px; font-style: italic; font-weight: bold; margin: 0; color: #1e3a8a !important; }
+
+        /* General Info Rows */
+        .info-row { display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 11px; }
+        .student-name-row { margin-bottom: 11px; font-size: 12px; text-transform: uppercase; font-weight: bold; }
+        .info-eleve-row { display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 14px; padding-bottom: 11px; border-bottom: 1px solid #e5e7eb; }
+        
+        strong { font-weight: bold; }
+
+        /* Table Commons */
+        table { width: 100%; border-collapse: collapse; font-size: 11px; border: 1px solid black; }
+        th, td { border: 1px solid black; padding: 4px; }
+        
+        /* Grades Table */
+        .grades-table th { background: #e5e7eb !important; color: #000000 !important; text-align: center; font-weight: bold; padding: 5px 4px; }
+        .grades-table td { text-align: center; }
+        .w-matiere { width: 25%; text-align: left; }
+        .text-left { text-align: left !important; }
+        .bold { font-weight: bold; }
+        .italic { font-style: italic; }
+        .uppercase { text-transform: uppercase; }
+        .text-xs { font-size: 10px; }
+        .bg-gray-300 { background-color: #d1d5db !important; }
+        .bg-gray-100 { background-color: #f3f4f6 !important; }
+        .cat-header { font-weight: bold; text-align: center; text-transform: uppercase; padding: 5px; }
+
+        /* Bilan Table */
+        .bilan-section { margin-top: 16px; }
+        .bilan-table th, .bilan-table td { border: 1px solid black; }
+        .text-right { text-align: right; }
+        .text-center { text-align: center; }
+        .text-lg { font-size: 12px; }
+
+        /* Council Section */
+        .council-section { margin-top: 16px; border: 1px solid black; page-break-inside: avoid; }
+        .council-header { background: #d1d5db !important; text-align: center; font-weight: bold; padding: 7px; border-bottom: 1px solid black; margin: 0; text-transform: uppercase; font-size: 12px; }
+        .council-content { display: flex; height: 120px; }
+        .council-left { width: 50%; border-right: 1px solid black; display: flex; justify-content: center; align-items: center; padding: 14px; }
+        .council-right { width: 50%; display: flex; flex-direction: column; align-items: center; padding: 14px; }
+        
+        .appreciation-box { border: 3px double #1f2937; padding: 16px; text-align: center; min-width: 160px; border-radius: 3px; }
+        .appr-grade { font-size: 14px; font-weight: bold; margin-bottom: 7px; }
+        .appr-decision { color: #dc2626; font-weight: bold; text-transform: uppercase; font-size: 13px; }
+
+        .proviseur-title { font-weight: bold; font-size: 12px; text-transform: uppercase; margin-bottom: 14px; }
+        
+        /* Footer */
+        .footer { margin-top: 14px; font-size: 10px; color: #6b7280; display: flex; justify-content: space-between; border-top: 1px solid #e5e7eb; padding-top: 7px; }
+        .info-grid { display: flex; gap: 20px; margin-bottom: 15px; font-size: 12px; border-bottom: 1px solid #ddd; padding-bottom: 10px; }
+        .info-item { display: flex; flex-direction: column; flex: 1; }
+        .info-label { color: #6b7280; font-size: 10px; margin-bottom: 2px; }
+        .info-value { font-weight: bold; }
+`;
+
 /**
  * Génère un PDF pour un bulletin scolaire
  * @param {Object} bulletinData - Données du bulletin
@@ -27,62 +119,7 @@ const generateBulletinPDF = async (bulletinData, schoolConfig = {}) => {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Bulletin de Notes</title>
     <style>
-        @page {
-            size: A4;
-            margin: 10mm;
-        }
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-        body {
-            font-family: Arial, Helvetica, sans-serif;
-            font-size: 11px;
-            line-height: 1.3;
-            color: #333;
-            background: white;
-            -webkit-print-color-adjust: exact;
-        }
-        
-        /* Styles exactly like class view */
-        .bulletin-container {
-            width: 210mm;
-            padding: 10px;
-            margin: 0 auto;
-        }
-
-        /* Header */
-        .header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 20px; border-bottom: 2px solid #333; padding-bottom: 10px; }
-        .header-left, .header-right { width: 30%; font-size: 10px; font-weight: bold; text-transform: uppercase; line-height: 1.2; }
-        .header-left p, .header-right p { margin: 0 0 2px 0; }
-        .header-right { text-align: right; }
-        .sub-motto { font-size: 9px; font-style: italic; text-transform: none; font-weight: normal; }
-        .header-center { width: 40%; display: flex; flex-direction: column; align-items: center; text-align: center; }
-        .logo-text { font-size: 24px; font-weight: 900; color: #1e3a8a; letter-spacing: -0.05em; }
-        .motto { font-size: 9px; font-weight: bold; color: #666; text-transform: uppercase; letter-spacing: 0.05em; margin-top: 4px; }
-
-        /* ... common styles ... */
-        .grades-table { width: 100%; border-collapse: collapse; margin-bottom: 15px; }
-        .grades-table th, .grades-table td { border: 1px solid black; padding: 4px; text-align: center; }
-        .grades-table th { background: #f3f4f6 !important; font-weight: bold; }
-        .text-left { text-align: left !important; }
-        .bold { font-weight: bold; }
-        .italic { font-style: italic; }
-        .uppercase { text-transform: uppercase; }
-        
-        /* Bilan Table */
-        .bilan-section { margin-top: 15px; }
-        .bilan-table { width: 100%; border-collapse: collapse; }
-        .bilan-table td { border: 1px solid black; padding: 6px; }
-
-        /* Council Section */
-        .council-section { margin-top: 15px; border: 1px solid black; }
-        .council-header { background: #d1d5db !important; text-align: center; font-weight: bold; padding: 6px; border-bottom: 1px solid black; text-transform: uppercase; }
-        .council-content { display: flex; min-height: 100px; }
-        .council-left { width: 50%; border-right: 1px solid black; display: flex; justify-content: center; align-items: center; padding: 10px; }
-        .council-right { width: 50%; display: flex; flex-direction: column; align-items: center; padding: 10px; }
-        .appreciation-box { border: 4px double #333; padding: 10px; text-align: center; min-width: 150px; }
+        ${bulletinStyles}
     </style>
 </head>
 <body>
@@ -145,101 +182,12 @@ const generateClassBulletinsPDF = async (bulletinsData, schoolConfig = {}) => {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Bulletins de Classe</title>
     <style>
-        @page {
-            size: A4;
-            margin: 10mm;
-        }
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-        body {
-            font-family: Arial, Helvetica, sans-serif;
-            font-size: 12px;
-            line-height: 1.4;
-            color: #333;
-            background: white;
-            -webkit-print-color-adjust: exact;
-        }
+        ${bulletinStyles}
         .page-break {
             page-break-after: always;
             display: block;
             height: 0;
         }
-        
-        /* Styles from generateBulletinHTML (Balanced for Readability) */
-        .bulletin-container {
-            width: 210mm;
-            padding: 20px;
-            margin: 0 auto;
-            background: white;
-        }
-
-        /* Header */
-        .header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 20px; border-bottom: 2px solid #333; padding-bottom: 10px; }
-        .header-left, .header-right { width: 30%; font-size: 11px; font-weight: bold; text-transform: uppercase; line-height: 1.3; }
-        .header-left p, .header-right p { margin: 0 0 3px 0; }
-        .header-right { text-align: right; }
-        .sub-motto { font-size: 10px; font-style: italic; text-transform: none; font-weight: normal; }
-        .header-center { width: 40%; display: flex; flex-direction: column; align-items: center; text-align: center; }
-        .logo-text { font-size: 28px; font-weight: 900; color: #1e3a8a; letter-spacing: -0.05em; }
-        .motto { font-size: 10px; font-weight: bold; color: #666; text-transform: uppercase; letter-spacing: 0.05em; margin-top: 4px; }
-
-        /* Title */
-        .title-section { text-align: center; margin: 16px 0; }
-        .title-section h1 { font-family: Arial, Helvetica, sans-serif; font-size: 22px; font-style: italic; font-weight: bold; margin: 0; color: #333333 !important; }
-
-        /* General Info Rows */
-        .info-row { display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 11px; }
-        .student-name-row { margin-bottom: 11px; font-size: 12px; text-transform: uppercase; font-weight: bold; }
-        .info-eleve-row { display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 14px; padding-bottom: 11px; border-bottom: 1px solid #e5e7eb; }
-        
-        strong { font-weight: bold; }
-
-        /* Table Commons */
-        table { width: 100%; border-collapse: collapse; font-size: 11px; border: 1px solid black; }
-        th, td { border: 1px solid black; padding: 4px; }
-        
-        /* Grades Table */
-        .grades-table th { background: #e5e7eb !important; color: #000000 !important; text-align: center; font-weight: bold; padding: 5px 4px; }
-        .grades-table td { text-align: center; }
-        .w-matiere { width: 25%; text-align: left; }
-        .text-left { text-align: left; }
-        .uppercase { text-transform: uppercase; }
-        .bold { font-weight: bold; }
-        .italic { font-style: italic; }
-        .text-xs { font-size: 10px; }
-        .bg-gray-300 { background-color: #d1d5db !important; }
-        .bg-gray-100 { background-color: #f3f4f6 !important; }
-        .cat-header { font-weight: bold; text-align: center; text-transform: uppercase; padding: 5px; }
-
-        /* Bilan Table */
-        .bilan-section { margin-top: 16px; }
-        .bilan-table th, .bilan-table td { border: 1px solid black; }
-        .text-right { text-align: right; }
-        .text-center { text-align: center; }
-        .text-lg { font-size: 12px; }
-
-        /* Council Section */
-        .council-section { margin-top: 16px; border: 1px solid black; page-break-inside: avoid; }
-        .council-header { background: #d1d5db !important; text-align: center; font-weight: bold; padding: 7px; border-bottom: 1px solid black; margin: 0; text-transform: uppercase; font-size: 12px; }
-        .council-content { display: flex; height: 120px; }
-        .council-left { width: 50%; border-right: 1px solid black; display: flex; justify-content: center; align-items: center; padding: 14px; }
-        .council-right { width: 50%; display: flex; flex-direction: column; align-items: center; padding: 14px; }
-        
-        .appreciation-box { border: 3px double #1f2937; padding: 16px; text-align: center; min-width: 160px; border-radius: 3px; }
-        .appr-grade { font-size: 14px; font-weight: bold; margin-bottom: 7px; }
-        .appr-decision { color: #dc2626; font-weight: bold; text-transform: uppercase; font-size: 13px; }
-
-        .proviseur-title { font-weight: bold; font-size: 12px; text-transform: uppercase; margin-bottom: 14px; }
-        
-        /* Footer */
-        .footer { margin-top: 14px; font-size: 10px; color: #6b7280; display: flex; justify-content: space-between; border-top: 1px solid #e5e7eb; padding-top: 7px; }
-        .info-grid { display: flex; gap: 20px; margin-bottom: 15px; font-size: 12px; border-bottom: 1px solid #ddd; padding-bottom: 10px; }
-        .info-item { display: flex; flex-direction: column; flex: 1; }
-        .info-label { color: #6b7280; font-size: 10px; margin-bottom: 2px; }
-        .info-value { font-weight: bold; }
     </style>
 </head>
 <body>
@@ -300,9 +248,9 @@ const generateHeaderHTML = (schoolConfig, secondaryText = '') => {
     return `
         <div class="header">
             <div class="header-left">
-                <p>${schoolConfig.region || 'RÉPUBLIQUE DU CAMEROUN'}</p>
-                <p>${schoolConfig.subRegion || 'MINISTÈRE DES ENSEIGNEMENTS SECONDAIRES'}</p>
-                <p>${schoolConfig.schoolName || 'ÉTABLISSEMENT SCOLAIRE'}</p>
+                <p>${schoolConfig.region || 'LA FORMATION PROFESSIONNELLE ET TECHNIQUE'}</p>
+                <p>${schoolConfig.subRegion || 'RÉGION CENTRE'}</p>
+                <p>${schoolConfig.schoolName || 'LYCÉE WEND PUIRÉ DE SAABA'}</p>
                 ${secondaryText ? `<p>${secondaryText}</p>` : ''}
             </div>
             
@@ -312,8 +260,8 @@ const generateHeaderHTML = (schoolConfig, secondaryText = '') => {
             </div>
             
             <div class="header-right">
-                <p>${schoolConfig.country || 'PAIX - TRAVAIL - PATRIE'}</p>
-                <p class="sub-motto">${schoolConfig.patrie || ''}</p>
+                <p>${schoolConfig.country || 'BURKINA FASO'}</p>
+                <p class="sub-motto">${schoolConfig.patrie || 'La Patrie ou la Mort, nous Vaincrons'}</p>
             </div>
         </div>
     `;
@@ -691,8 +639,17 @@ const generateBulletinContent = (bulletinData, schoolConfig = {}) => {
     // Column counts are strictly dynamic based on data
     const totalCols = 7 + maxInt + maxDev + maxCompo;
 
+    // Watermark Logic
+    const isProvisional = bulletinData.statut !== 'VALIDE' && bulletinData.statut !== 'FINALISE' && bulletinData.statut !== 'VALIDEE';
+    const watermarkHtml = isProvisional ? `
+        <div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; pointer-events: none; opacity: 0.08; transform: rotate(-30deg); z-index: 0;">
+            <span style="font-size: 120px; font-weight: 900; letter-spacing: 0.1em; border: 15px solid black; padding: 40px; text-transform: uppercase;">PROVISOIRE</span>
+        </div>
+    ` : '';
+
     return `
-    <div class="bulletin-container">
+    <div class="bulletin-container" style="position: relative;">
+        ${watermarkHtml}
         <!-- Header -->
         ${generateHeaderHTML(schoolConfig, schoolConfig.phone ? `Tél : ${schoolConfig.phone}` : '')}
 
@@ -854,7 +811,7 @@ const generateBulletinContent = (bulletinData, schoolConfig = {}) => {
 
         <!-- Footer -->
         <div class="footer">
-            <div>Édité le ${currentDate} - Document officiel à conserver.</div>
+            <div>Document officiel - Généré par le système Lebian.</div>
             <div>Page 1 sur 1</div>
         </div>
     </div>
@@ -875,85 +832,7 @@ const generateBulletinHTML = (bulletinData) => {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Bulletin Scolaire - ${bulletinData.eleve?.prenom} ${bulletinData.eleve?.nom}</title>
     <style>
-        @page { size: A4; margin: 10mm; }
-        * { box-sizing: border-box; }
-        body { 
-            font-family: Arial, Helvetica, sans-serif;
-            font-size: 12px; margin: 0; background: white; -webkit-print-color-adjust: exact; 
-            color: #333333; line-height: 1.4;
-        }
-        
-        .bulletin-container {
-            width: 210mm;
-            padding: 20px; 
-            margin: 0 auto;
-        }
-
-        /* Header */
-        .header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 14px; border-bottom: 1px solid #e5e7eb; padding-bottom: 14px; }
-        .header-left, .header-right { font-size: 11px; font-weight: bold; text-transform: uppercase; line-height: 1.3; }
-        .header-left p { margin-bottom: 3px; margin-top: 0; }
-        .header-right { text-align: right; }
-        .header-right p { margin-bottom: 3px; margin-top: 0; }
-        .sub-motto { font-size: 10px; font-style: italic; text-transform: none; font-weight: normal; }
-        .header-center { display: flex; flex-direction: column; align-items: center; }
-        .logo-text { font-size: 28px; font-weight: 900; color: #1e3a8a; letter-spacing: -0.05em; margin-bottom: 4px; }
-        .motto { font-size: 10px; font-weight: bold; color: #9ca3af; text-transform: uppercase; letter-spacing: 0.05em; }
-
-        /* Title */
-        .title-section { text-align: center; margin: 16px 0; }
-        .title-section h1 { font-family: Arial, Helvetica, sans-serif; font-size: 22px; font-style: italic; font-weight: bold; margin: 0; color: #333333 !important; }
-
-        /* General Info Rows */
-        .info-row { display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 11px; }
-        .student-name-row { margin-bottom: 11px; font-size: 12px; text-transform: uppercase; font-weight: bold; }
-        .info-eleve-row { display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 14px; padding-bottom: 11px; border-bottom: 1px solid #e5e7eb; }
-        
-        strong { font-weight: bold; }
-
-        /* Table Commons */
-        table { width: 100%; border-collapse: collapse; font-size: 11px; border: 1px solid black; }
-        th, td { border: 1px solid black; padding: 4px; }
-        
-        /* Grades Table */
-        .grades-table th { background: #e5e7eb !important; color: #000000 !important; text-align: center; font-weight: bold; padding: 5px 4px; }
-        .grades-table td { text-align: center; }
-        .w-matiere { width: 25%; text-align: left; }
-        .text-left { text-align: left; }
-        .uppercase { text-transform: uppercase; }
-        .bold { font-weight: bold; }
-        .italic { font-style: italic; }
-        .text-xs { font-size: 10px; }
-        
-        .bg-gray-300 { background-color: #d1d5db !important; }
-        .bg-gray-100 { background-color: #f3f4f6 !important; }
-        
-        .cat-header { font-weight: bold; text-align: center; text-transform: uppercase; padding: 5px; }
-
-        /* Bilan Table */
-        .bilan-section { margin-top: 16px; }
-        .bilan-table th, .bilan-table td { border: 1px solid black; }
-        .text-right { text-align: right; }
-        .text-center { text-align: center; }
-        .text-lg { font-size: 12px; }
-
-        /* Council Section */
-        .council-section { margin-top: 16px; border: 1px solid black; page-break-inside: avoid; }
-        .council-header { background: #d1d5db !important; text-align: center; font-weight: bold; padding: 7px; border-bottom: 1px solid black; margin: 0; text-transform: uppercase; font-size: 12px; }
-        .council-content { display: flex; height: 120px; }
-        .council-left { width: 50%; border-right: 1px solid black; display: flex; justify-content: center; align-items: center; padding: 14px; }
-        .council-right { width: 50%; display: flex; flex-direction: column; align-items: center; padding: 14px; }
-        
-        .appreciation-box { border: 3px double #1f2937; padding: 16px; text-align: center; min-width: 160px; border-radius: 3px; }
-        .appr-grade { font-size: 14px; font-weight: bold; margin-bottom: 7px; }
-        
-        .appr-decision { color: #dc2626; font-weight: bold; text-transform: uppercase; font-size: 13px; }
-
-        .proviseur-title { font-weight: bold; font-size: 12px; text-transform: uppercase; margin-bottom: 14px; }
-        
-        /* Footer */
-        .footer { margin-top: 14px; font-size: 10px; color: #6b7280; display: flex; justify-content: space-between; border-top: 1px solid #e5e7eb; padding-top: 7px; }
-
+        ${bulletinStyles}
     </style>
 </head>
 <body>

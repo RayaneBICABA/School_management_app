@@ -3,6 +3,7 @@ const User = require('../models/User');
 const Matiere = require('../models/Matiere');
 const Classe = require('../models/Classe');
 const ErrorResponse = require('../utils/errorResponse');
+const { createOrUpdateBulletin } = require('./bulletinController');
 const asyncHandler = require('../middleware/async');
 const mongoose = require('mongoose');
 const { generateMasterGradeSheetPDF } = require('../utils/pdfGenerator');
@@ -262,6 +263,14 @@ exports.validateNote = asyncHandler(async (req, res, next) => {
     await note.save();
     await note.populate(['eleve', 'matiere', 'classe', 'professeur', 'validePar']);
 
+    // Mettre à jour le bulletin de l'élève
+    try {
+        await createOrUpdateBulletin(note.eleve._id, note.classe._id, note.periode, note.anneeScolaire, req.user.id);
+    } catch (bulletinError) {
+        console.error('Erreur lors de la mise à jour du bulletin après validation:', bulletinError);
+        // On ne bloque pas la réponse si la mise à jour du bulletin échoue
+    }
+
     res.status(200).json({
         success: true,
         data: note
@@ -436,6 +445,31 @@ exports.validateNotesBulk = asyncHandler(async (req, res, next) => {
             }
         }
     );
+
+    // Mettre à jour les bulletins des élèves concernés
+    if (result.modifiedCount > 0) {
+        try {
+            // Récupérer les ids des élèves dont les notes ont été validées
+            const academicSetting = await require('../models/Setting').findOne({ key: 'academic_year_config' });
+            const currentYear = academicSetting ? (academicSetting.value.year || academicSetting.value.academicYear) : '2025-2026';
+
+            const affectedStudents = await Note.distinct('eleve', {
+                classe,
+                matiere,
+                periode,
+                anneeScolaire: currentYear,
+                statut: 'VALIDEE',
+                dateValidation: { $gte: new Date(Date.now() - 5000) } // Recent validation
+            });
+
+            // Mettre à jour chaque bulletin (en parallèle)
+            await Promise.all(affectedStudents.map(studentId =>
+                createOrUpdateBulletin(studentId, classe, periode, currentYear, req.user.id)
+            ));
+        } catch (bulletinError) {
+            console.error('Erreur lors de la mise à jour groupée des bulletins:', bulletinError);
+        }
+    }
 
     res.status(200).json({
         success: true,

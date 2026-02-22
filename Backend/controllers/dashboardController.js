@@ -484,10 +484,9 @@ exports.getSuiviActiviteStats = async (req, res, next) => {
         let totalScheduled = 0;
 
         for (const [pid, data] of profMap) {
-            // Completude Logic: >= 2 grades = 100%, 1 = 50%, 0 = 0%
+            // Completude Logic: >= 1 grade = 100%, 0 = 0%
             let completude = 0;
-            if (data.totalGrades >= 2) completude = 100;
-            else if (data.totalGrades === 1) completude = 50;
+            if (data.totalGrades >= 1) completude = 100;
 
             const evalsCount = profFutureEvalsMap.get(pid) || 0;
 

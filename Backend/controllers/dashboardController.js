@@ -66,7 +66,7 @@ exports.getProviseurStats = async (req, res, next) => {
 
         // Map to quick lookup
         const cmGradeMap = new Map();
-        gradesCounts.forEach(g => {
+        notesCounts.forEach(g => {
             cmGradeMap.set(`${g._id.classe}-${g._id.matiere}`, g.count);
         });
 

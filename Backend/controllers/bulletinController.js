@@ -101,32 +101,33 @@ const createOrUpdateBulletin = async (eleveId, classeId, periode, anneeScolaire,
     // Mapper les notes
     const mappedNotes = notesDocs.map(noteDoc => {
         const isDispensed = dispensedMatiereIds.includes(noteDoc.matiere._id.toString());
-        const intNotes = noteDoc.notes.filter(n => n.type.toLowerCase().includes('interro'));
-        const devNotes = noteDoc.notes.filter(n => n.type.toLowerCase().includes('devoir'));
-        const compoNotes = noteDoc.notes.filter(n => n.type.toLowerCase().includes('compo'));
 
-        const avgInt = intNotes.length > 0 ? intNotes.reduce((sum, n) => sum + n.valeur, 0) / intNotes.length : undefined;
-        const avgDev = devNotes.length > 0 ? devNotes.reduce((sum, n) => sum + n.valeur, 0) / devNotes.length : undefined;
-        const avgCompo = compoNotes.length > 0 ? compoNotes.reduce((sum, n) => sum + n.valeur, 0) / compoNotes.length : undefined;
+        const allGrades = noteDoc.notes || [];
+        const compoNotes = allGrades.filter(n => n?.type?.toLowerCase().includes('compo') || n?.type?.toLowerCase().includes('composition'));
+        const otherNotes = allGrades.filter(n => !(n?.type?.toLowerCase().includes('compo') || n?.type?.toLowerCase().includes('composition')));
 
-        const interroGrades = intNotes.map(n => n.valeur);
-        const devoirGrades = devNotes.map(n => n.valeur);
+        const avgCompo = compoNotes.length > 0 ? compoNotes.reduce((sum, n) => sum + (n.valeur || 0), 0) / compoNotes.length : undefined;
+        const avgOther = otherNotes.length > 0 ? otherNotes.reduce((sum, n) => sum + (n.valeur || 0), 0) / otherNotes.length : undefined;
+
+        // interroGrades stockent tout ce qui n'est pas "compo"
+        const interroGrades = otherNotes.map(n => n.valeur);
+        const devoirGrades = [];
         const compoGrades = compoNotes.map(n => n.valeur);
 
         const coeff = noteDoc.matiere?.coefficient || 1;
 
         // Recalculer la moyenne de la note si elle est à 0 ou manquante
         let average = noteDoc.moyenne || 0;
-        if (average === 0 && noteDoc.notes.length > 0) {
-            average = noteDoc.calculerMoyenne();
+        if (average === 0 && allGrades.length > 0) {
+            average = typeof noteDoc.calculerMoyenne === 'function' ? noteDoc.calculerMoyenne() : (avgOther || 0);
         }
         const officialProf = assignmentMap[noteDoc.matiere._id.toString()];
 
         return {
             matiere: noteDoc.matiere._id,
             professeur: officialProf || noteDoc.professeur,
-            int: avgInt,
-            dev: avgDev,
+            int: avgOther, // Moyenne de tout sauf compo
+            dev: undefined,
             compo: avgCompo,
             interroGrades,
             devoirGrades,
@@ -993,26 +994,22 @@ exports.regenerateAllBulletins = asyncHandler(async (req, res, next) => {
                             // S'assurer que noteDoc.notes est bien un tableau
                             const notesArray = Array.isArray(noteDoc.notes) ? noteDoc.notes : [];
 
-                            const intNotes = notesArray.filter(n => n && n.type && n.type.toLowerCase().includes('interro'));
-                            const devNotes = notesArray.filter(n => n && n.type && n.type.toLowerCase().includes('devoir'));
-                            const compoNotes = notesArray.filter(n => n && n.type && n.type.toLowerCase().includes('compo'));
+                            const allGrades = notesArray;
+                            const compoNotes = allGrades.filter(n => n?.type?.toLowerCase().includes('compo') || n?.type?.toLowerCase().includes('composition'));
+                            const otherNotes = allGrades.filter(n => !(n?.type?.toLowerCase().includes('compo') || n?.type?.toLowerCase().includes('composition')));
 
-                            const avgInt = intNotes.length > 0
-                                ? intNotes.reduce((sum, n) => sum + (n.valeur || 0), 0) / intNotes.length
-                                : undefined;
-                            const avgDev = devNotes.length > 0
-                                ? devNotes.reduce((sum, n) => sum + (n.valeur || 0), 0) / devNotes.length
-                                : undefined;
-                            const avgCompo = compoNotes.length > 0
-                                ? compoNotes.reduce((sum, n) => sum + (n.valeur || 0), 0) / compoNotes.length
-                                : undefined;
+                            const avgCompo = compoNotes.length > 0 ? compoNotes.reduce((sum, n) => sum + (n.valeur || 0), 0) / compoNotes.length : undefined;
+                            const avgOther = otherNotes.length > 0 ? otherNotes.reduce((sum, n) => sum + (n.valeur || 0), 0) / otherNotes.length : undefined;
 
-                            const interroGrades = intNotes.map(n => n.valeur);
-                            const devoirGrades = devNotes.map(n => n.valeur);
+                            const interroGrades = otherNotes.map(n => n.valeur);
+                            const devoirGrades = [];
                             const compoGrades = compoNotes.map(n => n.valeur);
 
                             const coeff = noteDoc.matiere.coefficient || 1;
-                            const average = noteDoc.moyenne || 0;
+                            let average = noteDoc.moyenne || 0;
+                            if (average === 0 && allGrades.length > 0) {
+                                average = typeof noteDoc.calculerMoyenne === 'function' ? noteDoc.calculerMoyenne() : (avgOther || 0);
+                            }
 
                             // Utiliser le professeur officiel de ClasseMatiere, sinon celui de la note
                             const officialProf = assignmentMap[noteDoc.matiere._id.toString()];
@@ -1020,8 +1017,8 @@ exports.regenerateAllBulletins = asyncHandler(async (req, res, next) => {
                             return {
                                 matiere: noteDoc.matiere._id,
                                 professeur: officialProf || noteDoc.professeur?._id,
-                                int: avgInt,
-                                dev: avgDev,
+                                int: avgOther,
+                                dev: undefined,
                                 compo: avgCompo,
                                 interroGrades,
                                 devoirGrades,

@@ -68,6 +68,114 @@ const updateClassStats = async (classeId, periode, anneeScolaire) => {
     }
 };
 
+// Helper pour créer ou mettre à jour un bulletin avec les données réelles (notes validées)
+const createOrUpdateBulletin = async (eleveId, classeId, periode, anneeScolaire, genereeParId) => {
+    // Get current academic year from settings if not provided
+    let year = anneeScolaire;
+    if (!year) {
+        const academicSetting = await Setting.findOne({ key: 'academic_year_config' });
+        year = academicSetting ? (academicSetting.value.year || academicSetting.value.academicYear) : '2023-2024';
+    }
+
+    // Récupérer toutes les notes non rejetées (permet d'avoir des moyennes en brouillon)
+    const notesDocs = await Note.find({
+        eleve: eleveId,
+        classe: classeId,
+        periode,
+        statut: { $ne: 'REJETEE' },
+        anneeScolaire: year
+    }).populate('matiere');
+
+    // Récupérer les assignations officielles
+    const assignments = await ClasseMatiere.find({ classe: classeId });
+    const assignmentMap = {};
+    assignments.forEach(a => {
+        if (a.professeur) assignmentMap[a.matiere.toString()] = a.professeur;
+    });
+
+    // Récupérer les dispensations
+    const Dispensation = require('../models/Dispensation');
+    const dispensations = await Dispensation.find({ eleve: eleveId, anneeScolaire: year });
+    const dispensedMatiereIds = dispensations.map(d => d.matiere.toString());
+
+    // Mapper les notes
+    const mappedNotes = notesDocs.map(noteDoc => {
+        const isDispensed = dispensedMatiereIds.includes(noteDoc.matiere._id.toString());
+        const intNotes = noteDoc.notes.filter(n => n.type.toLowerCase().includes('interro'));
+        const devNotes = noteDoc.notes.filter(n => n.type.toLowerCase().includes('devoir'));
+        const compoNotes = noteDoc.notes.filter(n => n.type.toLowerCase().includes('compo'));
+
+        const avgInt = intNotes.length > 0 ? intNotes.reduce((sum, n) => sum + n.valeur, 0) / intNotes.length : undefined;
+        const avgDev = devNotes.length > 0 ? devNotes.reduce((sum, n) => sum + n.valeur, 0) / devNotes.length : undefined;
+        const avgCompo = compoNotes.length > 0 ? compoNotes.reduce((sum, n) => sum + n.valeur, 0) / compoNotes.length : undefined;
+
+        const interroGrades = intNotes.map(n => n.valeur);
+        const devoirGrades = devNotes.map(n => n.valeur);
+        const compoGrades = compoNotes.map(n => n.valeur);
+
+        const coeff = noteDoc.matiere?.coefficient || 1;
+
+        // Recalculer la moyenne de la note si elle est à 0 ou manquante
+        let average = noteDoc.moyenne || 0;
+        if (average === 0 && noteDoc.notes.length > 0) {
+            average = noteDoc.calculerMoyenne();
+        }
+        const officialProf = assignmentMap[noteDoc.matiere._id.toString()];
+
+        return {
+            matiere: noteDoc.matiere._id,
+            professeur: officialProf || noteDoc.professeur,
+            int: avgInt,
+            dev: avgDev,
+            compo: avgCompo,
+            interroGrades,
+            devoirGrades,
+            compoGrades,
+            moyenneMatiere: average,
+            coeff: coeff,
+            notePonderee: isDispensed ? 0 : average * coeff,
+            appreciation: isDispensed ? 'DISPENSÉ' : noteDoc.appreciation,
+            categorie: noteDoc.matiere?.categorie || 'AUTRES',
+            isDispensed: isDispensed
+        };
+    });
+
+    // Chercher s'il existe déjà un bulletin
+    let bulletin = await Bulletin.findOne({ eleve: eleveId, periode, anneeScolaire: year });
+
+    if (bulletin) {
+        // Mise à jour si non finalisé
+        if (bulletin.statut === 'BROUILLON') {
+            bulletin.notes = mappedNotes;
+            if (genereeParId) bulletin.genereePar = genereeParId;
+        }
+    } else {
+        // Création
+        bulletin = new Bulletin({
+            eleve: eleveId,
+            classe: classeId,
+            periode,
+            anneeScolaire: year,
+            notes: mappedNotes,
+            genereePar: genereeParId,
+            statut: 'BROUILLON'
+        });
+    }
+
+    // Recalculer les déductions
+    try {
+        await recalculatePointDeductions(eleveId, classeId, periode, new Date());
+    } catch (e) {
+        console.error('Erreur recalculatePointDeductions:', e.message);
+    }
+
+    await bulletin.calculerMoyenneGenerale();
+    await bulletin.calculerRang();
+    await bulletin.save();
+
+    return bulletin;
+};
+
 // @desc    Générer un bulletin pour un élève
 // @route   POST /api/v1/bulletins/generate
 // @access  Private (Censeur/Admin)
@@ -102,91 +210,8 @@ exports.generateBulletin = asyncHandler(async (req, res, next) => {
         return next(new ErrorResponse('Un bulletin existe déjà pour cet élève et cette période', 400));
     }
 
-    // Get current academic year from settings
-    const academicSetting = await Setting.findOne({ key: 'academic_year_config' });
-    const currentYear = academicSetting ? (academicSetting.value.year || academicSetting.value.academicYear) : '2023-2024';
-
-    // Récupérer toutes les notes validées de l'élève pour cette période
-    const notesDocs = await Note.find({
-        eleve,
-        classe,
-        periode,
-        statut: 'VALIDEE',
-        anneeScolaire: anneeScolaire || currentYear
-    }).populate('matiere');
-
-    if (notesDocs.length === 0) {
-        return next(new ErrorResponse('Aucune note validée trouvée pour cet élève', 400));
-    }
-
-    // Récupérer les assignations officielles de professeurs pour cette classe
-    const assignments = await ClasseMatiere.find({ classe });
-    const assignmentMap = {};
-    assignments.forEach(a => {
-        if (a.professeur) assignmentMap[a.matiere.toString()] = a.professeur;
-    });
-
-    // Récupérer les dispensations de l'élève
-    const Dispensation = require('../models/Dispensation');
-    const dispensations = await Dispensation.find({ eleve, anneeScolaire: anneeScolaire || '2025-2026' });
-    const dispensedMatiereIds = dispensations.map(d => d.matiere.toString());
-
-    // Mapper les notes pour le bulletin
-    const mappedNotes = notesDocs.map(noteDoc => {
-        const isDispensed = dispensedMatiereIds.includes(noteDoc.matiere._id.toString());
-        const intNotes = noteDoc.notes.filter(n => n.type.toLowerCase().includes('interro'));
-        const devNotes = noteDoc.notes.filter(n => n.type.toLowerCase().includes('devoir'));
-        const compoNotes = noteDoc.notes.filter(n => n.type.toLowerCase().includes('compo'));
-
-        const avgInt = intNotes.length > 0 ? intNotes.reduce((sum, n) => sum + n.valeur, 0) / intNotes.length : undefined;
-        const avgDev = devNotes.length > 0 ? devNotes.reduce((sum, n) => sum + n.valeur, 0) / devNotes.length : undefined;
-        const avgCompo = compoNotes.length > 0 ? compoNotes.reduce((sum, n) => sum + n.valeur, 0) / compoNotes.length : undefined;
-
-        const interroGrades = intNotes.map(n => n.valeur);
-        const devoirGrades = devNotes.map(n => n.valeur);
-        const compoGrades = compoNotes.map(n => n.valeur);
-
-        const coeff = noteDoc.matiere?.coefficient || 1;
-        const average = noteDoc.moyenne || 0;
-
-        // Utiliser le professeur officiel de ClasseMatiere, sinon celui de la note
-        const officialProf = assignmentMap[noteDoc.matiere._id.toString()];
-
-        return {
-            matiere: noteDoc.matiere._id,
-            professeur: officialProf || noteDoc.professeur,
-            int: avgInt,
-            dev: avgDev,
-            compo: avgCompo,
-            interroGrades,
-            devoirGrades,
-            compoGrades,
-            moyenneMatiere: average,
-            coeff: coeff,
-            notePonderee: isDispensed ? 0 : average * coeff,
-            appreciation: isDispensed ? 'DISPENSÉ' : noteDoc.appreciation,
-            categorie: noteDoc.matiere?.categorie || 'AUTRES',
-            isDispensed: isDispensed
-        };
-    });
-
-    // Créer le bulletin
-    const bulletin = await Bulletin.create({
-        eleve,
-        classe,
-        periode,
-        anneeScolaire: anneeScolaire || '2025-2026',
-        notes: mappedNotes,
-        genereePar: req.user.id
-    });
-
-    // Recalculate absence deductions before saving
-    await recalculatePointDeductions(eleve, classe, periode, new Date());
-
-    // Calculer la moyenne générale et le rang
-    await bulletin.calculerMoyenneGenerale();
-    await bulletin.calculerRang();
-    await bulletin.save();
+    // Créer le bulletin via le helper
+    const bulletin = await createOrUpdateBulletin(eleve, classe, periode, anneeScolaire, req.user.id);
 
     await bulletin.populate([
         { path: 'eleve', select: 'nom prenom matricule' },
@@ -224,94 +249,14 @@ exports.generateBulletinsClasse = asyncHandler(async (req, res, next) => {
 
     for (const eleve of eleves) {
         try {
-            // Vérifier qu'un bulletin n'existe pas déjà
-            const existingBulletin = await Bulletin.findOne({
-                eleve: eleve._id,
-                periode,
-                anneeScolaire: anneeScolaire || '2025-2026'
-            });
-
-            if (existingBulletin) {
-                erreurs.push({
-                    eleve: `${eleve.prenom} ${eleve.nom}`,
-                    erreur: 'Bulletin déjà existant'
-                });
-                continue;
-            }
-
-            // Get current academic year from settings
-            const academicSetting = await Setting.findOne({ key: 'academic_year_config' });
-            const currentYear = academicSetting ? (academicSetting.value.year || academicSetting.value.academicYear) : '2023-2024';
-
-            // Récupérer les notes validées
-            const notesDocs = await Note.find({
-                eleve: eleve._id,
+            // createOrUpdateBulletin will handle checking for existing bulletin and creating/updating
+            const bulletin = await createOrUpdateBulletin(
+                eleve._id,
                 classe,
                 periode,
-                statut: 'VALIDEE',
-                anneeScolaire: anneeScolaire || currentYear
-            }).populate('matiere');
-
-            // Récupérer les dispensations de l'élève
-            const Dispensation = require('../models/Dispensation');
-            const dispensations = await Dispensation.find({ eleve: eleve._id, anneeScolaire: anneeScolaire || '2025-2026' });
-            const dispensedMatiereIds = dispensations.map(d => d.matiere.toString());
-
-            const mappedNotes = notesDocs.length === 0 ? [] : notesDocs.map(noteDoc => {
-                const isDispensed = dispensedMatiereIds.includes(noteDoc.matiere._id.toString());
-                const intNotes = noteDoc.notes.filter(n => n.type.toLowerCase().includes('interro'));
-                const devNotes = noteDoc.notes.filter(n => n.type.toLowerCase().includes('devoir'));
-                const compoNotes = noteDoc.notes.filter(n => n.type.toLowerCase().includes('compo'));
-
-                const avgInt = intNotes.length > 0 ? intNotes.reduce((sum, n) => sum + n.valeur, 0) / intNotes.length : undefined;
-                const avgDev = devNotes.length > 0 ? devNotes.reduce((sum, n) => sum + n.valeur, 0) / devNotes.length : undefined;
-                const avgCompo = compoNotes.length > 0 ? compoNotes.reduce((sum, n) => sum + n.valeur, 0) / compoNotes.length : undefined;
-
-                const interroGrades = intNotes.map(n => n.valeur);
-                const devoirGrades = devNotes.map(n => n.valeur);
-                const compoGrades = compoNotes.map(n => n.valeur);
-
-                const coeff = noteDoc.matiere?.coefficient || 1;
-                const average = noteDoc.moyenne || 0;
-
-                // Utiliser le professeur officiel de ClasseMatiere, sinon celui de la note
-                const officialProf = assignmentMap[noteDoc.matiere._id.toString()];
-
-                return {
-                    matiere: noteDoc.matiere._id,
-                    professeur: officialProf || noteDoc.professeur,
-                    int: avgInt,
-                    dev: avgDev,
-                    compo: avgCompo,
-                    interroGrades,
-                    devoirGrades,
-                    compoGrades,
-                    moyenneMatiere: average,
-                    coeff: coeff,
-                    notePonderee: isDispensed ? 0 : average * coeff,
-                    appreciation: isDispensed ? 'DISPENSÉ' : noteDoc.appreciation,
-                    categorie: noteDoc.matiere?.categorie || 'AUTRES',
-                    isDispensed: isDispensed
-                };
-            });
-
-            // Créer le bulletin
-            const bulletin = await Bulletin.create({
-                eleve: eleve._id,
-                classe,
-                periode,
-                anneeScolaire: anneeScolaire || '2025-2026',
-                notes: mappedNotes,
-                genereePar: req.user.id
-            });
-
-            // Recalculate absence deductions before saving
-            await recalculatePointDeductions(eleve._id, classe, periode, new Date());
-
-            await bulletin.calculerMoyenneGenerale();
-            await bulletin.calculerRang();
-            await bulletin.save();
-
+                anneeScolaire,
+                req.user.id
+            );
             bulletinsGeneres.push(bulletin);
         } catch (error) {
             erreurs.push({
@@ -321,7 +266,7 @@ exports.generateBulletinsClasse = asyncHandler(async (req, res, next) => {
         }
     }
 
-    // Calculer les rangs et statistiques de classe pour tous les bulletins générés
+    // Mettre à jour les statistiques de la classe après avoir généré tous les bulletins
     if (bulletinsGeneres.length > 0) {
         const academicSetting = await Setting.findOne({ key: 'academic_year_config' });
         const currentYear = academicSetting ? (academicSetting.value.year || academicSetting.value.academicYear) : '2023-2024';
@@ -340,26 +285,73 @@ exports.generateBulletinsClasse = asyncHandler(async (req, res, next) => {
 // @route   GET /api/v1/bulletins/classe/:classeId
 // @access  Private
 exports.getBulletinsByClasse = asyncHandler(async (req, res, next) => {
-    const { periode, statut, anneeScolaire } = req.query;
+    let { periode, statut, anneeScolaire } = req.query;
+
+    // Détection auto de la période et de l'année si manquantes
+    if (!anneeScolaire || !periode) {
+        const academicSetting = await Setting.findOne({ key: 'academic_year_config' });
+        if (!anneeScolaire) {
+            anneeScolaire = academicSetting ? (academicSetting.value.year || academicSetting.value.academicYear) : '2023-2024';
+        }
+        if (!periode) {
+            // Chercher currentTrimester ou currentSemester
+            const trimesterSetting = await Setting.findOne({ key: 'currentTrimester' });
+            const semesterSetting = await Setting.findOne({ key: 'currentSemester' });
+
+            if (trimesterSetting) {
+                // Map "1er Trimestre" -> "Trimestre 1"
+                const t = trimesterSetting.value.trimester || '';
+                if (t.includes('1')) periode = 'Trimestre 1';
+                else if (t.includes('2')) periode = 'Trimestre 2';
+                else if (t.includes('3')) periode = 'Trimestre 3';
+            } else if (semesterSetting) {
+                const s = semesterSetting.value.semester || '';
+                if (s.includes('1')) periode = 'Semestre 1';
+                else if (s.includes('2')) periode = 'Semestre 2';
+            }
+
+            // Fallback ultime
+            if (!periode) periode = 'Trimestre 1';
+        }
+    }
 
     let query = { classe: req.params.classeId };
-
     if (periode) query.periode = periode;
     if (statut) query.statut = statut;
     if (anneeScolaire) query.anneeScolaire = anneeScolaire;
 
-    const bulletins = await Bulletin.find(query)
+    let bulletins = await Bulletin.find(query)
         .populate('eleve', 'nom prenom matricule dateNaissance lieuNaissance photo redoublant')
         .populate('classe', 'niveau section filiere')
         .populate('genereePar', 'nom prenom')
-        .populate({
-            path: 'notes',
-            populate: [
-                { path: 'matiere', select: 'nom coefficient' },
-                { path: 'professeur', select: 'nom prenom' }
-            ]
-        })
+        .populate('notes.matiere', 'nom coefficient')
+        .populate('notes.professeur', 'nom prenom')
         .sort({ moyenneGenerale: -1 });
+
+    // Auto-population: Si certains élèves manquent, on les génère à la volée
+    if (periode && anneeScolaire) {
+        const studentsInClass = await User.find({ classe: req.params.classeId, role: 'ELEVE' });
+        const existingStudentIds = bulletins.map(b => b.eleve ? b.eleve._id.toString() : '');
+        const missingStudents = studentsInClass.filter(s => !existingStudentIds.includes(s._id.toString()));
+
+        if (missingStudents.length > 0) {
+            for (const student of missingStudents) {
+                try {
+                    await createOrUpdateBulletin(student._id, req.params.classeId, periode, anneeScolaire, null);
+                } catch (e) {
+                    console.error(`Auto-gen error for ${student._id}:`, e.message);
+                }
+            }
+            // Re-fetch after generation
+            bulletins = await Bulletin.find(query)
+                .populate('eleve', 'nom prenom matricule dateNaissance lieuNaissance photo redoublant')
+                .populate('classe', 'niveau section filiere')
+                .populate('genereePar', 'nom prenom')
+                .populate('notes.matiere', 'nom coefficient')
+                .populate('notes.professeur', 'nom prenom')
+                .sort({ moyenneGenerale: -1 });
+        }
+    }
 
     res.status(200).json({
         success: true,
@@ -383,7 +375,6 @@ exports.getBulletinsByEleve = asyncHandler(async (req, res, next) => {
     if (bulletins.length === 0) {
         const student = await User.findById(req.params.eleveId);
         if (student && student.role === 'ELEVE' && student.classe) {
-            const Classe = require('../models/Classe');
             const classe = await Classe.findById(student.classe);
 
             if (classe) {
@@ -391,28 +382,22 @@ exports.getBulletinsByEleve = asyncHandler(async (req, res, next) => {
                     ? ['Semestre 1', 'Semestre 2']
                     : ['Trimestre 1', 'Trimestre 2', 'Trimestre 3'];
 
-                const defaultBulletins = periodes.map(periode => ({
-                    eleve: student._id,
-                    classe: student.classe,
-                    periode: periode,
-                    anneeScolaire: classe.anneeScolaire || '2025-2026',
-                    notes: [],
-                    statut: 'BROUILLON'
-                }));
-
-                await Bulletin.insertMany(defaultBulletins);
+                for (const periode of periodes) {
+                    await createOrUpdateBulletin(
+                        student._id,
+                        student.classe,
+                        periode,
+                        classe.anneeScolaire || '2025-2026',
+                        null // Pas d'utilisateur spécifique pour l'auto-génération
+                    );
+                }
 
                 // Récupérer à nouveau après création
                 bulletins = await Bulletin.find({ eleve: req.params.eleveId })
                     .populate('eleve', 'nom prenom matricule dateNaissance lieuNaissance photo redoublant')
                     .populate('classe', 'niveau section filiere anneeScolaire')
-                    .populate({
-                        path: 'notes',
-                        populate: [
-                            { path: 'matiere', select: 'nom coefficient' },
-                            { path: 'professeur', select: 'nom prenom' }
-                        ]
-                    })
+                    .populate('notes.matiere', 'nom coefficient')
+                    .populate('notes.professeur', 'nom prenom')
                     .sort('-anneeScolaire -periode');
             }
         }
@@ -432,13 +417,8 @@ exports.getBulletin = asyncHandler(async (req, res, next) => {
     const bulletin = await Bulletin.findById(req.params.id)
         .populate('eleve', 'nom prenom matricule dateNaissance lieuNaissance photo redoublant')
         .populate('classe', 'niveau section filiere')
-        .populate({
-            path: 'notes',
-            populate: [
-                { path: 'matiere', select: 'nom coefficient' },
-                { path: 'professeur', select: 'nom prenom' }
-            ]
-        })
+        .populate('notes.matiere', 'nom coefficient')
+        .populate('notes.professeur', 'nom prenom')
         .populate('genereePar', 'nom prenom');
 
     if (!bulletin) {
@@ -491,7 +471,7 @@ exports.finalizeBulletin = asyncHandler(async (req, res, next) => {
     await bulletin.populate([
         { path: 'eleve', select: 'nom prenom matricule' },
         { path: 'classe', select: 'niveau section filiere' },
-        { path: 'notes', populate: { path: 'matiere', select: 'nom coefficient' } }
+        { path: 'notes.matiere', select: 'nom coefficient' }
     ]);
 
     res.status(200).json({
@@ -585,13 +565,8 @@ exports.downloadBulletinPDF = asyncHandler(async (req, res, next) => {
         const bulletin = await Bulletin.findById(req.params.id)
             .populate('eleve', 'nom prenom matricule dateNaissance lieuNaissance photo')
             .populate('classe', 'niveau section filiere')
-            .populate({
-                path: 'notes',
-                populate: [
-                    { path: 'matiere', select: 'nom coefficient' },
-                    { path: 'professeur', select: 'nom prenom' }
-                ]
-            })
+            .populate('notes.matiere', 'nom coefficient')
+            .populate('notes.professeur', 'nom prenom')
             .populate('genereePar', 'nom prenom');
 
         if (!bulletin) {
@@ -643,13 +618,8 @@ exports.downloadClassBulletinsPDF = asyncHandler(async (req, res, next) => {
         const bulletins = await Bulletin.find(query)
             .populate('eleve', 'nom prenom matricule dateNaissance lieuNaissance photo')
             .populate('classe', 'niveau section filiere')
-            .populate({
-                path: 'notes',
-                populate: [
-                    { path: 'matiere', select: 'nom coefficient' },
-                    { path: 'professeur', select: 'nom prenom' }
-                ]
-            })
+            .populate('notes.matiere', 'nom coefficient')
+            .populate('notes.professeur', 'nom prenom')
             .populate('genereePar', 'nom prenom')
             .sort('eleve.nom eleve.prenom');
 
@@ -657,12 +627,11 @@ exports.downloadClassBulletinsPDF = asyncHandler(async (req, res, next) => {
             return next(new ErrorResponse('Aucun bulletin trouvé pour cette classe et cette période', 404));
         }
 
-        // Vérification de la validation de TOUS les bulletins
-        // UPDATE: Allow partial printing. Filter and keep only valid ones.
-        const validBulletins = bulletins.filter(b => b.statut === 'FINALISE' || b.statut === 'DISTRIBUE');
+        // Vérification: Inclure TOUS les bulletins trouvés (permet de visualiser avant validation)
+        const validBulletins = bulletins;
 
         if (validBulletins.length === 0) {
-            return next(new ErrorResponse('Impossible d\'imprimer : Aucun bulletin n\'est validé pour cette classe.', 400));
+            return next(new ErrorResponse('Aucun bulletin disponible pour cette classe.', 400));
         }
 
         // Fetch school config
@@ -849,7 +818,7 @@ exports.getValidationPageStats = asyncHandler(async (req, res, next) => {
         const acc = {};
         evalCounts.forEach(e => { acc[e._id.toString()] = e.count; });
 
-        for (const m of matieres) {
+        for (const m of matieresDocs) {
             const count = acc[m.matiere.toString()] || 0;
             if (count < 2) {
                 allSubjectsReady = false;
@@ -1132,3 +1101,5 @@ exports.regenerateAllBulletins = asyncHandler(async (req, res, next) => {
         return next(new ErrorResponse(`Erreur lors de la régénération: ${error.message}`, 500));
     }
 });
+// Export non-route handlers for internal use if needed
+exports.createOrUpdateBulletin = createOrUpdateBulletin;

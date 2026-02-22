@@ -16,7 +16,7 @@ const errorHandler = (err, req, res, next) => {
     // Mongoose duplicate key (Code 11000)
     if (err.code === 11000) {
         // Extract the field value or key pattern
-        const fieldName = Object.keys(err.keyValue)[0];
+        const fieldName = err.keyValue ? Object.keys(err.keyValue)[0] : 'Inconnu';
         const message = `La valeur pour '${fieldName}' existe déjà. Veuillez en choisir une autre.`;
         error = new ErrorResponse(message, 400);
     }

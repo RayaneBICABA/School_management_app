@@ -43,7 +43,10 @@
             </div>
           </div>
           <div class="flex items-center gap-3">
-            <!-- Removed Imprimer button -->
+            <button @click="telechargerClassePDF" class="flex items-center gap-2 px-5 py-2.5 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-bold rounded-lg hover:bg-slate-200 dark:hover:bg-slate-700 shadow-sm border border-slate-200 dark:border-slate-700 transition-colors">
+              <span class="material-symbols-outlined text-[20px]">download</span>
+              Télécharger tous les bulletins
+            </button>
             <button @click="validerClasseEntiere" class="flex items-center gap-2 px-5 py-2.5 bg-primary text-white font-bold rounded-lg hover:bg-blue-600 shadow-md transition-colors">
               <span class="material-symbols-outlined text-[20px]">verified</span>
               Valider la classe entière
@@ -114,10 +117,15 @@
                 </td>
                 <!-- Removed Appreciation Globale Data -->
                 <td class="px-6 py-4 text-right">
-                  <button @click="voirBulletin(student)" class="inline-flex items-center gap-1 text-primary text-sm font-bold hover:underline">
-                    Voir bulletin
-                    <span class="material-symbols-outlined text-base">open_in_new</span>
-                  </button>
+                  <div class="flex items-center justify-end gap-3">
+                    <button @click="telechargerBulletinPDF(student)" class="inline-flex items-center justify-center p-2 text-slate-500 hover:text-primary hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg transition-colors" title="Télécharger">
+                      <span class="material-symbols-outlined text-lg">download</span>
+                    </button>
+                    <button @click="voirBulletin(student)" class="inline-flex items-center gap-1 text-primary text-sm font-bold hover:underline">
+                      Voir bulletin
+                      <span class="material-symbols-outlined text-base">open_in_new</span>
+                    </button>
+                  </div>
                 </td>
               </tr>
             </tbody>
@@ -183,12 +191,79 @@ const stats = ref({
 const students = ref([])
 
 // Voir le bulletin d'un élève
-const voirBulletin = (student) => {
+const voirBulletin = async (student) => {
   if (student.bulletinId) {
     router.push(`/proviseur/bulletin/${student.bulletinId}`)
   } else {
-    showError('Aucun bulletin trouvé pour cet élève');
+    try {
+        const res = await api.getBulletinsByEleve(student.id);
+        const bulletins = res.data?.data || [];
+        if (bulletins && bulletins.length > 0) {
+            student.bulletinId = bulletins[0]._id;
+            router.push(`/proviseur/bulletin/${student.bulletinId}`);
+        } else {
+            showError("Aucun bulletin trouvé pour cet élève, même par défaut.");
+        }
+    } catch(e) {
+        showError("Erreur lors de la récupération du bulletin de base.");
+    }
   }
+}
+
+// Télécharger le bulletin d'un élève en PDF
+const telechargerBulletinPDF = async (student) => {
+    let bId = student.bulletinId;
+    if (!bId) {
+        try {
+            const res = await api.getBulletinsByEleve(student.id);
+            const bulletins = res.data?.data || [];
+            if (bulletins && bulletins.length > 0) {
+                bId = bulletins[0]._id;
+                student.bulletinId = bId;
+            } else {
+                showError("Aucun bulletin trouvé pour cet élève, même par défaut.");
+                return;
+            }
+        } catch(e) {
+            showError("Erreur lors de la récupération du bulletin de base.");
+            return;
+        }
+    }
+    
+    try {
+        const response = await api.downloadBulletinPDF(bId);
+        const url = window.URL.createObjectURL(new Blob([response.data]));
+        const link = document.createElement('a');
+        link.href = url;
+        link.setAttribute('download', `Bulletin_${student.nom.replace(/\s+/g, '_')}_${classeInfo.value.nom}.pdf`);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        window.URL.revokeObjectURL(url);
+        success('Téléchargement démarré');
+    } catch (e) {
+        console.error("Erreur lors du téléchargement:", e);
+        showError('Erreur lors du téléchargement du bulletin');
+    }
+}
+
+// Télécharger tous les bulletins de la classe en PDF
+const telechargerClassePDF = async () => {
+    try {
+        const response = await api.downloadClassBulletins(classeId);
+        const url = window.URL.createObjectURL(new Blob([response.data]));
+        const link = document.createElement('a');
+        link.href = url;
+        link.setAttribute('download', `Bulletins_Classe_${classeInfo.value.nom.replace(/\s+/g, '_')}.pdf`);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        window.URL.revokeObjectURL(url);
+        success('Téléchargement de la classe démarré');
+    } catch (e) {
+        console.error("Erreur lors du téléchargement de la classe:", e);
+        showError('Erreur lors de la génération du PDF de la classe');
+    }
 }
 
 // Générer un matricule unique
@@ -235,69 +310,56 @@ const fetchClasseDetails = async () => {
       serie: classeData.serie || ''
     }
     
-    // Récupérer les bulletins de la classe pour les moyennes et rangs
-    const bulletinsResponse = await api.getBulletinsByClasse(classeId);
+    const [bulletinsResponse, studentsResponse] = await Promise.all([
+      api.getBulletinsByClasse(classeId),
+      api.getStudentsByClass(classeId)
+    ]);
+    
     const bulletins = bulletinsResponse.data?.data || [];
+    const studentsData = studentsResponse.data?.data || [];
     
-    // Fallback if no bulletins found (should avoid this in logic, but safety first)
-    // Actually we should rely on Bulletins. If no bulletins, maybe show students from user list but with 0 avg.
-    // For now, assume bulletins exist or we fetch students via `getStudentsByClass` and merge.
-    
-    // Let's stick to existing logic but merge with real bulletindata if available.
-    
-    // Since user wants synchronization, we should rely on Bulletins primarily for grades.
-    
-    students.value = bulletins.map((b, index) => ({
-      id: b.eleve._id,
-      bulletinId: b._id,
-      rang: parseInt(b.rang) || index + 1,
-      rangText: b.rang === '1' ? '1er' : `${b.rang}e`,
-      nom: `${b.eleve.nom} ${b.eleve.prenom}`,
-      matricule: b.eleve.matricule || 'N/A',
-      initials: `${b.eleve.nom?.[0] || ''}${b.eleve.prenom?.[0] || ''}`.toUpperCase(),
-      moyenne: (b.moyenneGenerale || 0).toFixed(2),
-      appreciation: b.appreciationGenerale || ''
-    }));
+    // Create a map of student ID -> bulletin
+    const bulletinMap = {};
+    bulletins.forEach(b => {
+      if (b.eleve && b.eleve._id) {
+        bulletinMap[b.eleve._id] = b;
+      }
+    });
 
-    if (students.value.length === 0) {
-         // Fallback to student list if no bulletins yet
-         const studentsResponse = await api.getStudentsByClass(classeId)
-         const studentsData = studentsResponse.data?.data || []
-         students.value = studentsData.map((student, index) => ({
-            id: student._id || student.id,
-            bulletinId: null,
-            rang: '-',
-            rangText: '-',
-            nom: `${student.nom || ''} ${student.prenom || ''}`.trim(),
-            matricule: student.matricule || 'N/A',
-            initials: `${student.nom?.[0] || ''}${student.prenom?.[0] || ''}`.toUpperCase(),
-            moyenne: '0.00',
-            appreciation: ''
-         }));
-    }
+    // Strategy: Use official student list as base, overlay bulletin data if exists
+    students.value = studentsData.map((s, index) => {
+      const studentId = s._id || s.id;
+      const b = bulletinMap[studentId];
+      
+      return {
+        id: studentId,
+        bulletinId: b ? b._id : null,
+        rang: b ? (parseInt(b.rang) || '-') : '-',
+        rangText: b && b.rang ? (b.rang === '1' ? '1er' : `${b.rang}e`) : '-',
+        nom: `${s.nom || ''} ${s.prenom || ''}`.trim(),
+        matricule: s.matricule || 'N/A',
+        initials: `${s.nom?.[0] || ''}${s.prenom?.[0] || ''}`.toUpperCase(),
+        moyenne: b ? (b.moyenneGenerale || 0).toFixed(2) : '0.00',
+        appreciation: b ? (b.appreciationGenerale || '') : ''
+      };
+    });
     
     // Mettre à jour le nombre total d'élèves
     classeInfo.value.totalEleves = students.value.length
     
     // Calculer les statistiques
     if (students.value.length > 0) {
-      const moyennes = students.value.map(s => parseFloat(s.moyenne)).filter(m => m > 0);
-      if (moyennes.length > 0) {
-          stats.value = {
-            moyenneClasse: (moyennes.reduce((sum, m) => sum + m, 0) / moyennes.length).toFixed(2),
-            plusHauteMoy: Math.max(...moyennes).toFixed(2),
-            plusBasseMoy: Math.min(...moyennes).toFixed(2),
-            bulletinsPrets: bulletins.length // Count actual bulletins
-          }
-      } else {
-           stats.value = {
-            moyenneClasse: '0.00',
-            plusHauteMoy: '0.00',
-            plusBasseMoy: '0.00',
-            bulletinsPrets: 0
-          }
+      const bulletinsWithMoyenne = students.value.filter(s => s.bulletinId && parseFloat(s.moyenne) > 0);
+      const allMoyennes = bulletinsWithMoyenne.map(s => parseFloat(s.moyenne));
+      
+      stats.value = {
+        moyenneClasse: allMoyennes.length > 0 
+          ? (allMoyennes.reduce((sum, m) => sum + m, 0) / allMoyennes.length).toFixed(2) 
+          : '0.00',
+        plusHauteMoy: allMoyennes.length > 0 ? Math.max(...allMoyennes).toFixed(2) : '0.00',
+        plusBasseMoy: allMoyennes.length > 0 ? Math.min(...allMoyennes).toFixed(2) : '0.00',
+        bulletinsPrets: bulletins.length
       }
-
     } else {
       stats.value = {
         moyenneClasse: '0.00',

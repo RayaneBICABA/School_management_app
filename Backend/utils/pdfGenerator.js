@@ -300,9 +300,9 @@ const generateHeaderHTML = (schoolConfig, secondaryText = '') => {
     return `
         <div class="header">
             <div class="header-left">
-                <p>${schoolConfig.region || 'LA FORMATION PROFESSIONNELLE ET TECHNIQUE'}</p>
-                <p>${schoolConfig.subRegion || 'RÉGION CENTRE'}</p>
-                <p>${schoolConfig.schoolName || 'LYCÉE WEND PUIRÉ DE SAABA'}</p>
+                <p>${schoolConfig.region || 'RÉPUBLIQUE DU CAMEROUN'}</p>
+                <p>${schoolConfig.subRegion || 'MINISTÈRE DES ENSEIGNEMENTS SECONDAIRES'}</p>
+                <p>${schoolConfig.schoolName || 'ÉTABLISSEMENT SCOLAIRE'}</p>
                 ${secondaryText ? `<p>${secondaryText}</p>` : ''}
             </div>
             
@@ -312,8 +312,8 @@ const generateHeaderHTML = (schoolConfig, secondaryText = '') => {
             </div>
             
             <div class="header-right">
-                <p>${schoolConfig.country || 'BURKINA FASO'}</p>
-                <p class="sub-motto">${schoolConfig.patrie || 'La Patrie ou la Mort, nous Vaincrons'}</p>
+                <p>${schoolConfig.country || 'PAIX - TRAVAIL - PATRIE'}</p>
+                <p class="sub-motto">${schoolConfig.patrie || ''}</p>
             </div>
         </div>
     `;

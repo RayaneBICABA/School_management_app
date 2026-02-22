@@ -890,33 +890,41 @@ exports.validateClassBulletins = asyncHandler(async (req, res, next) => {
         return next(new ErrorResponse('Non autorisé', 403));
     }
 
-    const bulletins = await Bulletin.find({
-        classe: classeId,
-        periode: periode || 'Trimestre 1',
-        anneeScolaire: anneeScolaire || '2025-2026'
-    });
+    const currentYear = anneeScolaire || '2025-2026';
+    const currentPeriode = periode || 'Trimestre 1';
 
-    if (bulletins.length === 0) {
-        return next(new ErrorResponse('Aucun bulletin trouvé pour cette classe', 404));
+    // Récupérer tous les élèves de la classe
+    const eleves = await User.find({ classe: classeId, role: 'ELEVE' });
+
+    if (eleves.length === 0) {
+        return next(new ErrorResponse('Aucun élève trouvé dans cette classe', 404));
     }
 
     let updatedCount = 0;
-    for (const bulletin of bulletins) {
-        // Update status and signature
-        bulletin.statut = 'FINALISE'; // Ready for print/distribute
-        bulletin.signatureProviseur = true;
-        // Optionally signatureCenseur if not already? User didn't specify.
+    for (const eleve of eleves) {
+        // 1. Forcer la régénération du bulletin vide existant (ou création s'il n'existe pas encore)
+        // avec la logique corrigée qui tire les vraies moyennes Validées de Note
+        const bulletin = await createOrUpdateBulletin(
+            eleve._id,
+            classeId,
+            currentPeriode,
+            currentYear,
+            req.user.id
+        );
 
-        // Recalculate to be sure
-        await bulletin.calculerMoyenneGenerale();
-        await bulletin.calculerRang();
-        await bulletin.save();
-        updatedCount++;
+        // 2. Mettre à jour le statut et la signature
+        if (bulletin) {
+            bulletin.statut = 'FINALISE'; // Ready for print/distribute
+            bulletin.signatureProviseur = true;
+
+            await bulletin.save();
+            updatedCount++;
+        }
     }
 
     // Mettre à jour les stats de la classe pour cette période
     if (updatedCount > 0) {
-        await updateClassStats(classeId, periode || 'Trimestre 1', anneeScolaire || '2025-2026');
+        await updateClassStats(classeId, currentPeriode, currentYear);
     }
 
     res.status(200).json({

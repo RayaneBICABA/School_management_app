@@ -140,6 +140,23 @@ const createOrUpdateBulletin = async (eleveId, classeId, periode, anneeScolaire,
         };
     });
 
+    const classeObj = await Classe.findById(classeId);
+    if (classeObj && classeObj.filiere === 'Technique') {
+        const dispensedIdsSet = new Set(dispensedMatiereIds);
+        // Filtrer les matières qui n'ont aucune note *et* ne sont pas dispensées
+        const indexToKeep = mappedNotes.map((m, idx) => {
+            const hasNotes = (m.int !== undefined || m.dev !== undefined || m.compo !== undefined || m.interroGrades.length > 0 || m.devoirGrades.length > 0 || m.compoGrades.length > 0);
+            return hasNotes || dispensedIdsSet.has(m.matiere.toString()) ? idx : -1;
+        }).filter(idx => idx !== -1);
+
+        let filteredMappedNotes = [];
+        indexToKeep.forEach(idx => filteredMappedNotes.push(mappedNotes[idx]));
+
+        // Assigner à mappedNotes la version filtrée (Note: mappedNotes était déclaré avec const plus haut, on va muter ou redéclarer ici)
+        // Workaround pour ne pas toucher la ligne `const mappedNotes = notesDocs.map(...)` :
+        mappedNotes.splice(0, mappedNotes.length, ...filteredMappedNotes);
+    }
+
     // Chercher s'il existe déjà un bulletin
     let bulletin = await Bulletin.findOne({ eleve: eleveId, periode, anneeScolaire: year });
 
@@ -781,46 +798,27 @@ exports.getValidationPageStats = asyncHandler(async (req, res, next) => {
 
         // Check if all subjects have >= 2 validated evaluations
         let allSubjectsReady = true;
-        // Optimization: Aggregate evaluations count by matiere for this class/period
-        // Note: Evaluation model uses 'matiere' and 'classe' and 'statut'='VALIDE' (or VALIDE?)
-        // Check Evaluation model: enum ['EN_ATTENTE', 'VALIDE', 'REFUSE', 'TERMINE']
-
-        // Wait, user said "evaluations validés". Assuming 'VALIDE' or 'TERMINE'. 
-        // Let's use 'VALIDE' based on Evaluation model.
-
-        // Actually, we can just check if *Evaluations* exist.
-        // Or simpler: Check if *Grades* (Notes) exist? 
-        // Prompt said: "toute les matieres aurait minimum 2 evaluations validés". 
-        // This refers to the *Evaluation Planning* (Evaluations that happened).
-        // But logic for "Bulletin" usually relies on "Notes". 
-        // If an Evaluation is validated, it means it took place. 
-        // I will check Evaluation count where statut='VALIDE' or 'TERMINE' and date < now? 
-        // Let's just user 'VALIDE' and 'TERMINE'.
-
-        const evalCounts = await Evaluation.aggregate([
+        // Optimization: Aggregate validated Notes count by matiere for this class/period
+        const validedNotesCounts = await Note.aggregate([
             {
                 $match: {
                     classe: classe._id,
                     matiere: { $in: matiereIds },
-                    statut: { $in: ['VALIDE', 'TERMINE'] }
-                    // Filter by period? Evaluation usually has date. 
-                    // Period logic is complex (date range). 
-                    // For now, I will assume all evaluations for simplicity or if Evaluation has 'periode' field? 
-                    // Model shows 'date'. I should filter by date range for the period if possible. 
-                    // As I don't have Period dates in memory, I'll skip date filter for now or assume recent.
-                    // Risk: Counting old evaluations. 
-                    // Improvement: Filter by academic year dates or assume database is cleaned/scoped.
+                    periode: selectedPeriod,
+                    anneeScolaire: currentYear,
+                    statut: 'VALIDEE'
                 }
             },
             { $group: { _id: "$matiere", count: { $sum: 1 } } }
         ]);
 
         const acc = {};
-        evalCounts.forEach(e => { acc[e._id.toString()] = e.count; });
+        validedNotesCounts.forEach(e => { acc[e._id.toString()] = e.count; });
 
         for (const m of matieresDocs) {
             const count = acc[m.matiere.toString()] || 0;
-            if (count < 2) {
+            // Une matière qui n'a pas du tout de note validée bloque la classe
+            if (count === 0) {
                 allSubjectsReady = false;
                 break;
             }
@@ -1040,6 +1038,19 @@ exports.regenerateAllBulletins = asyncHandler(async (req, res, next) => {
                         }
                     })
                     .filter(note => note !== null); // Filtrer les notes qui ont échoué au mapping
+
+                if (mappedNotes.length === 0) continue;
+
+                // Pour les filières techniques, retirer les matières sans note ni dispense
+                const classeObj = await Classe.findById(classe);
+                if (classeObj && classeObj.filiere === 'Technique') {
+                    // on n'a pas accès aux dispenses ici dans rebuild all, mais ce n'est pas utilisé dans le mapper actuel de rebuild all
+                    // On va simplement filtrer celles sans notes
+                    const filteredMappedNotes = mappedNotes.filter(m =>
+                        m.int !== undefined || m.dev !== undefined || m.compo !== undefined || m.interroGrades.length > 0 || m.devoirGrades.length > 0 || m.compoGrades.length > 0
+                    );
+                    mappedNotes.splice(0, mappedNotes.length, ...filteredMappedNotes);
+                }
 
                 if (mappedNotes.length === 0) continue;
 

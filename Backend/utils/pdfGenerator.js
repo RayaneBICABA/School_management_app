@@ -333,11 +333,11 @@ const getMasterSheetHTML = (data, schoolConfig) => {
             <thead>
                 <tr>
                     <th rowspan="2" style="width: 25px;">RANG</th>
-                    <th rowspan="2" style="width: 80px;">MATRICULE</th>
-                    <th rowspan="2" class="text-left" style="min-width: 130px;">NOM ET PRÉNOMS</th>
-                    ${data.matieres.map(m => `<th colspan="${subjectColCounts[m._id]}" class="bg-blue-50">${m.nom} (Coef: ${m.coefficient})</th>`).join('')}
-                    <th rowspan="2" class="bg-orange-50" style="width: 60px;">TOTAL DES POINTS</th>
-                    <th rowspan="2" style="width: 60px;">MOYENNE GÉNÉRALE</th>
+                    <th rowspan="2" style="width: 70px;">MATRICULE</th>
+                    <th rowspan="2" class="text-left" style="width: 130px;">NOM ET PRÉNOMS</th>
+                    ${data.matieres.map(m => `<th colspan="${subjectColCounts[m._id]}" class="bg-blue-50" style="white-space: normal; max-width: 80px; word-wrap: break-word;">${m.nom}<br>(Coef: ${m.coefficient})</th>`).join('')}
+                    <th rowspan="2" class="bg-orange-50" style="width: 50px;">TOTAL DES<br>POINTS</th>
+                    <th rowspan="2" style="width: 50px;">MOYENNE<br>GÉNÉRALE</th>
                 </tr>
                 <tr>
                     ${data.matieres.map(m => {
@@ -458,7 +458,7 @@ const generateMasterGradeSheetPDF = async (data, schoolConfig = {}) => {
         const page = await browser.newPage();
         const html = getMasterSheetHTML(data, schoolConfig);
         await page.setContent(html, { waitUntil: 'networkidle0' });
-        return await page.pdf({ format: 'A3', landscape: true, printBackground: true });
+        return await page.pdf({ format: 'A3', landscape: true, printBackground: true, scale: 0.75, margin: { top: '5mm', right: '5mm', bottom: '5mm', left: '5mm' } });
     } finally { if (browser) await browser.close(); }
 };
 
@@ -479,7 +479,7 @@ const generateBulkMasterGradeSheetPDF = async (sheetsData, schoolConfig = {}) =>
         });
         fullHtml += '</body></html>';
         await page.setContent(fullHtml, { waitUntil: 'networkidle0' });
-        return await page.pdf({ format: 'A3', landscape: true, printBackground: true });
+        return await page.pdf({ format: 'A3', landscape: true, printBackground: true, scale: 0.75, margin: { top: '5mm', right: '5mm', bottom: '5mm', left: '5mm' } });
     } finally { if (browser) await browser.close(); }
 };
 

@@ -98,8 +98,8 @@
               <th rowspan="2" class="sticky left-0 z-30 bg-gray-50 border-r border-b p-2 w-10">N°</th>
               <th rowspan="2" class="sticky left-[40px] z-30 bg-gray-50 border-r border-b p-2 w-24">Matricule</th>
               <th rowspan="2" class="sticky left-[136px] z-30 bg-gray-50 border-r border-b p-2 min-w-[200px] text-left">Élève</th>
-              <th v-for="m in matieres" :key="'h1-'+m._id" :colspan="getColSpan(m._id)" class="border-r border-b p-2 text-center uppercase font-bold bg-blue-50 text-blue-900">
-                {{ m.nom }}
+              <th v-for="m in matieres" :key="'h1-'+m._id" :colspan="getColSpan(m._id)" class="border-r border-b p-2 text-center uppercase font-bold bg-blue-50 text-blue-900 whitespace-normal max-w-[100px] break-words">
+                {{ m.nom }}<br><span class="text-[9px] lowercase opacity-80">(Coef: {{ m.coefficient || 1 }})</span>
               </th>
               <th rowspan="2" class="border-r border-b p-2 bg-orange-50 text-orange-800 font-bold min-w-[80px]">TOTAL DES<br>POINTS</th>
               <th rowspan="2" class="border-b p-2 bg-gray-100 font-bold min-w-[80px]">MOYENNE<br>GÉNÉRALE</th>

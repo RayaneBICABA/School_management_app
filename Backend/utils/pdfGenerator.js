@@ -183,10 +183,44 @@ const generateBulletinContent = (bulletinData, schoolConfig = {}) => {
                 </tr>
             </thead>
             <tbody>
-                ${(bulletinData.notes || []).map(note => {
-        const moy = note.moyenneMatiere || 0;
-        const appr = getAppre(moy);
-        return `
+                ${(() => {
+            const isTechnique = classe.filiere === 'Technique';
+            const groups = {};
+
+            const getSmartCategory = (note) => {
+                const nom = (note.matiere?.nom || '').toUpperCase();
+                const baseCat = note.categorie || note.matiere?.categorie || 'ENSEIGNEMENT GÉNÉRAL';
+
+                if (isTechnique) {
+                    if (baseCat === 'ENSEIGNEMENT TECHNIQUE') return "MATIÈRES DE L'ENSEIGNEMENT TECHNIQUE";
+                    return "MATIÈRES DE L'ENSEIGNEMENT GÉNÉRAL";
+                }
+
+                if (baseCat === 'ENSEIGNEMENT TECHNIQUE') return "MATIÈRES DE L'ENSEIGNEMENT TECHNIQUE";
+
+                const isScientific = ['MATH', 'PHYS', 'SVT', 'CHIMIE', 'INFO', 'TECHNO', 'SCIENCES', 'BIO'].some(kw => nom.includes(kw)) || (nom.includes('GEO') && !nom.includes('GEOGRAPHIE'));
+                if (isScientific) return "MATIÈRES SCIENTIFIQUES";
+
+                const isLiterary = ['FRANCAIS', 'ANGLAIS', 'HISTOIRE', 'GEOGRAPHIE', 'PHILO', 'ALLEMAND', 'ESPAGNOL', 'LINGUISTIQUE', 'CIVIQUE', 'MORALE'].some(kw => nom.includes(kw));
+                if (isLiterary) return "MATIÈRES LITTÉRAIRES";
+
+                const isEPS = ['EPS', 'SPORT', 'PHYSIQUE'].some(kw => nom.includes(kw)) && !isScientific;
+                if (isEPS) return "ÉDUCATION PHYSIQUE ET SPORTIVE";
+
+                return "AUTRES";
+            };
+
+            (bulletinData.notes || []).forEach(note => {
+                const cat = getSmartCategory(note);
+                if (!groups[cat]) groups[cat] = [];
+                groups[cat].push(note);
+            });
+
+            return Object.entries(groups).map(([catName, notes]) => {
+                const catRows = notes.map(note => {
+                    const moy = note.moyenneMatiere || 0;
+                    const appr = getAppre(moy);
+                    return `
                     <tr>
                         <td class="text-left bold uppercase" style="padding: 6px;">${note.matiere?.nom || 'N/A'}</td>
                         <td>${(note.coeff || note.matiere?.coefficient || 0).toFixed(1)}</td>
@@ -198,8 +232,35 @@ const generateBulletinContent = (bulletinData, schoolConfig = {}) => {
                         <td class="text-xs" style="width: 80px; white-space: nowrap;">${note.professeur ? (note.professeur.civilite === 'Mr' ? 'M ' : (note.professeur.civilite ? note.professeur.civilite + ' ' : '')) + (note.professeur.prenom + ' ' + note.professeur.nom).toUpperCase() : ''}</td>
                         <td class="signature-cell" style="width: 60px;"></td>
                     </tr>
-                    `;
-    }).join('')}
+                `;
+                }).join('');
+
+                const catTotalCoeff = notes.reduce((sum, n) => sum + (n.coeff || 0), 0);
+                const catTotalPoints = notes.reduce((sum, n) => sum + (n.notePonderee || 0), 0);
+
+                return `
+                <tr class="bg-gray-300">
+                    <td colspan="7" class="bold text-center uppercase" style="padding: 4px;">${catName}</td>
+                </tr>
+                ${catRows}
+                <tr class="bg-gray-100 bold">
+                    <td class="text-left uppercase" style="padding: 4px; font-size: 9px;">Total ${catName}</td>
+                    <td>${catTotalCoeff.toFixed(1)}</td>
+                    <td></td>
+                    <td>${catTotalPoints.toFixed(2)}</td>
+                    <td colspan="3"></td>
+                </tr>
+            `;
+            }).join('');
+        })()}
+                <!-- Global Totals -->
+                <tr class="bg-gray-100 bold text-center">
+                    <td class="text-left uppercase" style="padding: 6px;">TOTAL GÉNÉRAL</td>
+                    <td>${(bulletinData.totalCoefficients || 0).toFixed(1)}</td>
+                    <td></td>
+                    <td class="bold">${(bulletinData.totalPoints || 0).toFixed(2)}</td>
+                    <td colspan="3"></td>
+                </tr>
             </tbody>
         </table>
 

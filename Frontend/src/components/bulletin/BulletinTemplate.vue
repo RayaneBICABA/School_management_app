@@ -74,7 +74,11 @@
           </tr>
         </thead>
         <tbody>
-            <tr v-for="note in bulletin.notes" :key="note.matiere?._id" class="text-center">
+          <template v-for="(category, catName) in groupedNotes" :key="catName">
+            <tr class="bg-gray-300">
+              <td :colspan="totalCols" class="border border-black p-2 font-bold text-center uppercase">{{ catName }}</td>
+            </tr>
+            <tr v-for="note in category" :key="note.matiere?._id" class="text-center">
               <td class="border border-black p-2 text-left font-bold uppercase">{{ note.matiere?.nom }}</td>
               <td class="border border-black p-1">{{ (note.coeff || note.matiere?.coefficient || 0).toFixed(1) }}</td>
               
@@ -87,14 +91,24 @@
               <td class="border border-black p-1 text-[9px]" style="min-width: 80px; white-space: nowrap;">{{ note.professeur ? (note.professeur.civilite === 'Mr' ? 'M ' : (note.professeur.civilite ? note.professeur.civilite + ' ' : '')) + (note.professeur.prenom + ' ' + note.professeur.nom).toUpperCase() : '' }}</td>
               <td class="border border-black p-1 w-20"></td>
             </tr>
-            <!-- Global Totals -->
-            <tr class="bg-gray-100 font-bold text-center">
-              <td class="border border-black p-2 text-left uppercase">Total</td>
-              <td class="border border-black p-1">{{ (bulletin.totalCoefficients || 0).toFixed(1) }}</td>
-              <td class="border border-black p-1"></td>
-              <td class="border border-black p-1 font-bold">{{ (bulletin.totalPoints || 0).toFixed(2) }}</td>
+            <!-- Category Totals -->
+            <tr class="bg-gray-100 font-bold">
+              <td class="border border-black p-1 px-2 text-left uppercase text-[9px]">Total {{ catName }}</td>
+              <td class="border border-black p-1 text-center">{{ getCategoryTotalCoeff(category) }}</td>
+              <td class="border border-black p-1" colspan="1"></td>
+              <td class="border border-black p-1 text-center">{{ getCategoryTotalPoints(category) }}</td>
               <td class="border border-black p-1" colspan="3"></td>
             </tr>
+          </template>
+
+          <!-- Global Totals -->
+          <tr class="bg-blue-50 font-bold text-center">
+            <td class="border border-black p-2 text-left uppercase">TOTAL GÉNÉRAL</td>
+            <td class="border border-black p-1">{{ (bulletin.totalCoefficients || 0).toFixed(1) }}</td>
+            <td class="border border-black p-1"></td>
+            <td class="border border-black p-1 font-bold">{{ (bulletin.totalPoints || 0).toFixed(2) }}</td>
+            <td class="border border-black p-1" colspan="3"></td>
+          </tr>
         </tbody>
       </table>
  
@@ -232,11 +246,38 @@ onMounted(async () => {
   }
 });
 
+const getSmartCategory = (note, filiereClass) => {
+  const nom = (note.matiere?.nom || '').toUpperCase();
+  const baseCat = note.categorie || note.matiere?.categorie || 'ENSEIGNEMENT GÉNÉRAL';
+  
+  if (filiereClass === 'Technique') {
+    if (baseCat === 'ENSEIGNEMENT TECHNIQUE') return "MATIÈRES DE L'ENSEIGNEMENT TECHNIQUE";
+    return "MATIÈRES DE L'ENSEIGNEMENT GÉNÉRAL";
+  }
+  
+  // Logic for "Générale" stream - dynamic sub-categorization
+  if (baseCat === 'ENSEIGNEMENT TECHNIQUE') return "MATIÈRES DE L'ENSEIGNEMENT TECHNIQUE";
+  
+  // Keyword matching for General stream
+  const isScientific = ['MATH', 'PHYS', 'SVT', 'CHIMIE', 'INFO', 'TECHNO', 'SCIENCES', 'BIO'].some(kw => nom.includes(kw)) || (nom.includes('GEO') && !nom.includes('GEOGRAPHIE'));
+  if (isScientific) return "MATIÈRES SCIENTIFIQUES";
+  
+  const isLiterary = ['FRANCAIS', 'ANGLAIS', 'HISTOIRE', 'GEOGRAPHIE', 'PHILO', 'ALLEMAND', 'ESPAGNOL', 'LINGUISTIQUE', 'CIVIQUE', 'MORALE'].some(kw => nom.includes(kw));
+  if (isLiterary) return "MATIÈRES LITTÉRAIRES";
+  
+  const isEPS = ['EPS', 'SPORT', 'PHYSIQUE'].some(kw => nom.includes(kw)) && !isScientific;
+  if (isEPS) return "ÉDUCATION PHYSIQUE ET SPORTIVE";
+  
+  return "AUTRES";
+};
+
 const groupedNotes = computed(() => {
   const groups = {};
+  const filiere = props.classe.filiere || 'Générale';
+  
   if (props.bulletin.notes && Array.isArray(props.bulletin.notes)) {
     props.bulletin.notes.forEach(note => {
-      const cat = note.categorie || 'AUTRES';
+      const cat = getSmartCategory(note, filiere);
       if (!groups[cat]) groups[cat] = [];
       groups[cat].push(note);
     });

@@ -82,12 +82,17 @@
               <td class="border border-black p-2 text-left font-bold uppercase">{{ note.matiere?.nom }}</td>
               <td class="border border-black p-1">{{ (note.coeff || note.matiere?.coefficient || 0).toFixed(1) }}</td>
               
-              <td v-if="note.isDispensed" colspan="2" class="border border-black p-2 font-bold italic text-red-600">D</td>
+              <template v-if="note.isDispensed">
+                <td class="border border-black p-2 font-bold italic">-</td>
+                <td class="border border-black p-1 font-bold">-</td>
+              </template>
               <template v-else>
                 <td class="border border-black p-1">{{ (note.moyenneMatiere || 0).toFixed(2) }}</td>
+                <td class="border border-black p-1 font-bold">{{ (note.notePonderee || 0).toFixed(2) }}</td>
               </template>
-              <td class="border border-black p-1 font-bold">{{ (note.notePonderee || 0).toFixed(2) }}</td>
-              <td class="border border-black p-1 w-24 italic" :class="getAppreciationColor(getSubjectAppreciation(note.moyenneMatiere || 0))">{{ getSubjectAppreciation(note.moyenneMatiere || 0) }}</td>
+              <td class="border border-black p-1 w-24 italic" :class="note.isDispensed ? '' : getAppreciationColor(getSubjectAppreciation(note.moyenneMatiere || 0))">
+                {{ note.isDispensed ? '' : getSubjectAppreciation(note.moyenneMatiere || 0) }}
+              </td>
               <td class="border border-black p-1 text-[9px]" style="min-width: 80px; white-space: nowrap;">{{ note.professeur ? (note.professeur.civilite === 'Mr' ? 'M ' : (note.professeur.civilite ? note.professeur.civilite + ' ' : '')) + (note.professeur.nom || '').toUpperCase() : '' }}</td>
               <td class="border border-black p-1 w-20"></td>
             </tr>

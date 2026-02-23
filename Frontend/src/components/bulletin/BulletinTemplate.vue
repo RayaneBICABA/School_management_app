@@ -90,7 +90,7 @@
                 <td class="border border-black p-1">{{ (note.moyenneMatiere || 0).toFixed(2) }}</td>
                 <td class="border border-black p-1 font-bold">{{ (note.notePonderee || 0).toFixed(2) }}</td>
               </template>
-              <td class="border border-black p-1 w-24 italic" :class="note.isDispensed ? '' : getAppreciationColor(getSubjectAppreciation(note.moyenneMatiere || 0))">
+              <td class="border border-black p-1 w-20 italic" :class="note.isDispensed ? '' : getAppreciationColor(getSubjectAppreciation(note.moyenneMatiere || 0))">
                 {{ note.isDispensed ? '' : getSubjectAppreciation(note.moyenneMatiere || 0) }}
               </td>
               <td class="border border-black p-1 text-[9px]" style="width: 60px; white-space: nowrap;">{{ note.professeur ? (note.professeur.civilite === 'Mr' ? 'M ' : (note.professeur.civilite ? note.professeur.civilite + ' ' : '')) + (note.professeur.nom || '').toUpperCase() : '' }}</td>

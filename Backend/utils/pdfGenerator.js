@@ -160,7 +160,7 @@ exports.getBulletinHTML = (bulletin, schoolConfig) => {
                     `<td>-</td><td>-</td>` :
                     `<td>${(note.moyenneMatiere || 0).toFixed(2)}</td><td>${(note.notePonderee || 0).toFixed(2)}</td>`
                 }
-                    <td class="italic">${app}</td>
+                    <td class="italic" style="width: 80px;">${app}</td>
                     <td style="font-size: 8px; width: 60px;">${prof}</td>
                     <td></td>
                 </tr>

@@ -392,20 +392,20 @@ exports.getMasterSheetHTML = (sheetsData, schoolConfig) => {
         const getColSpan = (matiereId) => getMaxNotes(matiereId) + 2;
 
         const headerHtml = `
-            <div class="header" style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 15px; border-bottom: 2px solid #333; padding-bottom: 10px;">
-                <div style="width: 30%; font-size: 10px; font-weight: bold; text-transform: uppercase; line-height: 1.2;">
-                    <p style="margin: 0;">${schoolConfig.region || 'REGION'}</p>
-                    <p style="margin: 0;">${schoolConfig.subRegion || 'REGION CENTRE'}</p>
-                    <p style="margin: 0;">${schoolConfig.schoolName || 'LYCÉE'}</p>
-                    <p style="margin: 4px 0 0 0; font-size: 9px; font-weight: normal;">Proviseur: ${schoolConfig.proviseurName || ''}</p>
+            <div class="header" style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 20px; border-bottom: 2px solid #f1f5f9; padding-bottom: 10px;">
+                <div style="width: 30%; font-[8.5px] font-weight: bold; text-transform: uppercase; line-height: 1.2;">
+                    <p style="margin: 0;">${schoolConfig.region || 'FORMATION PROFESSIONNELLE ET TECHNIQUE'}</p>
+                    <p style="margin: 0;">${schoolConfig.subRegion || 'RÉGION CENTRE'}</p>
+                    <p style="margin: 0;">${schoolConfig.schoolName || 'LYCÉE WEND PUIRÉ DE SAABA'}</p>
+                    <p style="margin: 0;">TÉL : ${schoolConfig.phone || '51 54 88 11'}</p>
                 </div>
-                <div style="width: 40%; display: flex; flex-direction: column; align-items: center; text-align: center;">
-                    <div style="font-size: 24px; font-weight: 900; color: #1e3a8a; letter-spacing: -0.05em;">${schoolConfig.shortName || 'LWS'}</div>
-                    <div style="font-size: 9px; font-weight: bold; color: #666; text-transform: uppercase; letter-spacing: 0.05em; margin-top: 4px;">${schoolConfig.motto || ''}</div>
+                <div style="width: 40%; display: flex; flex-direction: column; align-items: center; text-align: center; justify-content: center;">
+                    <div style="font-size: 28px; font-weight: 900; color: #1e3a8a; letter-spacing: -1px; line-height: 1;">${schoolConfig.shortName || 'LWS'}</div>
+                    <div style="font-size: 8px; color: #6b7280; text-transform: uppercase; letter-spacing: 0.5px; margin-top: 3px; font-weight: bold;">${schoolConfig.motto || 'DISCIPLINE-TRAVAIL-SUCCES'}</div>
                 </div>
-                <div style="width: 30%; text-align: right; font-size: 10px; font-weight: bold; text-transform: uppercase; line-height: 1.2;">
+                <div style="width: 30%; text-align: right; font-size: 8.5px; font-weight: bold; text-transform: uppercase; line-height: 1.2;">
                     <p style="margin: 0;">${schoolConfig.country || 'BURKINA FASO'}</p>
-                    <p style="font-size: 9px; font-style: italic; text-transform: none; font-weight: normal; margin: 0;">${schoolConfig.patrie || 'La Patrie ou la Mort, nous Vaincrons'}</p>
+                    <p style="margin: 0; font-size: 7.5px; font-style: italic; text-transform: none; font-weight: normal;">${schoolConfig.patrie || 'La Patrie ou la Mort, nous Vaincrons'}</p>
                 </div>
             </div>
         `;

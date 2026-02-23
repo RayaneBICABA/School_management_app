@@ -56,7 +56,7 @@ exports.createNotes = asyncHandler(async (req, res, next) => {
 
     // Get current academic year from settings
     const academicSetting = await Setting.findOne({ key: 'academic_year_config' });
-    const currentYear = academicSetting ? (academicSetting.value.year || academicSetting.value.academicYear) : '2025-2026';
+    const currentYear = academicSetting ? (academicSetting.value.year || academicSetting.value.academicYear) : '2023-2024';
 
     // Vérifier qu'il n'existe pas déjà une note pour cet élève/matière/période
     const existingNote = await Note.findOne({
@@ -524,7 +524,7 @@ exports.getMasterSheetData = asyncHandler(async (req, res, next) => {
     let year = anneeScolaire;
     if (!year) {
         const academicSetting = await Setting.findOne({ key: 'academic_year_config' });
-        year = academicSetting ? (academicSetting.value.year || academicSetting.value.academicYear) : '2025-2026';
+        year = academicSetting ? (academicSetting.value.year || academicSetting.value.academicYear) : '2023-2024';
     }
 
     // 1. Récupérer la classe

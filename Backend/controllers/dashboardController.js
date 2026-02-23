@@ -14,15 +14,40 @@ const Setting = require('../models/Setting');
 exports.getProviseurStats = async (req, res, next) => {
     try {
         const { trimestre } = req.query;
-        const selectedPeriod = trimestre || 'Trimestre 1'; // Default
 
-        // Get current academic year from settings
+        // Find current period from settings if not in query
         const academicSetting = await Setting.findOne({ key: 'academic_year_config' });
+        const trimesterSetting = await Setting.findOne({ key: 'currentTrimester' });
+        const semesterSetting = await Setting.findOne({ key: 'currentSemester' });
+
+        let selectedPeriod = trimestre;
+        if (!selectedPeriod) {
+            if (trimesterSetting) {
+                const t = trimesterSetting.value.trimester || '';
+                if (t.includes('1')) selectedPeriod = 'Trimestre 1';
+                else if (t.includes('2')) selectedPeriod = 'Trimestre 2';
+                else if (t.includes('3')) selectedPeriod = 'Trimestre 3';
+            } else if (semesterSetting) {
+                const s = semesterSetting.value.semester || '';
+                if (s.includes('1')) selectedPeriod = 'Semestre 1';
+                else if (s.includes('2')) selectedPeriod = 'Semestre 2';
+            }
+        }
+        if (!selectedPeriod) selectedPeriod = 'Trimestre 1';
+
         const currentYear = academicSetting ? (academicSetting.value.year || academicSetting.value.academicYear) : '2025-2026';
+
+        // Map periods for search
+        let periodsToSearch = [selectedPeriod];
+        if (selectedPeriod === 'Trimestre 1' || selectedPeriod === 'Trimestre 2') {
+            periodsToSearch.push('Semestre 1');
+        } else if (selectedPeriod === 'Trimestre 3') {
+            periodsToSearch.push('Semestre 2');
+        }
 
         // 1. Taux de réussite global (Average of all note values >= 10)
         // Note schema has notes array with valeur. We aggregate across all notes.
-        const notes = await Note.find({ periode: selectedPeriod, anneeScolaire: currentYear, statut: 'VALIDEE' });
+        const notes = await Note.find({ periode: { $in: periodsToSearch }, anneeScolaire: currentYear, statut: 'VALIDEE' });
         let totalVal = 0;
         let countVal = 0;
         let passingVal = 0;
@@ -60,13 +85,13 @@ exports.getProviseurStats = async (req, res, next) => {
 
         // Let's try an aggregation to map Classe+Matiere -> Count of evaluations (batches) that are VALIDATED
         const notesCounts = await Note.aggregate([
-            { $match: { periode: selectedPeriod, anneeScolaire: currentYear, statut: 'VALIDEE' } },
+            { $match: { periode: { $in: periodsToSearch }, anneeScolaire: currentYear, statut: 'VALIDEE' } },
             { $group: { _id: { classe: "$classe", matiere: "$matiere" }, count: { $sum: 1 } } }
         ]);
 
         // Map to quick lookup
         const cmGradeMap = new Map();
-        gradesCounts.forEach(g => {
+        notesCounts.forEach(g => {
             cmGradeMap.set(`${g._id.classe}-${g._id.matiere}`, g.count);
         });
 
@@ -110,7 +135,7 @@ exports.getProviseurStats = async (req, res, next) => {
         // Schema has ['BROUILLON', 'FINALISE', 'DISTRIBUE'].
         // Let's assume 'FINALISE' is the "En attente" state for Proviseur.
         const bulletinsAttente = await Bulletin.countDocuments({
-            periode: selectedPeriod,
+            periode: { $in: periodsToSearch },
             statut: 'FINALISE'
         });
 
@@ -394,16 +419,10 @@ exports.getSuiviActiviteStats = async (req, res, next) => {
         const currentYear = academicSetting ? (academicSetting.value.year || academicSetting.value.academicYear) : '2025-2026';
 
         // Determine filiere based on period name
-        let targetFiliere = 'Générale'; // Default
-        if (selectedPeriod.toLowerCase().includes('semestre')) {
-            targetFiliere = 'Technique';
-        }
+        // 1. Get all Classes
+        const allRelevantClasses = await Classe.find();
 
-        // 1. Get relevant Classes
-        const relevantClasses = await Classe.find({ filiere: targetFiliere });
-        const relevantClassIds = relevantClasses.map(c => c._id);
-
-        if (relevantClassIds.length === 0) {
+        if (allRelevantClasses.length === 0) {
             return res.status(200).json({
                 success: true,
                 data: {
@@ -428,21 +447,21 @@ exports.getSuiviActiviteStats = async (req, res, next) => {
         // Let's iterate CMs.
 
         // Pre-fetch notes counts (VALIDATED batches) for this period
-        const notesAggr = await Note.aggregate([
-            { $match: { periode: selectedPeriod, anneeScolaire: currentYear, classe: { $in: relevantClassIds }, statut: 'VALIDEE' } },
-            { $group: { _id: { classe: "$classe", matiere: "$matiere" }, count: { $sum: 1 } } }
+        // We fetch for both trimesters and semesters to map them later
+        const notesAggrCombined = await Note.aggregate([
+            { $match: { anneeScolaire: currentYear, statut: 'VALIDEE' } },
+            { $group: { _id: { classe: "$classe", matiere: "$matiere", periode: "$periode" }, count: { $sum: 1 } } }
         ]);
 
         const cmNoteMap = new Map();
-        notesAggr.forEach(n => {
-            cmNoteMap.set(`${n._id.classe}-${n._id.matiere}`, n.count);
+        notesAggrCombined.forEach(n => {
+            cmNoteMap.set(`${n._id.classe}-${n._id.matiere}-${n._id.periode}`, n.count);
         });
 
         // Pre-fetch Future evaluations
         const now = new Date();
         const futureEvals = await require('../models/Evaluation').find({
-            date: { $gt: now },
-            classe: { $in: relevantClassIds }
+            date: { $gt: now }
         });
 
         // Map evaluations by professor
@@ -472,8 +491,18 @@ exports.getSuiviActiviteStats = async (req, res, next) => {
             profData.matieres.add(cm.matiere ? cm.matiere.nom : 'N/A');
             profData.classes.add(`${cm.classe.niveau} ${cm.classe.section}`); // e.g., Tle A
 
+            // Determine effective period for this class
+            let effectivePeriode = selectedPeriod;
+            if (cm.classe.filiere === 'Technique') {
+                if (selectedPeriod.includes('Trimestre 1') || selectedPeriod.includes('Trimestre 2')) {
+                    effectivePeriode = 'Semestre 1';
+                } else if (selectedPeriod.includes('Trimestre 3')) {
+                    effectivePeriode = 'Semestre 2';
+                }
+            }
+
             // Notes count for this specific CM (Batch count)
-            const notesKey = `${cm.classe._id}-${cm.matiere._id}`;
+            const notesKey = `${cm.classe._id}-${cm.matiere._id}-${effectivePeriode}`;
             profData.totalGrades += (cmNoteMap.get(notesKey) || 0);
         }
 
@@ -662,12 +691,12 @@ exports.getSuiviAvancementCenseur = async (req, res, next) => {
         const allCMs = await ClasseMatiere.find().populate('professeur', 'nom prenom').populate('matiere', 'nom');
 
         // Count individual notes per class/matiere for the period by unwinding the notes array
-        const notesAggr = await Note.aggregate([
-            { $match: { periode: selectedPeriod, anneeScolaire: currentYear } },
+        const notesAggrCombined = await Note.aggregate([
+            { $match: { anneeScolaire: currentYear } },
             { $unwind: "$notes" },
             {
                 $group: {
-                    _id: { classe: "$classe", matiere: "$matiere" },
+                    _id: { classe: "$classe", matiere: "$matiere", periode: "$periode" },
                     count: { $sum: 1 }, // Total individual notes (student * eval)
                     evalTypes: { $addToSet: "$notes.type" }
                 }
@@ -675,8 +704,8 @@ exports.getSuiviAvancementCenseur = async (req, res, next) => {
         ]);
 
         const noteMap = new Map();
-        notesAggr.forEach(n => {
-            noteMap.set(`${n._id.classe}-${n._id.matiere}`, {
+        notesAggrCombined.forEach(n => {
+            noteMap.set(`${n._id.classe}-${n._id.matiere}-${n._id.periode}`, {
                 count: n.count,
                 evalCount: n.evalTypes.length
             });
@@ -706,11 +735,21 @@ exports.getSuiviAvancementCenseur = async (req, res, next) => {
             const classElevesCount = classEleves.length;
             let classCMs = allCMs.filter(cm => cm.classe.toString() === classe._id.toString());
 
+            // Determine effective period for this class
+            let effectivePeriode = selectedPeriod;
+            if (classe.filiere === 'Technique') {
+                if (selectedPeriod.includes('Trimestre 1') || selectedPeriod.includes('Trimestre 2')) {
+                    effectivePeriode = 'Semestre 1';
+                } else if (selectedPeriod.includes('Trimestre 3')) {
+                    effectivePeriode = 'Semestre 2';
+                }
+            }
+
             // Pour les filières techniques, inclure les matières ayant au moins une note (statut EN_ATTENTE ou VALIDEE)
             if (classe.filiere === 'Technique' && classCMs.length > 0) {
                 const matieresWithNotes = await Note.distinct('matiere', {
                     classe: classe._id,
-                    periode: selectedPeriod,
+                    periode: effectivePeriode,
                     anneeScolaire: currentYear,
                     statut: { $in: ['EN_ATTENTE', 'VALIDEE'] }
                 });
@@ -725,7 +764,8 @@ exports.getSuiviAvancementCenseur = async (req, res, next) => {
             const totalMatieres = classCMs.length;
 
             classCMs.forEach(cm => {
-                const noteData = noteMap.get(`${classe._id}-${cm.matiere._id}`) || { count: 0, evalCount: 0 };
+                const noteKey = `${classe._id}-${cm.matiere._id}-${effectivePeriode}`;
+                const noteData = noteMap.get(noteKey) || { count: 0, evalCount: 0 };
                 const notesCount = noteData.count;
                 const evalCount = noteData.evalCount;
 

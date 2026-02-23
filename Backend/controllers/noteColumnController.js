@@ -60,9 +60,15 @@ exports.getNoteColumns = asyncHandler(async (req, res, next) => {
         query.professeur = req.user.id;
     }
 
-    const columns = await NoteColumn.find(query)
+    const academicSetting = await require('../models/Setting').findOne({ key: 'academic_year_config' });
+    const currentYear = academicSetting ? (academicSetting.value.year || academicSetting.value.academicYear) : '2023-2024';
+
+    const columns = await NoteColumn.find({
+        ...query,
+        anneeScolaire: req.body.anneeScolaire || currentYear
+    })
         .populate('matiere', 'nom')
-        .populate('classe', 'niveau section')
+        .populate('classe', 'nom')
         .populate('professeur', 'nom prenom')
         .sort('ordre');
 

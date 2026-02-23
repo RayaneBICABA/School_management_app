@@ -179,7 +179,12 @@ exports.getManageableAbsences = asyncHandler(async (req, res, next) => {
     // Support for school periods (Trimesters)
     if (req.query.periode && req.query.periode !== 'custom') {
         const period = req.query.periode;
-        const currentYear = new Date().getFullYear();
+        const academicSetting = await require('../models/Setting').findOne({ key: 'academic_year_config' });
+        const currentYearString = academicSetting ? (academicSetting.value.year || academicSetting.value.academicYear) : '2023-2024';
+
+        // Extract base year for calculations (e.g., 2023 from 2023-2024)
+        const baseYearMatch = currentYearString.match(/^\d{4}/);
+        const currentYear = baseYearMatch ? parseInt(baseYearMatch[0]) : new Date().getFullYear();
 
         if (period === 'Trimestre 1') {
             query.date = {
@@ -411,7 +416,10 @@ exports.recalculatePointDeductions = async (studentId, classeId, periodParam, da
             eleve: studentId,
             classe: classeId,
             periode: period,
-            anneeScolaire: '2025-2026' // Should be dynamic
+            anneeScolaire: (await (async () => {
+                const setting = await require('../models/Setting').findOne({ key: 'academic_year_config' });
+                return setting ? (setting.value.year || setting.value.academicYear) : '2023-2024';
+            })())
         });
 
         if (bulletin) {

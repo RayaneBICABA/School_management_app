@@ -78,8 +78,7 @@ const NoteSchema = new mongoose.Schema({
     },
     anneeScolaire: {
         type: String,
-        required: [true, 'L\'année scolaire est requise'],
-        default: '2025-2026'
+        required: [true, 'L\'année scolaire est requise']
     },
     createdAt: {
         type: Date,

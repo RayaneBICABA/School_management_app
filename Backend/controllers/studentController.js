@@ -272,17 +272,21 @@ exports.getBulletins = async (req, res, next) => {
                     const periodes = classe.filiere === 'Technique'
                         ? ['Semestre 1', 'Semestre 2']
                         : ['Trimestre 1', 'Trimestre 2', 'Trimestre 3'];
+                    const academicSetting = await require('../models/Setting').findOne({ key: 'academic_year_config' });
+                    const currentYear = academicSetting ? (academicSetting.value.year || academicSetting.value.academicYear) : '2023-2024';
 
-                    const defaultBulletins = periodes.map(p => ({
-                        eleve: student._id,
-                        classe: student.classe,
-                        periode: p,
-                        anneeScolaire: classe.anneeScolaire || '2025-2026',
-                        notes: [],
-                        statut: 'BROUILLON'
-                    }));
+                    // Import bulletinController here to avoid circular dependency if it's not already imported
+                    const bulletinController = require('./bulletinController');
 
-                    await Bulletin.insertMany(defaultBulletins);
+                    for (const periode of periodes) {
+                        await bulletinController.createOrUpdateBulletin(
+                            student._id,
+                            student.classe,
+                            periode,
+                            classe.anneeScolaire || currentYear,
+                            req.user.id
+                        );
+                    }
 
                     // Récupérer à nouveau après création
                     bulletins = await Bulletin.find(query)

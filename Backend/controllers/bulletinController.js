@@ -19,8 +19,7 @@ const updateClassStats = async (classeId, periode, anneeScolaire) => {
                 $match: {
                     classe: new mongoose.Types.ObjectId(classeId),
                     periode,
-                    anneeScolaire,
-                    statut: { $ne: 'BROUILLON' }
+                    anneeScolaire
                 }
             },
             {
@@ -53,14 +52,27 @@ const updateClassStats = async (classeId, periode, anneeScolaire) => {
         const bulletins = await Bulletin.find({
             classe: classeId,
             periode,
-            anneeScolaire,
-            statut: { $ne: 'BROUILLON' }
+            anneeScolaire
         }).sort({ moyenneGenerale: -1 });
 
+        let currentRank = 1;
         for (let i = 0; i < bulletins.length; i++) {
-            const rangSuffix = (i + 1) === 1 ? 'er' : 'e';
-            bulletins[i].rang = `${i + 1}${rangSuffix}`;
+            // Logic for ex-aequo
+            if (i > 0 && bulletins[i].moyenneGenerale === bulletins[i - 1].moyenneGenerale) {
+                // Keep same currentRank as previous
+            } else {
+                currentRank = i + 1;
+            }
+
+            // Check if there's a tie (either with previous or next)
+            const isEx = (i > 0 && bulletins[i].moyenneGenerale === bulletins[i - 1].moyenneGenerale) ||
+                (i < bulletins.length - 1 && bulletins[i].moyenneGenerale === bulletins[i + 1].moyenneGenerale);
+
+            const suffix = currentRank === 1 ? 'er' : 'e';
+            bulletins[i].rang = `${currentRank}${suffix}${isEx ? ' ex' : ''}`;
             bulletins[i].effectif = bulletins.length;
+
+            // Prevent save loops if unnecessary, but here we need to ensure ranks are persisted
             await bulletins[i].save();
         }
     } catch (error) {
@@ -76,11 +88,21 @@ const createOrUpdateBulletin = async (eleveId, classeId, periode, anneeScolaire,
         anneeScolaire = academicSetting ? (academicSetting.value.year || academicSetting.value.academicYear) : '2025-2026';
     }
 
+    const classeObj = await Classe.findById(classeId);
+    let effectivePeriode = periode;
+    if (classeObj && classeObj.filiere === 'Technique') {
+        if (periode.includes('Trimestre 1') || periode.includes('Trimestre 2')) {
+            effectivePeriode = 'Semestre 1';
+        } else if (periode.includes('Trimestre 3')) {
+            effectivePeriode = 'Semestre 2';
+        }
+    }
+
     // Récupérer toutes les notes non rejetées (permet d'avoir des moyennes en brouillon)
     const notesDocs = await Note.find({
         eleve: eleveId,
         classe: classeId,
-        periode,
+        periode: effectivePeriode,
         statut: { $ne: 'REJETEE' },
         anneeScolaire: anneeScolaire
     }).populate('matiere');
@@ -100,7 +122,10 @@ const createOrUpdateBulletin = async (eleveId, classeId, periode, anneeScolaire,
     // Mapper les notes
     const mappedNotes = notesDocs.map(noteDoc => {
         const isDispensed = dispensedMatiereIds.includes(noteDoc.matiere._id.toString());
-        const intNotes = noteDoc.notes.filter(n => n.type.toLowerCase().includes('interro'));
+        const intNotes = noteDoc.notes.filter(n => {
+            const t = n.type.toLowerCase();
+            return t.includes('interro') || (!t.includes('devoir') && !t.includes('compo'));
+        });
         const devNotes = noteDoc.notes.filter(n => n.type.toLowerCase().includes('devoir'));
         const compoNotes = noteDoc.notes.filter(n => n.type.toLowerCase().includes('compo'));
 
@@ -135,17 +160,16 @@ const createOrUpdateBulletin = async (eleveId, classeId, periode, anneeScolaire,
             notePonderee: isDispensed ? 0 : average * coeff,
             appreciation: isDispensed ? 'DISPENSÉ' : noteDoc.appreciation,
             categorie: noteDoc.matiere?.categorie || 'AUTRES',
-            isDispensed: isDispensed
+            isDispensed: isDispensed,
+            hasAnyNote: noteDoc.notes.length > 0
         };
     });
 
-    const classeObj = await Classe.findById(classeId);
     if (classeObj && classeObj.filiere === 'Technique') {
         const dispensedIdsSet = new Set(dispensedMatiereIds);
         // Filtrer les matières qui n'ont aucune note *et* ne sont pas dispensées
         const indexToKeep = mappedNotes.map((m, idx) => {
-            const hasNotes = (m.int !== undefined || m.dev !== undefined || m.compo !== undefined || m.interroGrades.length > 0 || m.devoirGrades.length > 0 || m.compoGrades.length > 0);
-            return hasNotes || dispensedIdsSet.has(m.matiere.toString()) ? idx : -1;
+            return m.hasAnyNote || dispensedIdsSet.has(m.matiere.toString()) ? idx : -1;
         }).filter(idx => idx !== -1);
 
         let filteredMappedNotes = [];
@@ -157,7 +181,7 @@ const createOrUpdateBulletin = async (eleveId, classeId, periode, anneeScolaire,
     }
 
     // Chercher s'il existe déjà un bulletin
-    let bulletin = await Bulletin.findOne({ eleve: eleveId, periode, anneeScolaire: anneeScolaire });
+    let bulletin = await Bulletin.findOne({ eleve: eleveId, periode: effectivePeriode, anneeScolaire: anneeScolaire });
 
     if (bulletin) {
         // Aggressive Refresh: Update notes if NOT already distributed
@@ -171,7 +195,7 @@ const createOrUpdateBulletin = async (eleveId, classeId, periode, anneeScolaire,
         bulletin = new Bulletin({
             eleve: eleveId,
             classe: classeId,
-            periode,
+            periode: effectivePeriode,
             anneeScolaire: anneeScolaire,
             notes: mappedNotes,
             genereePar: genereeParId,
@@ -181,13 +205,12 @@ const createOrUpdateBulletin = async (eleveId, classeId, periode, anneeScolaire,
 
     // Recalculer les déductions
     try {
-        await recalculatePointDeductions(eleveId, classeId, periode, new Date());
+        await recalculatePointDeductions(eleveId, classeId, effectivePeriode, new Date());
     } catch (e) {
         console.error('Erreur recalculatePointDeductions:', e.message);
     }
 
     await bulletin.calculerMoyenneGenerale();
-    await bulletin.calculerRang();
     await bulletin.save();
 
     return bulletin;
@@ -332,8 +355,18 @@ exports.getBulletinsByClasse = asyncHandler(async (req, res, next) => {
         }
     }
 
+    const classeObj = await Classe.findById(req.params.classeId);
+    let effectivePeriode = periode;
+    if (classeObj && classeObj.filiere === 'Technique') {
+        if (periode.includes('Trimestre 1') || periode.includes('Trimestre 2')) {
+            effectivePeriode = 'Semestre 1';
+        } else if (periode.includes('Trimestre 3')) {
+            effectivePeriode = 'Semestre 2';
+        }
+    }
+
     let query = { classe: req.params.classeId };
-    if (periode) query.periode = periode;
+    if (effectivePeriode) query.periode = effectivePeriode;
     if (statut) query.statut = statut;
     if (anneeScolaire) query.anneeScolaire = anneeScolaire;
 
@@ -345,24 +378,19 @@ exports.getBulletinsByClasse = asyncHandler(async (req, res, next) => {
         .populate('notes.professeur', 'nom prenom')
         .sort({ moyenneGenerale: -1 });
 
-    // Aggressive Refresh: Ensure ALL draft/finalized bulletins have the latest data/averages
-    // This addresses the discrepancy between local and production data
-    for (let i = 0; i < bulletins.length; i++) {
-        const b = bulletins[i];
+    // Aggressive Refresh: Ensure ALL non-distributed bulletins have the latest data/averages
+    let refreshCount = 0;
+    for (const b of bulletins) {
         if (b.statut !== 'DISTRIBUE') {
-            await createOrUpdateBulletin(b.eleve._id, b.classe, b.periode, b.anneeScolaire);
+            await createOrUpdateBulletin(b.eleve._id, b.classe._id || b.classe, b.periode, b.anneeScolaire);
+            refreshCount++;
         }
     }
 
-    // Refresh the list after updates if any refreshes actually happened
-    if (bulletins.some(b => b.statut !== 'DISTRIBUE')) {
-        // Trigger class stats update to recalculate ranks and class averages
-        if (req.params.classeId && bulletins.length > 0) {
-            const targetYear = bulletins[0].anneeScolaire;
-            const targetPeriode = bulletins[0].periode;
-            await updateClassStats(req.params.classeId, targetPeriode, targetYear);
-        }
-
+    // Si on a effectué des rafraîchissements, on recalcule les stats de classe et les rangs globalement
+    if (refreshCount > 0) {
+        await updateClassStats(req.params.classeId, effectivePeriode, anneeScolaire);
+        // Re-récupérer après mise à jour
         bulletins = await Bulletin.find(query)
             .populate('eleve', 'nom prenom matricule dateNaissance lieuNaissance photo redoublant')
             .populate('classe', 'niveau section filiere')
@@ -431,7 +459,10 @@ exports.getBulletinsByEleve = asyncHandler(async (req, res, next) => {
                         student._id,
                         student.classe,
                         periode,
-                        classe.anneeScolaire || '2025-2026',
+                        classe.anneeScolaire || (await (async () => {
+                            const academicSetting = await require('../models/Setting').findOne({ key: 'academic_year_config' });
+                            return academicSetting ? (academicSetting.value.year || academicSetting.value.academicYear) : '2023-2024';
+                        })()),
                         null // Pas d'utilisateur spécifique pour l'auto-génération
                     );
                 }
@@ -452,7 +483,7 @@ exports.getBulletinsByEleve = asyncHandler(async (req, res, next) => {
     for (let i = 0; i < bulletins.length; i++) {
         const b = bulletins[i];
         if (b.statut !== 'DISTRIBUE') {
-            await createOrUpdateBulletin(b.eleve._id, b.classe, b.periode, b.anneeScolaire);
+            await createOrUpdateBulletin(b.eleve._id, b.classe._id || b.classe, b.periode, b.anneeScolaire);
             updatedCount++;
         }
     }
@@ -477,16 +508,30 @@ exports.getBulletinsByEleve = asyncHandler(async (req, res, next) => {
 // @route   GET /api/v1/bulletins/:id
 // @access  Private
 exports.getBulletin = asyncHandler(async (req, res, next) => {
-    const bulletin = await Bulletin.findById(req.params.id)
-        .populate('eleve', 'nom prenom matricule dateNaissance lieuNaissance photo redoublant')
-        .populate('classe', 'niveau section filiere')
-        .populate('notes.matiere', 'nom coefficient')
-        .populate('notes.professeur', 'nom prenom')
-        .populate('genereePar', 'nom prenom');
+    let bulletin = await Bulletin.findById(req.params.id);
 
     if (!bulletin) {
         return next(new ErrorResponse('Bulletin non trouvé', 404));
     }
+
+    // Refresh data if it's still a draft to ensure lately validated notes are included
+    if (bulletin.statut === 'BROUILLON') {
+        bulletin = await createOrUpdateBulletin(
+            bulletin.eleve,
+            bulletin.classe,
+            bulletin.periode,
+            bulletin.anneeScolaire,
+            req.user.id
+        );
+    }
+
+    await bulletin.populate([
+        { path: 'eleve', select: 'nom prenom matricule dateNaissance lieuNaissance photo redoublant' },
+        { path: 'classe', select: 'niveau section filiere' },
+        { path: 'notes.matiere', select: 'nom coefficient' },
+        { path: 'notes.professeur', select: 'nom prenom' },
+        { path: 'genereePar', select: 'nom prenom' }
+    ]);
 
     res.status(200).json({
         success: true,
@@ -513,9 +558,8 @@ exports.finalizeBulletin = asyncHandler(async (req, res, next) => {
         return next(new ErrorResponse('Ce bulletin est déjà finalisé', 400));
     }
 
-    // Recalculer la moyenne et le rang
+    // Recalculer la moyenne (le rang sera mis à jour par updateClassStats ci-après)
     await bulletin.calculerMoyenneGenerale();
-    await bulletin.calculerRang();
 
     bulletin.statut = 'FINALISE';
 
@@ -798,8 +842,26 @@ exports.getBulletinStats = asyncHandler(async (req, res, next) => {
 // @access  Private (Proviseur)
 exports.getValidationPageStats = asyncHandler(async (req, res, next) => {
     const { periode, anneeScolaire } = req.query;
-    const selectedPeriod = periode || 'Trimestre 1';
-    const currentYear = anneeScolaire || '2025-2026';
+    const academicSetting = await Setting.findOne({ key: 'academic_year_config' });
+    const currentYear = anneeScolaire || (academicSetting ? (academicSetting.value.year || academicSetting.value.academicYear) : '2023-2024');
+    const selectedPeriod = periode || (async () => {
+        const trimesterSetting = await Setting.findOne({ key: 'currentTrimester' });
+        const semesterSetting = await Setting.findOne({ key: 'currentSemester' });
+        if (trimesterSetting) {
+            const t = trimesterSetting.value.trimester || '';
+            if (t.includes('1')) return 'Trimestre 1';
+            if (t.includes('2')) return 'Trimestre 2';
+            if (t.includes('3')) return 'Trimestre 3';
+        } else if (semesterSetting) {
+            const s = semesterSetting.value.semester || '';
+            if (s.includes('1')) return 'Semestre 1';
+            if (s.includes('2')) return 'Semestre 2';
+        }
+        return 'Trimestre 1';
+    })();
+
+    // Wait for async selectedPeriod if it was a promise
+    const finalPeriode = typeof selectedPeriod === 'string' ? selectedPeriod : await selectedPeriod;
 
     // 1. Get all classes
     const classes = await Classe.find().populate('professeurPrincipal', 'nom prenom');
@@ -808,17 +870,26 @@ exports.getValidationPageStats = asyncHandler(async (req, res, next) => {
 
     const result = [];
     let classesPretesCount = 0;
-
     for (const classe of classes) {
         // Find assigned subjects for this class
         const matieresDocs = await ClasseMatiere.find({ classe: classe._id });
         let matiereIds = matieresDocs.map(m => m.matiere);
 
+        // Determine effective period for this class
+        let classPeriode = finalPeriode;
+        if (classe.filiere === 'Technique') {
+            if (finalPeriode.includes('Trimestre 1') || finalPeriode.includes('Trimestre 2')) {
+                classPeriode = 'Semestre 1';
+            } else if (finalPeriode.includes('Trimestre 3')) {
+                classPeriode = 'Semestre 2';
+            }
+        }
+
         // Pour les filières techniques, exclure les matières sans notes validées dans la période
         if (classe.filiere === 'Technique' && matiereIds.length > 0) {
             const matieresWithNotes = await Note.distinct('matiere', {
                 classe: classe._id,
-                periode: selectedPeriod,
+                periode: classPeriode,
                 anneeScolaire: currentYear,
                 statut: 'VALIDEE'
             });
@@ -850,7 +921,7 @@ exports.getValidationPageStats = asyncHandler(async (req, res, next) => {
                 $match: {
                     classe: classe._id,
                     matiere: { $in: matiereIds },
-                    periode: selectedPeriod,
+                    periode: classPeriode,
                     anneeScolaire: currentYear,
                     statut: 'VALIDEE'
                 }
@@ -875,7 +946,7 @@ exports.getValidationPageStats = asyncHandler(async (req, res, next) => {
         // Calculate Class Stats (Avg, Min, Max from Bulletins if they exist, or calculate from Grades?)
         // To be fast, use existing Bulletins if any. 
         const stats = await Bulletin.aggregate([
-            { $match: { classe: classe._id, periode: selectedPeriod, anneeScolaire: currentYear } },
+            { $match: { classe: classe._id, periode: classPeriode, anneeScolaire: currentYear } },
             {
                 $group: {
                     _id: null,
@@ -923,20 +994,34 @@ exports.getValidationPageStats = asyncHandler(async (req, res, next) => {
     });
 });
 
-// @desc    Title: Valider tous les bulletins d'une classe
-// @route   PUT /api/v1/bulletins/validate-classe/:classeId
-// @access  Private (Proviseur)
 exports.validateClassBulletins = asyncHandler(async (req, res, next) => {
     const { classeId } = req.params;
     const { periode, anneeScolaire } = req.body;
 
-    // Ensure user is Proviseur
+    // Ensure user is Proviseur or Admin
     if (req.user.role !== 'PROVISEUR' && req.user.role !== 'ADMIN') {
         return next(new ErrorResponse('Non autorisé', 403));
     }
 
-    const currentYear = anneeScolaire || '2025-2026';
-    const currentPeriode = periode || 'Trimestre 1';
+    const academicSetting = await Setting.findOne({ key: 'academic_year_config' });
+    const currentYear = anneeScolaire || (academicSetting ? (academicSetting.value.year || academicSetting.value.academicYear) : '2023-2024');
+    const currentPeriode = periode || (async () => {
+        const trimesterSetting = await Setting.findOne({ key: 'currentTrimester' });
+        const semesterSetting = await Setting.findOne({ key: 'currentSemester' });
+        if (trimesterSetting) {
+            const t = trimesterSetting.value.trimester || '';
+            if (t.includes('1')) return 'Trimestre 1';
+            if (t.includes('2')) return 'Trimestre 2';
+            if (t.includes('3')) return 'Trimestre 3';
+        } else if (semesterSetting) {
+            const s = semesterSetting.value.semester || '';
+            if (s.includes('1')) return 'Semestre 1';
+            if (s.includes('2')) return 'Semestre 2';
+        }
+        return 'Trimestre 1';
+    })();
+
+    const finalPeriode = typeof currentPeriode === 'string' ? currentPeriode : await currentPeriode;
 
     // Récupérer tous les élèves de la classe
     const eleves = await User.find({ classe: classeId, role: 'ELEVE' });
@@ -952,7 +1037,7 @@ exports.validateClassBulletins = asyncHandler(async (req, res, next) => {
         const bulletin = await createOrUpdateBulletin(
             eleve._id,
             classeId,
-            currentPeriode,
+            finalPeriode,
             currentYear,
             req.user.id
         );
@@ -969,7 +1054,7 @@ exports.validateClassBulletins = asyncHandler(async (req, res, next) => {
 
     // Mettre à jour les stats de la classe pour cette période
     if (updatedCount > 0) {
-        await updateClassStats(classeId, currentPeriode, currentYear);
+        await updateClassStats(classeId, finalPeriode, currentYear);
     }
 
     res.status(200).json({
@@ -1120,7 +1205,6 @@ exports.regenerateAllBulletins = asyncHandler(async (req, res, next) => {
                 });
 
                 await bulletin.calculerMoyenneGenerale();
-                await bulletin.calculerRang();
                 await bulletin.save();
 
                 bulletinsGeneres.push(bulletin);

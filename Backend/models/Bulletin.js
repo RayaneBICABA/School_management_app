@@ -18,8 +18,7 @@ const BulletinSchema = new mongoose.Schema({
     },
     anneeScolaire: {
         type: String,
-        required: [true, 'L\'année scolaire est requise'],
-        default: '2025-2026'
+        required: [true, 'L\'année scolaire est requise']
     },
     notes: [{
         matiere: {
@@ -208,8 +207,19 @@ BulletinSchema.methods.calculerRang = async function () {
 
         this.effectif = await User.countDocuments({ classe: this.classe, role: 'ELEVE' });
 
-        const rang = bulletins.findIndex(b => b._id.toString() === this._id.toString()) + 1;
-        this.rang = rang > 0 ? rang : bulletins.length;
+        const index = bulletins.findIndex(b => b._id.toString() === this._id.toString());
+        const rangNum = index + 1;
+
+        // Correct tie handling: find the first instance of this average
+        const firstIndex = bulletins.findIndex(b => b.moyenneGenerale === this.moyenneGenerale);
+        const actualRank = firstIndex + 1;
+
+        // Check if there are ties
+        const tiedCount = bulletins.filter(b => b.moyenneGenerale === this.moyenneGenerale).length;
+        const isEx = tiedCount > 1;
+
+        const suffix = actualRank === 1 ? 'er' : 'e';
+        this.rang = `${actualRank}${suffix}${isEx ? ' ex' : ''}`;
 
         return this.rang;
     } catch (error) {

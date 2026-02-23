@@ -491,11 +491,14 @@ const createBulletinsForStudent = async (student) => {
             ? ['Semestre 1', 'Semestre 2']
             : ['Trimestre 1', 'Trimestre 2', 'Trimestre 3'];
 
+        const academicSetting = await Setting.findOne({ key: 'academic_year_config' });
+        const currentYear = academicSetting ? (academicSetting.value.year || academicSetting.value.academicYear) : '2023-2024';
+
         const bulletins = periodes.map(periode => ({
             eleve: student._id,
             classe: student.classe,
             periode: periode,
-            anneeScolaire: classe.anneeScolaire || '2025-2026',
+            anneeScolaire: classe.anneeScolaire || currentYear, // Use currentYear from settings
             notes: [],
             statut: 'BROUILLON'
         }));

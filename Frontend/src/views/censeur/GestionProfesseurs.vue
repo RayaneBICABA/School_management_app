@@ -71,7 +71,7 @@
                   class="hover:bg-slate-50 dark:hover:bg-slate-800/30 transition-colors"
                 >
                   <td class="px-6 py-4">
-                    <div class="font-semibold text-[#0e141b] dark:text-white">{{ prof.prenom }} {{ prof.nom }}</div>
+                    <div class="font-semibold text-[#0e141b] dark:text-white">{{ prof.civilite ? prof.civilite + ' ' : '' }}{{ prof.prenom }} {{ prof.nom }}</div>
                     <div class="text-xs text-slate-500">ID: {{ prof._id.substring(0, 8) }}</div>
                   </td>
                   <td class="px-6 py-4">
@@ -119,6 +119,18 @@
             </p>
           </div>
           <form @submit.prevent="handleSubmit" class="p-6 flex flex-col gap-4">
+            <div class="flex flex-col gap-1.5">
+              <label class="text-sm font-semibold text-[#0e141b] dark:text-slate-200">Civilité *</label>
+              <select 
+                v-model="form.civilite"
+                class="w-full bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 rounded-lg text-sm focus:ring-primary focus:border-primary h-10 px-3 text-[#0e141b] dark:text-white"
+                required
+              >
+                <option value="">-- Sélectionner --</option>
+                <option value="Mr">Mr</option>
+                <option value="Mme">Mme</option>
+              </select>
+            </div>
             <div class="flex flex-col gap-1.5">
               <label class="text-sm font-semibold text-[#0e141b] dark:text-slate-200">Prénom *</label>
               <input 
@@ -229,6 +241,7 @@ const filteredProfesseurs = computed(() => {
 })
 
 const form = reactive({
+  civilite: '',
   prenom: '',
   nom: '',
   email: '',
@@ -282,6 +295,7 @@ const openCreateModal = () => {
 
 const editProfesseur = (prof) => {
   editingProfesseur.value = prof
+  form.civilite = prof.civilite || ''
   form.prenom = prof.prenom
   form.nom = prof.nom
   form.email = prof.email
@@ -309,6 +323,7 @@ const deleteProfesseur = async (id) => {
 
 const resetForm = () => {
   editingProfesseur.value = null
+  form.civilite = ''
   form.prenom = ''
   form.nom = ''
   form.email = ''
@@ -321,6 +336,7 @@ const handleSubmit = async () => {
   isSaving.value = true
   try {
     const payload = {
+      civilite: form.civilite,
       prenom: form.prenom,
       nom: form.nom,
       email: form.email,

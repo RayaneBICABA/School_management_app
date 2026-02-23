@@ -32,6 +32,11 @@ const UserSchema = new mongoose.Schema({
         type: String,
         enum: ['M', 'F']
     },
+    civilite: {
+        type: String,
+        enum: ['Mr', 'Mme'],
+        // Not required, since existing profs don't have it yet
+    },
     isRedoublant: {
         type: Boolean,
         default: false

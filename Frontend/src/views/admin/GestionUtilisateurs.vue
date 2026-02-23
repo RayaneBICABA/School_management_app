@@ -136,7 +136,7 @@
                                     {{ getInitials(user.nom, user.prenom) }}
                                 </div>
                                 <div class="min-w-0">
-                                    <p class="text-sm font-bold text-slate-900 dark:text-white truncate">{{ user.nom }} {{ user.prenom }}</p>
+                                    <p class="text-sm font-bold text-slate-900 dark:text-white truncate">{{ user.civilite ? user.civilite + ' ' : '' }}{{ user.nom }} {{ user.prenom }}</p>
                                     <p class="text-xs text-slate-500 truncate">{{ user.email }}</p>
                                     <p v-if="user.matricule" class="text-xs text-primary font-medium">Matricule: {{ user.matricule }}</p>
                                 </div>
@@ -223,6 +223,15 @@
             <div class="flex flex-col gap-2">
               <label class="text-sm font-medium text-[#0e141b] dark:text-slate-200">Téléphone</label>
               <input v-model="editForm.telephone" class="form-input rounded-lg border-[#d0dbe7] dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-[#0e141b] dark:text-white focus:border-primary focus:ring-primary h-12 px-4 text-base" type="text"/>
+            </div>
+            <!-- Civilité (only for PROFESSEUR) -->
+            <div v-if="editForm.role === 'PROFESSEUR'" class="flex flex-col gap-2">
+              <label class="text-sm font-medium text-[#0e141b] dark:text-slate-200">Civilité</label>
+              <select v-model="editForm.civilite" class="form-select rounded-lg border-[#d0dbe7] dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-[#0e141b] dark:text-white focus:border-primary focus:ring-primary h-12 px-4">
+                <option value="">-- Non spécifiée --</option>
+                <option value="Mr">Mr</option>
+                <option value="Mme">Mme</option>
+              </select>
             </div>
             <div class="flex flex-col gap-2">
               <label class="text-sm font-medium text-[#0e141b] dark:text-slate-200">Rôle</label>
@@ -365,6 +374,7 @@ const editForm = ref({
   nom: '',
   email: '',
   telephone: '',
+  civilite: '',
   role: '',
   status: '',
   classe: ''
@@ -448,6 +458,7 @@ const openEditModal = (user) => {
     nom: user.nom,
     email: user.email,
     telephone: user.telephone || '',
+    civilite: user.civilite || '',
     role: user.role,
     status: user.status,
     classe: user.classe?._id || user.classe || ''
@@ -464,6 +475,7 @@ const closeEditModal = () => {
     nom: '',
     email: '',
     telephone: '',
+    civilite: '',
     role: '',
     status: '',
     classe: ''
@@ -482,6 +494,7 @@ const handleUpdate = async () => {
       nom: editForm.value.nom,
       email: editForm.value.email,
       telephone: editForm.value.telephone,
+      civilite: editForm.value.role === 'PROFESSEUR' ? editForm.value.civilite : undefined,
       role: editForm.value.role,
       status: editForm.value.status,
       classe: editForm.value.role === 'ELEVE' ? editForm.value.classe : undefined

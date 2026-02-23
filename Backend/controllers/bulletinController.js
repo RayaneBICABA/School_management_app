@@ -375,7 +375,7 @@ exports.getBulletinsByClasse = asyncHandler(async (req, res, next) => {
         .populate('classe', 'niveau section filiere')
         .populate('genereePar', 'nom prenom')
         .populate('notes.matiere', 'nom coefficient')
-        .populate('notes.professeur', 'nom prenom')
+        .populate('notes.professeur', 'nom prenom civilite')
         .sort({ moyenneGenerale: -1 });
 
     // Aggressive Refresh: Ensure ALL non-distributed bulletins have the latest data/averages
@@ -396,7 +396,7 @@ exports.getBulletinsByClasse = asyncHandler(async (req, res, next) => {
             .populate('classe', 'niveau section filiere')
             .populate('genereePar', 'nom prenom')
             .populate('notes.matiere', 'nom coefficient')
-            .populate('notes.professeur', 'nom prenom')
+            .populate('notes.professeur', 'nom prenom civilite')
             .sort({ moyenneGenerale: -1 });
     }
 
@@ -420,7 +420,7 @@ exports.getBulletinsByClasse = asyncHandler(async (req, res, next) => {
                 .populate('classe', 'niveau section filiere')
                 .populate('genereePar', 'nom prenom')
                 .populate('notes.matiere', 'nom coefficient')
-                .populate('notes.professeur', 'nom prenom')
+                .populate('notes.professeur', 'nom prenom civilite')
                 .sort({ moyenneGenerale: -1 });
         }
     }
@@ -440,7 +440,7 @@ exports.getBulletinsByEleve = asyncHandler(async (req, res, next) => {
         .populate('eleve', 'nom prenom matricule dateNaissance lieuNaissance photo redoublant')
         .populate('classe', 'niveau section filiere anneeScolaire')
         .populate('notes.matiere', 'nom coefficient categorie')
-        .populate('notes.professeur', 'nom prenom')
+        .populate('notes.professeur', 'nom prenom civilite')
         .sort('-anneeScolaire -periode');
 
     // Si aucun bulletin n'existe, essayer d'en créer par défaut
@@ -472,7 +472,7 @@ exports.getBulletinsByEleve = asyncHandler(async (req, res, next) => {
                     .populate('eleve', 'nom prenom matricule dateNaissance lieuNaissance photo redoublant')
                     .populate('classe', 'niveau section filiere anneeScolaire')
                     .populate('notes.matiere', 'nom coefficient')
-                    .populate('notes.professeur', 'nom prenom')
+                    .populate('notes.professeur', 'nom prenom civilite')
                     .sort('-anneeScolaire -periode');
             }
         }
@@ -493,7 +493,7 @@ exports.getBulletinsByEleve = asyncHandler(async (req, res, next) => {
             .populate('eleve', 'nom prenom matricule dateNaissance lieuNaissance photo redoublant')
             .populate('classe', 'niveau section filiere anneeScolaire')
             .populate('notes.matiere', 'nom coefficient categorie')
-            .populate('notes.professeur', 'nom prenom')
+            .populate('notes.professeur', 'nom prenom civilite')
             .sort('-anneeScolaire -periode');
     }
 
@@ -529,7 +529,7 @@ exports.getBulletin = asyncHandler(async (req, res, next) => {
         { path: 'eleve', select: 'nom prenom matricule dateNaissance lieuNaissance photo redoublant' },
         { path: 'classe', select: 'niveau section filiere' },
         { path: 'notes.matiere', select: 'nom coefficient' },
-        { path: 'notes.professeur', select: 'nom prenom' },
+        { path: 'notes.professeur', select: 'nom prenom civilite' },
         { path: 'genereePar', select: 'nom prenom' }
     ]);
 
@@ -673,7 +673,7 @@ exports.downloadBulletinPDF = asyncHandler(async (req, res, next) => {
             .populate('eleve', 'nom prenom matricule dateNaissance lieuNaissance photo')
             .populate('classe', 'niveau section filiere')
             .populate('notes.matiere', 'nom coefficient')
-            .populate('notes.professeur', 'nom prenom')
+            .populate('notes.professeur', 'nom prenom civilite')
             .populate('genereePar', 'nom prenom');
 
         if (!bulletin) {
@@ -726,7 +726,7 @@ exports.downloadClassBulletinsPDF = asyncHandler(async (req, res, next) => {
             .populate('eleve', 'nom prenom matricule dateNaissance lieuNaissance photo')
             .populate('classe', 'niveau section filiere')
             .populate('notes.matiere', 'nom coefficient')
-            .populate('notes.professeur', 'nom prenom')
+            .populate('notes.professeur', 'nom prenom civilite')
             .populate('genereePar', 'nom prenom')
             .sort('eleve.nom eleve.prenom');
 

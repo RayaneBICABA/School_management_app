@@ -27,7 +27,7 @@
           </button>
         </div>
         <div class="flex flex-col text-center md:text-left flex-grow">
-          <h2 class="text-[#0e141b] dark:text-white text-3xl font-bold tracking-tight">{{ user.nom }} {{ user.prenom }}</h2>
+          <h2 class="text-[#0e141b] dark:text-white text-3xl font-bold tracking-tight">{{ user.civilite ? user.civilite + ' ' : '' }}{{ user.nom }} {{ user.prenom }}</h2>
           <p class="text-slate-500 dark:text-slate-400 text-base font-medium">{{ user.role }}</p>
           <p class="text-slate-400 dark:text-slate-500 text-sm font-normal">Identifiant: {{ user._id.substring(0,8) }}</p>
         </div>
@@ -66,6 +66,14 @@
         <div class="flex flex-col gap-2">
           <label class="text-slate-500 dark:text-slate-400 text-xs uppercase tracking-wider font-bold">Téléphone</label>
           <input v-model="user.telephone" class="rounded-lg border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 focus:ring-primary h-11 px-4 text-sm"/>
+        </div>
+        <div class="flex flex-col gap-2">
+          <label class="text-slate-500 dark:text-slate-400 text-xs uppercase tracking-wider font-bold">Civilité</label>
+          <select v-model="user.civilite" class="rounded-lg border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 focus:ring-primary h-11 px-4 text-sm">
+            <option value="">-- Non spécifiée --</option>
+            <option value="Mr">Mr</option>
+            <option value="Mme">Mme</option>
+          </select>
         </div>
       </div>
     </section>
@@ -245,7 +253,8 @@ const handleUpdateDetails = async () => {
         await api.updateDetails({
             nom: user.value.nom,
             prenom: user.value.prenom,
-            telephone: user.value.telephone
+            telephone: user.value.telephone,
+            civilite: user.value.civilite
         });
         alert('Profil mis à jour !');
     } catch (error) {

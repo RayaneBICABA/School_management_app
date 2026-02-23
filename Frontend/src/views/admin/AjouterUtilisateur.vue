@@ -118,6 +118,15 @@
             <!-- For Professor -->
             <div v-if="form.role === 'PROFESSEUR'" class="space-y-4">
               <p class="text-sm text-[#4e7397] dark:text-slate-400 italic">Affectez des classes et matières à ce professeur.</p>
+              <!-- Civilité -->
+              <div class="flex flex-col gap-2">
+                <label class="text-sm font-medium text-[#0e141b] dark:text-slate-200">Civilité *</label>
+                <select v-model="form.civilite" required class="form-select rounded-lg border-[#d0dbe7] dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-[#0e141b] dark:text-white focus:border-primary focus:ring-primary h-12 px-4 transition-all">
+                  <option value="">-- Sélectionner --</option>
+                  <option value="Mr">Mr</option>
+                  <option value="Mme">Mme</option>
+                </select>
+              </div>
               <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div class="flex flex-col gap-2">
                   <label class="text-sm font-medium text-[#0e141b] dark:text-slate-200">Classes & Matières Disponibles</label>
@@ -260,8 +269,9 @@ const form = ref({
   email: '',
   telephone: '',
   matricule: '',
-  password: '', // Laisser vide pour génération automatique
+  password: '',
   role: '',
+  civilite: '',
   classe: ''
 })
 
@@ -381,8 +391,9 @@ const handleSubmit = async () => {
       email: form.value.email,
       telephone: form.value.telephone || '',
       matricule: form.value.matricule || '',
-      password: form.value.password, // Si vide, le backend générera un mot de passe
+      password: form.value.password,
       role: form.value.role,
+      civilite: form.value.role === 'PROFESSEUR' ? form.value.civilite : undefined,
       classe: form.value.role === 'ELEVE' ? form.value.classe : undefined
     }
 

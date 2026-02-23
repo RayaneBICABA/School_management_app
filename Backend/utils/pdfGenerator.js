@@ -80,7 +80,7 @@ exports.generateMasterGradeSheetPDF = async (sheetsData, schoolConfig) => {
         await page.setContent(html, { waitUntil: 'networkidle0' });
 
         const pdf = await page.pdf({
-            format: 'A4',
+            format: 'A3',
             landscape: true,
             printBackground: true,
             margin: { top: '10mm', right: '10mm', bottom: '10mm', left: '10mm' }
@@ -344,58 +344,154 @@ exports.getBulletinHTML = (bulletin, schoolConfig) => {
 exports.getMasterSheetHTML = (sheetsData, schoolConfig) => {
     let tablesHtml = '';
 
-    sheetsData.forEach((data, index) => {
-        const { classe, periode, anneeScolaire, matieres, matrix, subjectStats, overallStats } = data;
+    const sheets = Array.isArray(sheetsData) ? sheetsData : [sheetsData];
+
+    sheets.forEach((sheet, index) => {
+        const { classe, matieres, matrix, subjectStats, overallStats, periode, anneeScolaire } = sheet;
+
+        // Helper to get max notes for a subject
+        const getMaxNotes = (matiereId) => {
+            let max = 0;
+            matrix.forEach(row => {
+                const n = row.matieres[matiereId]?.notes?.length || 0;
+                if (n > max) max = n;
+            });
+            return max;
+        };
+
+        const getColSpan = (matiereId) => getMaxNotes(matiereId) + 2;
+
+        const headerHtml = `
+            <div class="header" style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 15px; border-bottom: 2px solid #333; padding-bottom: 10px;">
+                <div style="width: 30%; font-size: 10px; font-weight: bold; text-transform: uppercase; line-height: 1.2;">
+                    <p style="margin: 0;">${schoolConfig.region || 'REGION'}</p>
+                    <p style="margin: 0;">${schoolConfig.subRegion || 'REGION CENTRE'}</p>
+                    <p style="margin: 0;">${schoolConfig.schoolName || 'LYCÉE'}</p>
+                    <p style="margin: 4px 0 0 0; font-size: 9px; font-weight: normal;">Proviseur: ${schoolConfig.proviseurName || ''}</p>
+                </div>
+                <div style="width: 40%; display: flex; flex-direction: column; align-items: center; text-align: center;">
+                    <div style="font-size: 24px; font-weight: 900; color: #1e3a8a; letter-spacing: -0.05em;">${schoolConfig.shortName || 'LWS'}</div>
+                    <div style="font-size: 9px; font-weight: bold; color: #666; text-transform: uppercase; letter-spacing: 0.05em; margin-top: 4px;">${schoolConfig.motto || ''}</div>
+                </div>
+                <div style="width: 30%; text-align: right; font-size: 10px; font-weight: bold; text-transform: uppercase; line-height: 1.2;">
+                    <p style="margin: 0;">${schoolConfig.country || 'BURKINA FASO'}</p>
+                    <p style="font-size: 9px; font-style: italic; text-transform: none; font-weight: normal; margin: 0;">${schoolConfig.patrie || 'La Patrie ou la Mort, nous Vaincrons'}</p>
+                </div>
+            </div>
+        `;
 
         tablesHtml += `
             <div class="sheet-page" style="${index > 0 ? 'page-break-before: always;' : ''}">
-                <div class="header">
-                    <div style="width: 30%; font-size: 9px; text-transform: uppercase;">
-                        <p>${schoolConfig.region || ''}</p>
-                        <p>${schoolConfig.schoolName || ''}</p>
-                    </div>
-                    <div style="text-align: center; flex-grow: 1;">
-                        <h1>RELEVÉ RÉCAPITULATIF DES NOTES</h1>
-                        <h3 style="color: #d35400;">${classe.niveau} ${classe.section} - ${periode}</h3>
-                        <p>Année Scolaire: ${anneeScolaire}</p>
-                    </div>
-                    <div style="width: 30%; text-align: right; font-size: 9px;">
-                        <p>${schoolConfig.country || 'BURKINA FASO'}</p>
-                    </div>
+                ${headerHtml}
+                
+                <div style="text-align: center; margin-bottom: 15px;">
+                    <h1 style="font-size: 20px; color: #1e3a8a; margin-bottom: 3px; font-weight: 800;">RÉCAPITULATIF DES NOTES (MASTER SHEET)</h1>
+                    <h2 style="font-size: 16px; color: #d35400; margin-bottom: 3px; font-weight: 700;">${classe.niveau} ${classe.section} - ${periode}</h2>
+                    <p style="font-size: 11px; color: #666;">Année Scolaire: ${anneeScolaire}</p>
                 </div>
 
                 <table>
                     <thead>
                         <tr>
-                            <th>N°</th>
-                            <th>Matricule</th>
-                            <th class="name-col">Nom & Prénoms</th>
-                            ${matieres.map(m => `<th>${m.nom}<br><small>(Coef: ${m.coefficient})</small></th>`).join('')}
-                            <th class="stats-col">Moyenne</th>
+                            <th rowspan="2" style="width: 30px;">N°</th>
+                            <th rowspan="2" style="width: 80px;">Matricule</th>
+                            <th rowspan="2" class="name-col" style="width: 200px;">Élève</th>
+                            ${matieres.map(m => `
+                                <th colspan="${getColSpan(m._id)}" class="matiere-group-header">
+                                    ${m.nom}<br>
+                                    <span style="font-size: 8px; font-weight: normal; text-transform: lowercase;">(Coef: ${m.coefficient || 1})</span>
+                                </th>
+                            `).join('')}
+                            <th rowspan="2" class="total-pts-header" style="width: 80px;">TOTAL DES<br>POINTS</th>
+                            <th rowspan="2" class="moy-gen-header" style="width: 80px;">MOYENNE<br>GÉNÉRALE</th>
+                        </tr>
+                        <tr>
+                            ${matieres.map(m => {
+            let subHeaders = '';
+            const maxN = getMaxNotes(m._id);
+            for (let i = 1; i <= maxN; i++) {
+                subHeaders += `<th class="sub-header-n">N${i}</th>`;
+            }
+            subHeaders += `<th class="sub-header-moy">Moy</th>`;
+            subHeaders += `<th class="sub-header-pond">Pond.</th>`;
+            return subHeaders;
+        }).join('')}
                         </tr>
                     </thead>
                     <tbody>
                         ${matrix.map((row, i) => `
                             <tr>
                                 <td>${i + 1}</td>
-                                <td style="font-size: 8px;">${row.matricule || '-'}</td>
-                                <td class="name-col">${row.nom} ${row.prenom}</td>
+                                <td style="font-size: 8px; white-space: nowrap;">${row.matricule || '-'}</td>
+                                <td class="name-col font-bold">${row.nom} ${row.prenom}</td>
                                 ${matieres.map(m => {
             const grade = row.matieres[m._id];
             if (grade && grade.isDispensed) {
-                return '<td class="dispensed">D</td>';
+                return `<td colspan="${getColSpan(m._id)}" class="dispensed">D</td>`;
             }
-            return `<td>${grade && grade.moyenne !== null ? grade.moyenne.toFixed(2) : '-'}</td>`;
+            let cells = '';
+            const maxN = getMaxNotes(m._id);
+            for (let j = 0; j < maxN; j++) {
+                const noteVal = grade?.notes?.[j];
+                cells += `<td>${noteVal != null ? noteVal.toFixed(1) : '-'}</td>`;
+            }
+            cells += `<td class="font-bold">${grade?.moyenne != null ? grade.moyenne.toFixed(2) : '-'}</td>`;
+            const pond = (grade?.moyenne != null && grade?.coeff) ? (grade.moyenne * grade.coeff).toFixed(2) : '-';
+            cells += `<td class="pond-cell">${pond}</td>`;
+            return cells;
         }).join('')}
-                                <td class="font-bold stats-col">${(row.moyenneGenerale || 0).toFixed(2)}</td>
+                                <td class="font-bold total-pts-cell">
+                                    ${(() => {
+                let total = 0; let hasAny = false;
+                matieres.forEach(m => { const sm = row.matieres[m._id]; if (sm?.moyenne != null && sm?.coeff) { total += sm.moyenne * sm.coeff; hasAny = true; } });
+                return hasAny ? total.toFixed(2) : '-';
+            })()}
+                                </td>
+                                <td class="font-black moy-gen-cell ${row.moyenneGenerale >= 10 ? 'text-green' : (row.moyenneGenerale >= 7 ? 'text-orange' : 'text-red')}">
+                                    ${row.moyenneGenerale ? row.moyenneGenerale.toFixed(2) : '-'}
+                                </td>
                             </tr>
                         `).join('')}
                     </tbody>
-                    <tfoot class="stats-footer">
-                        <tr>
-                            <td colspan="3">Moyenne de la classe</td>
-                            ${matieres.map(m => `<td>${(subjectStats[m._id]?.avg || 0).toFixed(2)}</td>`).join('')}
-                            <td>${(overallStats.classAverage || 0).toFixed(2)}</td>
+                    <tfoot>
+                        <tr class="footer-avg">
+                            <td colspan="3" class="text-left" style="padding-left: 10px;">MOYENNE DE CLASSE</td>
+                            ${matieres.map(m => {
+                const maxN = getMaxNotes(m._id);
+                return `
+                                    ${maxN > 0 ? `<td colspan="${maxN}"></td>` : ''}
+                                    <td class="bg-blue-100">${subjectStats[m._id]?.avg?.toFixed(2) || '-'}</td>
+                                    <td class="bg-yellow-50"></td>
+                                `;
+            }).join('')}
+                            <td class="bg-orange-50"></td>
+                            <td class="bg-blue-200">${overallStats?.classAverage?.toFixed(2) || '-'}</td>
+                        </tr>
+                        <tr class="footer-max">
+                            <td colspan="3" class="text-left" style="padding-left: 10px;">Plus forte moyenne</td>
+                            ${matieres.map(m => {
+                const maxN = getMaxNotes(m._id);
+                return `
+                                    ${maxN > 0 ? `<td colspan="${maxN}"></td>` : ''}
+                                    <td class="bg-green-50">${subjectStats[m._id]?.max?.toFixed(2) || '-'}</td>
+                                    <td class="bg-yellow-50"></td>
+                                `;
+            }).join('')}
+                            <td class="bg-orange-50"></td>
+                            <td class="bg-green-100">${overallStats?.maxAverage?.toFixed(2) || '-'}</td>
+                        </tr>
+                        <tr class="footer-min">
+                            <td colspan="3" class="text-left" style="padding-left: 10px;">Plus faible moyenne</td>
+                            ${matieres.map(m => {
+                const maxN = getMaxNotes(m._id);
+                return `
+                                    ${maxN > 0 ? `<td colspan="${maxN}"></td>` : ''}
+                                    <td class="bg-red-50">${subjectStats[m._id]?.min?.toFixed(2) || '-'}</td>
+                                    <td class="bg-yellow-50"></td>
+                                `;
+            }).join('')}
+                            <td class="bg-orange-50"></td>
+                            <td class="bg-red-100">${overallStats?.minAverage?.toFixed(2) || '-'}</td>
                         </tr>
                     </tfoot>
                 </table>
@@ -403,7 +499,7 @@ exports.getMasterSheetHTML = (sheetsData, schoolConfig) => {
                 <div class="footer-sig">
                     <div class="sig-section">
                         <div class="sig-box">
-                            <p class="font-bold underline">LE TITULAIRE</p>
+                            <p class="font-bold underline">LE CENSEUR</p>
                             <div class="sig-space"></div>
                         </div>
                         <div class="sig-box">
@@ -422,28 +518,59 @@ exports.getMasterSheetHTML = (sheetsData, schoolConfig) => {
 <html>
 <head>
     <style>
+        @page { size: A3 landscape; margin: 10mm; }
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: 'Arial', sans-serif; font-size: 8px; margin: 0; padding: 0; }
-        .sheet-page { padding: 15mm; }
-        .header { display: flex; justify-content: space-between; margin-bottom: 10px; border-bottom: 2px solid #333; padding-bottom: 5px; align-items: flex-start; }
-        h1 { font-size: 16px; margin: 0; color: #1e3a8a; }
-        h3 { font-size: 14px; margin: 2px 0; }
+        body { font-family: 'Arial', sans-serif; font-size: 8px; color: #333; }
         
-        table { width: 100%; border-collapse: collapse; margin-top: 10px; table-layout: fixed; }
-        th, td { border: 1px solid #333; padding: 3px; text-align: center; word-wrap: break-word; }
-        th { background-color: #f2f2f2; font-weight: bold; }
-        .name-col { text-align: left; width: 140px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        .stats-col { width: 60px; background: #fef9c3; }
-        .stats-footer { background-color: #e5e7eb; font-weight: bold; }
+        .sheet-page { width: 100%; border-radius: 12px; }
         
-        .dispensed { font-weight: bold; color: #dc2626; font-style: italic; }
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; table-layout: fixed; border: 1px solid #555; }
+        th, td { border: 1px solid #555; padding: 3px; text-align: center; vertical-align: middle; font-size: 7.5px; }
+        
+        thead th { background-color: #f9fafb; font-weight: bold; }
+        .matiere-group-header { background-color: #eff6ff !important; color: #1e3a8a; text-transform: uppercase; }
+        
+        .sub-header-n { font-weight: normal; color: #6b7280; width: 25px; }
+        .sub-header-moy { background-color: #f9fafb; width: 35px; }
+        .sub-header-pond { background-color: #fefce8; color: #854d0e; width: 40px; }
+        
+        .name-col { text-align: left; padding-left: 8px; }
+        .total-pts-header { background-color: #fff7ed; color: #9a3412; }
+        .moy-gen-header { background-color: #f3f4f6; }
+        
+        .pond-cell { background-color: #fefce8; color: #854d0e; font-weight: 600; }
+        .total-pts-cell { background-color: #fff7ed; color: #9a3412; }
+        .moy-gen-cell { background-color: #f9fafb; font-weight: 900; }
+        
+        .dispensed { font-weight: bold; color: #e11d48; font-style: italic; }
         .font-bold { font-weight: bold; }
+        .font-black { font-weight: 900; }
+        .text-left { text-align: left; }
         .underline { text-decoration: underline; }
         
+        .text-green { color: #16a34a !important; }
+        .text-orange { color: #ea580c !important; }
+        .text-red { color: #dc2626 !important; }
+        
+        tfoot tr td { font-weight: bold; padding: 4px; }
+        .footer-avg { background-color: #f9fafb; border-top: 2px solid #94a3b8; }
+        .footer-max, .footer-min { font-size: 7px; color: #4b5563; }
+        
+        .bg-blue-100 { background-color: #dbeafe !important; color: #1e3a8a; }
+        .bg-blue-200 { background-color: #bfdbfe !important; color: #1e3a8a; font-size: 9px; }
+        .bg-yellow-50 { background-color: #fefce8 !important; }
+        .bg-orange-50 { background-color: #fff7ed !important; }
+        
+        .bg-green-50 { background-color: #f0fdf4 !important; color: #16a34a; }
+        .bg-green-100 { background-color: #dcfce7 !important; color: #14532d; }
+        
+        .bg-red-50 { background-color: #fef2f2 !important; color: #dc2626; }
+        .bg-red-100 { background-color: #fee2e2 !important; color: #7f1d1d; }
+        
         .footer-sig { margin-top: 30px; }
-        .sig-section { display: flex; justify-content: space-around; }
-        .sig-box { text-align: center; width: 200px; }
-        .sig-space { height: 60px; }
+        .sig-section { display: flex; justify-content: space-between; padding: 0 100px; }
+        .sig-box { text-align: center; width: 250px; }
+        .sig-space { height: 70px; }
     </style>
 </head>
 <body>

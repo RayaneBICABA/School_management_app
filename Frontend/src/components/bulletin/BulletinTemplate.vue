@@ -88,7 +88,7 @@
               </template>
               <td class="border border-black p-1 font-bold">{{ (note.notePonderee || 0).toFixed(2) }}</td>
               <td class="border border-black p-1 w-24 italic" :class="getAppreciationColor(getSubjectAppreciation(note.moyenneMatiere || 0))">{{ getSubjectAppreciation(note.moyenneMatiere || 0) }}</td>
-              <td class="border border-black p-1 text-[9px]" style="min-width: 80px; white-space: nowrap;">{{ note.professeur ? (note.professeur.civilite === 'Mr' ? 'M ' : (note.professeur.civilite ? note.professeur.civilite + ' ' : '')) + (note.professeur.prenom + ' ' + note.professeur.nom).toUpperCase() : '' }}</td>
+              <td class="border border-black p-1 text-[9px]" style="min-width: 80px; white-space: nowrap;">{{ note.professeur ? (note.professeur.civilite === 'Mr' ? 'M ' : (note.professeur.civilite ? note.professeur.civilite + ' ' : '')) + (note.professeur.nom || '').toUpperCase() : '' }}</td>
               <td class="border border-black p-1 w-20"></td>
             </tr>
             <!-- Category Totals -->

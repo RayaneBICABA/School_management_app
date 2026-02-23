@@ -229,7 +229,7 @@ const generateBulletinContent = (bulletinData, schoolConfig = {}) => {
                             <td class="bold">${(note.notePonderee || 0).toFixed(2)}</td>
                         `}
                         <td class="italic" style="${note.isDispensed ? '' : getAppreciationColor(appr)}">${note.isDispensed ? 'DISPENSÉ' : appr}</td>
-                        <td class="text-xs" style="width: 80px; white-space: nowrap;">${note.professeur ? (note.professeur.civilite === 'Mr' ? 'M ' : (note.professeur.civilite ? note.professeur.civilite + ' ' : '')) + (note.professeur.prenom + ' ' + note.professeur.nom).toUpperCase() : ''}</td>
+                        <td class="text-xs" style="width: 80px; white-space: nowrap;">${note.professeur ? (note.professeur.civilite === 'Mr' ? 'M ' : (note.professeur.civilite ? note.professeur.civilite + ' ' : '')) + (note.professeur.nom || '').toUpperCase() : ''}</td>
                         <td class="signature-cell" style="width: 60px;"></td>
                     </tr>
                 `;

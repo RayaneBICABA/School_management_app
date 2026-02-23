@@ -18,7 +18,7 @@ exports.getProviseurStats = async (req, res, next) => {
 
         // Get current academic year from settings
         const academicSetting = await Setting.findOne({ key: 'academic_year_config' });
-        const currentYear = academicSetting ? (academicSetting.value.year || academicSetting.value.academicYear) : '2023-2024';
+        const currentYear = academicSetting ? (academicSetting.value.year || academicSetting.value.academicYear) : '2025-2026';
 
         // 1. Taux de réussite global (Average of all note values >= 10)
         // Note schema has notes array with valeur. We aggregate across all notes.
@@ -391,7 +391,7 @@ exports.getSuiviActiviteStats = async (req, res, next) => {
 
         // Get current academic year from settings
         const academicSetting = await Setting.findOne({ key: 'academic_year_config' });
-        const currentYear = academicSetting ? (academicSetting.value.year || academicSetting.value.academicYear) : '2023-2024';
+        const currentYear = academicSetting ? (academicSetting.value.year || academicSetting.value.academicYear) : '2025-2026';
 
         // Determine filiere based on period name
         let targetFiliere = 'Générale'; // Default
@@ -648,7 +648,7 @@ exports.getSuiviAvancementCenseur = async (req, res, next) => {
 
         // Get current academic year from settings
         const academicSetting = await Setting.findOne({ key: 'academic_year_config' });
-        const currentYear = academicSetting ? (academicSetting.value.year || academicSetting.value.academicYear) : '2023-2024';
+        const currentYear = academicSetting ? (academicSetting.value.year || academicSetting.value.academicYear) : '2025-2026';
 
         // 1. Get all classes
         let classesQuery = {};

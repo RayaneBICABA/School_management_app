@@ -16,7 +16,7 @@ const generateCalendarICal = async (events) => {
       try {
         const startDate = new DateTime(event.dateDebut);
         const endDate = new DateTime(event.dateFin);
-        
+
         // Créer l'événement
         const calendarEvent = calendar.createEvent({
           start: startDate.toJSDate(),
@@ -36,7 +36,7 @@ const generateCalendarICal = async (events) => {
         if (event.type) {
           calendarEvent.set('X-MICROSOFT-CDO-BUSYSTATUS', event.type === 'EXAMEN' ? 'TENTATIVE' : 'CONFIRMED');
         }
-        
+
         if (event.professeur) {
           calendarEvent.set('X-MICROSOFT-CDO-ATTENDEES', event.professeur);
         }
@@ -55,9 +55,9 @@ const generateCalendarICal = async (events) => {
 
     // Générer le contenu iCal
     const icalData = calendar.toString();
-    
+
     return icalData;
-    
+
   } catch (error) {
     console.error('Erreur lors de la génération du calendrier iCal:', error);
     throw error;
@@ -70,7 +70,7 @@ const generateCalendarICal = async (events) => {
  */
 const addRecurringEvents = (calendar) => {
   try {
-    // Ajouter les jours fériés de l'année scolaire 2023-2024
+    // Ajouter les jours fériés de l'année scolaire 2025-2026
     const holidays = [
       { name: 'Vacances de la Toussaint', start: '2024-04-15', end: '2024-05-02' },
       { name: 'Vacances d\'été', start: '2024-07-01', end: '2024-08-31' },
@@ -86,7 +86,7 @@ const addRecurringEvents = (calendar) => {
         description: 'Vacances scolaires',
         status: 'CONFIRMED'
       });
-      
+
       if (holidayEvent && holidayEvent.categories) {
         holidayEvent.categories = ['VACANCES'];
       }
@@ -111,7 +111,7 @@ const addRecurringEvents = (calendar) => {
         description: 'Jour férié',
         status: 'CONFIRMED'
       });
-      
+
       if (holidayEvent && holidayEvent.categories) {
         holidayEvent.categories = ['JOURS FÉRIÉS'];
       }
@@ -120,13 +120,13 @@ const addRecurringEvents = (calendar) => {
     // Ajouter les jours de semaine d'école (lundi-vendredi)
     const schoolYearStart = new Date('2023-09-01');
     const schoolYearEnd = new Date('2024-06-30');
-    
+
     // Générer les jours d'école (du lundi au vendredi)
     let currentDate = new Date(schoolYearStart);
-    
+
     while (currentDate <= schoolYearEnd) {
       const dayOfWeek = currentDate.getDay();
-      
+
       // Si c'est un jour de semaine (lundi=1, vendredi=5)
       if (dayOfWeek >= 1 && dayOfWeek <= 5) {
         const schoolEvent = calendar.createEvent({
@@ -136,12 +136,12 @@ const addRecurringEvents = (calendar) => {
           description: 'Cours réguliers',
           status: 'CONFIRMED'
         });
-        
+
         if (schoolEvent && schoolEvent.categories) {
           schoolEvent.categories = ['COURS'];
         }
       }
-      
+
       currentDate.setDate(currentDate.getDate() + 1);
     }
 
@@ -159,15 +159,15 @@ const addRecurringEvents = (calendar) => {
 const generateStudentCalendarICal = async (eleveId, options = {}) => {
   try {
     const { startDate, endDate, includeHolidays, includeWeekends } = options;
-    
+
     // Récupérer les événements de l'élève depuis la base de données
     const events = await getStudentEvents(eleveId, options);
-    
+
     // Générer le calendrier iCal
     const icalData = await generateCalendarICal(events);
-    
+
     return icalData;
-    
+
   } catch (error) {
     console.error('Erreur lors de la génération du calendrier élève:', error);
     throw error;
@@ -183,15 +183,15 @@ const generateStudentCalendarICal = async (eleveId, options = {}) => {
 const generateClassCalendarICal = async (classeId, options = {}) => {
   try {
     const { startDate, endDate, includeHolidays, includeWeekends } = options;
-    
+
     // Récupérer les événements de la classe depuis la base de données
     const events = await getClassEvents(classeId, options);
-    
+
     // Générer le calendrier iCal
     const icalData = await generateCalendarICal(events);
-    
+
     return icalData;
-    
+
   } catch (error) {
     console.error('Erreur lors de la génération du calendrier classe:', error);
     throw error;
@@ -207,7 +207,7 @@ const generateClassCalendarICal = async (classeId, options = {}) => {
 const getStudentEvents = async (eleveId, options = {}) => {
   // Pour l'instant, nous allons simuler des événements
   // En production, cela viendrait de la base de données
-  
+
   const mockEvents = [
     {
       id: '1',
@@ -260,18 +260,18 @@ const getStudentEvents = async (eleveId, options = {}) => {
       eleveId: eleveId
     }
   ];
-  
+
   // Filtrer par date si spécifié
   if (options.startDate || options.endDate) {
     return mockEvents.filter(event => {
       const eventDate = new Date(event.dateDebut);
       const start = options.startDate ? new Date(options.startDate) : null;
       const end = options.endDate ? new Date(options.endDate) : null;
-      
+
       return (!start || eventDate >= start) && (!end || eventDate <= end);
     });
   }
-  
+
   return mockEvents;
 };
 
@@ -284,7 +284,7 @@ const getStudentEvents = async (eleveId, options = {}) => {
 const getClassEvents = async (classeId, options = {}) => {
   // Pour l'instant, nous allons simuler des événements de classe
   // En production, cela viendrait de la base de données
-  
+
   const mockEvents = [
     {
       id: '1',
@@ -322,18 +322,18 @@ const getClassEvents = async (classeId, options = {}) => {
       classeId: classeId
     }
   ];
-  
+
   // Filtrer par date si spécifié
   if (options.startDate || options.endDate) {
     return mockEvents.filter(event => {
       const eventDate = new Date(event.dateDebut);
       const start = options.startDate ? new Date(options.startDate) : null;
       const end = options.endDate ? new Date(options.endDate) : null;
-      
+
       return (!start || eventDate >= start) && (!end || eventDate <= end);
     });
   }
-  
+
   return mockEvents;
 };
 

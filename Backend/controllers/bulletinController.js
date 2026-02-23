@@ -71,10 +71,9 @@ const updateClassStats = async (classeId, periode, anneeScolaire) => {
 // Helper pour créer ou mettre à jour un bulletin avec les données réelles (notes validées)
 const createOrUpdateBulletin = async (eleveId, classeId, periode, anneeScolaire, genereeParId) => {
     // Get current academic year from settings if not provided
-    let year = anneeScolaire;
-    if (!year) {
+    if (!anneeScolaire) {
         const academicSetting = await Setting.findOne({ key: 'academic_year_config' });
-        year = academicSetting ? (academicSetting.value.year || academicSetting.value.academicYear) : '2023-2024';
+        anneeScolaire = academicSetting ? (academicSetting.value.year || academicSetting.value.academicYear) : '2025-2026';
     }
 
     // Récupérer toutes les notes non rejetées (permet d'avoir des moyennes en brouillon)
@@ -83,7 +82,7 @@ const createOrUpdateBulletin = async (eleveId, classeId, periode, anneeScolaire,
         classe: classeId,
         periode,
         statut: { $ne: 'REJETEE' },
-        anneeScolaire: year
+        anneeScolaire: anneeScolaire
     }).populate('matiere');
 
     // Récupérer les assignations officielles
@@ -95,7 +94,7 @@ const createOrUpdateBulletin = async (eleveId, classeId, periode, anneeScolaire,
 
     // Récupérer les dispensations
     const Dispensation = require('../models/Dispensation');
-    const dispensations = await Dispensation.find({ eleve: eleveId, anneeScolaire: year });
+    const dispensations = await Dispensation.find({ eleve: eleveId, anneeScolaire: anneeScolaire });
     const dispensedMatiereIds = dispensations.map(d => d.matiere.toString());
 
     // Mapper les notes
@@ -158,7 +157,7 @@ const createOrUpdateBulletin = async (eleveId, classeId, periode, anneeScolaire,
     }
 
     // Chercher s'il existe déjà un bulletin
-    let bulletin = await Bulletin.findOne({ eleve: eleveId, periode, anneeScolaire: year });
+    let bulletin = await Bulletin.findOne({ eleve: eleveId, periode, anneeScolaire: anneeScolaire });
 
     if (bulletin) {
         // Aggressive Refresh: Update notes if NOT already distributed
@@ -173,7 +172,7 @@ const createOrUpdateBulletin = async (eleveId, classeId, periode, anneeScolaire,
             eleve: eleveId,
             classe: classeId,
             periode,
-            anneeScolaire: year,
+            anneeScolaire: anneeScolaire,
             notes: mappedNotes,
             genereePar: genereeParId,
             statut: 'BROUILLON'
@@ -287,7 +286,7 @@ exports.generateBulletinsClasse = asyncHandler(async (req, res, next) => {
     // Mettre à jour les statistiques de la classe après avoir généré tous les bulletins
     if (bulletinsGeneres.length > 0) {
         const academicSetting = await Setting.findOne({ key: 'academic_year_config' });
-        const currentYear = academicSetting ? (academicSetting.value.year || academicSetting.value.academicYear) : '2023-2024';
+        const currentYear = academicSetting ? (academicSetting.value.year || academicSetting.value.academicYear) : '2025-2026';
         await updateClassStats(classe, periode, anneeScolaire || currentYear);
     }
 
@@ -357,6 +356,13 @@ exports.getBulletinsByClasse = asyncHandler(async (req, res, next) => {
 
     // Refresh the list after updates if any refreshes actually happened
     if (bulletins.some(b => b.statut !== 'DISTRIBUE')) {
+        // Trigger class stats update to recalculate ranks and class averages
+        if (req.params.classeId && bulletins.length > 0) {
+            const targetYear = bulletins[0].anneeScolaire;
+            const targetPeriode = bulletins[0].periode;
+            await updateClassStats(req.params.classeId, targetPeriode, targetYear);
+        }
+
         bulletins = await Bulletin.find(query)
             .populate('eleve', 'nom prenom matricule dateNaissance lieuNaissance photo redoublant')
             .populate('classe', 'niveau section filiere')
@@ -1162,3 +1168,4 @@ exports.regenerateAllBulletins = asyncHandler(async (req, res, next) => {
 });
 // Export non-route handlers for internal use if needed
 exports.createOrUpdateBulletin = createOrUpdateBulletin;
+exports.updateClassStats = updateClassStats;

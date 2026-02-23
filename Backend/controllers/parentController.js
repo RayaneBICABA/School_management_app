@@ -518,7 +518,7 @@ exports.getChildDisciplineStats = async (req, res, next) => {
 
         // Get student to know their class year
         const student = await User.findById(id).populate('classe');
-        const anneeScolaire = student.classe?.anneeScolaire || '2023-2024';
+        const anneeScolaire = student.classe?.anneeScolaire || '2025-2026';
 
         // Use the static method of Incident model
         const stats = await Incident.getStatsEleve(id, anneeScolaire);

@@ -67,7 +67,7 @@ exports.submitNotesForValidation = async (req, res) => {
                     date: evaluation.date
                 }],
                 statut: 'EN_ATTENTE',
-                anneeScolaire: '2023-2024'
+                anneeScolaire: '2025-2026'
             });
             createdNotes.push(note);
         }
@@ -209,7 +209,7 @@ const generateBulletin = async (eleveId, classeId, periode) => {
             eleve: eleveId,
             periode: periode,
             statut: 'VALIDEE',
-            anneeScolaire: eleve.classe.anneeScolaire || '2023-2024'
+            anneeScolaire: eleve.classe.anneeScolaire || '2025-2026'
         }).populate('matiere');
 
         const bulletinsNotes = [];
@@ -268,7 +268,7 @@ const generateBulletin = async (eleveId, classeId, periode) => {
         });
 
         const bulletin = await Bulletin.findOneAndUpdate(
-            { eleve: eleveId, periode: periode, anneeScolaire: eleve.classe.anneeScolaire || '2023-2024' },
+            { eleve: eleveId, periode: periode, anneeScolaire: eleve.classe.anneeScolaire || '2025-2026' },
             {
                 eleve: eleveId,
                 classe: classeId,
@@ -289,7 +289,7 @@ const generateBulletin = async (eleveId, classeId, periode) => {
         const allBulletins = await Bulletin.find({
             classe: classeId,
             periode: periode,
-            anneeScolaire: eleve.classe.anneeScolaire || '2023-2024'
+            anneeScolaire: eleve.classe.anneeScolaire || '2025-2026'
         }).sort({ moyenneGenerale: -1 });
 
         const scores = allBulletins.map(b => b.moyenneGenerale);
@@ -473,7 +473,7 @@ exports.getBulletinsByClass = async (req, res) => {
         const bulletins = await Bulletin.find({
             classe: classeId,
             periode: periode,
-            anneeScolaire: '2023-2024'
+            anneeScolaire: '2025-2026'
         })
             .populate('eleve', 'nom prenom matricule')
             .populate('classe', 'niveau section')
@@ -500,7 +500,7 @@ exports.getBulletinByStudent = async (req, res) => {
         const bulletin = await Bulletin.findOne({
             eleve: eleveId,
             periode: periode,
-            anneeScolaire: '2023-2024'
+            anneeScolaire: '2025-2026'
         })
             .populate('eleve', 'nom prenom matricule dateNaissance')
             .populate('classe', 'niveau section filiere')

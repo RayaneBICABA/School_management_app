@@ -26,13 +26,13 @@ exports.exportStudentCalendar = asyncHandler(async (req, res, next) => {
 
         // Configurer les headers pour le téléchargement
         const fileName = `calendrier-eleve-${eleveId}-${new Date().toISOString().split('T')[0]}.ics`;
-        
+
         res.setHeader('Content-Type', 'text/calendar');
         res.setHeader('Content-Disposition', `attachment; filename="${fileName}"`);
         res.setHeader('Content-Length', Buffer.byteLength(icalData));
 
         res.send(icalData);
-        
+
     } catch (error) {
         console.error('Erreur lors de l\'export du calendrier élève:', error);
         return next(new ErrorResponse('Erreur lors de l\'export du calendrier', 500));
@@ -63,13 +63,13 @@ exports.exportClassCalendar = asyncHandler(async (req, res, next) => {
 
         // Configurer les headers pour le téléchargement
         const fileName = `calendrier-classe-${classeId}-${new Date().toISOString().split('T')[0]}.ics`;
-        
+
         res.setHeader('Content-Type', 'text/calendar');
         res.setHeader('Content-Disposition', `attachment; filename="${fileName}"`);
         res.setHeader('Content-Length', Buffer.byteLength(icalData));
 
         res.send(icalData);
-        
+
     } catch (error) {
         console.error('Erreur lors de l\'export du calendrier classe:', error);
         return next(new ErrorResponse('Erreur lors de l\'export du calendrier', 500));
@@ -99,13 +99,13 @@ exports.exportSchoolCalendar = asyncHandler(async (req, res, next) => {
 
         // Configurer les headers pour le téléchargement
         const fileName = `calendrier-ecole-${new Date().toISOString().split('T')[0]}.ics`;
-        
+
         res.setHeader('Content-Type', 'text/calendar');
         res.setHeader('Content-Disposition', `attachment; filename="${fileName}"`);
         res.setHeader('Content-Length', Buffer.byteLength(icalData));
 
         res.send(icalData);
-        
+
     } catch (error) {
         console.error('Erreur lors de l\'export du calendrier école:', error);
         return next(new ErrorResponse('Erreur lors de l\'export du calendrier', 500));
@@ -138,7 +138,7 @@ exports.getStudentEvents = asyncHandler(async (req, res, next) => {
             count: events.length,
             data: events
         });
-        
+
     } catch (error) {
         console.error('Erreur lors de la récupération des événements élève:', error);
         return next(new ErrorResponse('Erreur lors de la récupération des événements', 500));
@@ -171,7 +171,7 @@ exports.getClassEvents = asyncHandler(async (req, res, next) => {
             count: events.length,
             data: events
         });
-        
+
     } catch (error) {
         console.error('Erreur lors de la récupération des événements classe:', error);
         return next(new ErrorResponse('Erreur lors de la récupération des événements', 500));
@@ -185,35 +185,35 @@ const checkCalendarAccess = async (user, targetId, type) => {
         // TODO: Vérifier que l'élève est bien un enfant du parent
         return true; // Pour l'instant, autoriser tous les parents
     }
-    
+
     // Les élèves peuvent voir leur propre calendrier
     if (user.role === 'ELEVE' && type === 'student') {
         return targetId === user._id.toString();
     }
-    
+
     // Les professeurs peuvent voir les calendriers de leurs classes
     if (user.role === 'PROFESSEUR' && type === 'class') {
         // TODO: Vérifier que le professeur enseigne dans cette classe
         return true; // Pour l'instant, autoriser tous les professeurs
     }
-    
+
     // Le censeur, proviseur et admin peuvent voir tous les calendriers
     if (['CENSEUR', 'PROVISEUR', 'ADMIN'].includes(user.role)) {
         return true;
     }
-    
+
     return false;
 };
 
 // Fonction pour générer le calendrier général de l'école
 const generateSchoolCalendarICal = async (options = {}) => {
     const { generateCalendarICal } = require('../utils/icalGenerator');
-    
+
     // Événements généraux de l'école
     const schoolEvents = [
         {
             titre: 'Rentrée scolaire',
-            description: 'Début de l\'année scolaire 2023-2024',
+            description: 'Début de l\'année scolaire 2025-2026',
             dateDebut: new Date('2023-09-01T08:00:00'),
             dateFin: new Date('2023-09-01T12:00:00'),
             lieu: 'Établissement',
@@ -239,20 +239,20 @@ const generateSchoolCalendarICal = async (options = {}) => {
             statut: 'CONFIRMÉ'
         }
     ];
-    
+
     return await generateCalendarICal(schoolEvents);
 };
 
 // Fonction pour récupérer les événements calendaires d'un élève
 const getStudentCalendarEvents = async (eleveId, options = {}) => {
     const { getStudentEvents } = require('../utils/icalGenerator');
-    
+
     return await getStudentEvents(eleveId, options);
 };
 
 // Fonction pour récupérer les événements calendaires d'une classe
 const getClassCalendarEvents = async (classeId, options = {}) => {
     const { getClassEvents } = require('../utils/icalGenerator');
-    
+
     return await getClassEvents(classeId, options);
 };

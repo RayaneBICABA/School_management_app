@@ -351,13 +351,24 @@
                     <p class="font-semibold text-sm text-[#0e141b] dark:text-white">{{ course.matiere?.nom }}</p>
                     <p class="text-xs text-slate-500">Coefficient: {{ course.coefficient }}</p>
                   </div>
-                  <button 
-                    type="button"
-                    @click="removeCourse(course._id)"
-                    class="p-1 text-slate-400 hover:text-red-500 transition-colors"
-                  >
-                    <span class="material-symbols-outlined text-lg">delete</span>
-                  </button>
+                  <div class="flex items-center gap-1">
+                    <button 
+                      type="button"
+                      @click="openEditSubjectModal(course)"
+                      class="p-1 text-slate-400 hover:text-primary transition-colors"
+                      title="Modifier la matière"
+                    >
+                      <span class="material-symbols-outlined text-lg">edit</span>
+                    </button>
+                    <button 
+                      type="button"
+                      @click="removeCourse(course._id)"
+                      class="p-1 text-slate-400 hover:text-red-500 transition-colors"
+                      title="Supprimer la matière de la classe"
+                    >
+                      <span class="material-symbols-outlined text-lg">delete</span>
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>
@@ -468,6 +479,74 @@
             class="flex-1 bg-primary text-white font-bold py-2.5 rounded-lg hover:bg-primary/90 transition-all"
           >
             Ajouter
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Edit Subject Modal -->
+  <div v-if="showEditSubjectModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
+    <div class="bg-white dark:bg-slate-900 w-full max-w-md rounded-xl shadow-2xl">
+      <div class="px-6 py-5 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center">
+        <h3 class="text-xl font-bold text-[#0e141b] dark:text-white">Modifier la matière</h3>
+        <button @click="closeEditSubjectModal" class="text-slate-400 hover:text-slate-600 transition-colors">
+          <span class="material-symbols-outlined">close</span>
+        </button>
+      </div>
+      
+      <form @submit.prevent="updateSubject" class="p-6 space-y-4">
+        <div class="flex flex-col gap-2">
+          <label class="text-sm font-semibold text-[#0e141b] dark:text-slate-200">Nom de la matière</label>
+          <input 
+            v-model="editSubjectForm.nom"
+            type="text"
+            required
+            class="w-full bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 rounded-lg text-sm focus:ring-primary focus:border-primary h-10 px-3"
+            placeholder="Nom de la matière"
+          />
+        </div>
+
+        <div class="flex flex-col gap-2">
+          <label class="text-sm font-semibold text-[#0e141b] dark:text-slate-200">Catégorie</label>
+          <select 
+            v-model="editSubjectForm.categorie"
+            required
+            class="w-full bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 rounded-lg text-sm focus:ring-primary focus:border-primary h-10 px-3"
+          >
+            <option value="">Sélectionner une catégorie</option>
+            <option value="ENSEIGNEMENT GÉNÉRAL">Enseignement Général</option>
+            <option value="ENSEIGNEMENT TECHNIQUE">Enseignement Technique</option>
+          </select>
+        </div>
+
+        <div class="flex flex-col gap-2">
+          <label class="text-sm font-semibold text-[#0e141b] dark:text-slate-200">Coefficient (pour cette classe)</label>
+          <input 
+            v-model.number="editSubjectForm.coefficient"
+            type="number"
+            step="0.5"
+            min="0.5"
+            max="10"
+            required
+            class="w-full bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 rounded-lg text-sm focus:ring-primary focus:border-primary h-10 px-3"
+            placeholder="Ex: 2"
+          />
+        </div>
+
+        <div class="flex gap-3 mt-6">
+          <button 
+            type="button"
+            @click="closeEditSubjectModal"
+            class="flex-1 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 font-bold py-2.5 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-700 transition-all"
+          >
+            Annuler
+          </button>
+          <button 
+            type="submit"
+            class="flex-1 bg-primary text-white font-bold py-2.5 rounded-lg hover:bg-primary/90 transition-all"
+          >
+            Mettre à jour
           </button>
         </div>
       </form>
@@ -700,6 +779,17 @@ const importData = reactive({
   selectedIds: [],
   loadingMatieres: false,
   isImporting: false
+})
+
+// Variables pour l'édition de matière
+const showEditSubjectModal = ref(false)
+const editingCourse = ref(null)
+const editSubjectForm = reactive({
+  id: '',
+  matiereId: '',
+  nom: '',
+  categorie: '',
+  coefficient: 1
 })
 
 // Manage Modal variables
@@ -1046,6 +1136,46 @@ const removeCourse = async (courseId) => {
       console.error('Erreur suppression matière:', error)
       alert('Erreur lors de la suppression de la matière')
     }
+  }
+}
+
+const openEditSubjectModal = (course) => {
+  editingCourse.value = course
+  editSubjectForm.id = course._id
+  editSubjectForm.matiereId = course.matiere?._id
+  editSubjectForm.nom = course.matiere?.nom || ''
+  editSubjectForm.categorie = course.matiere?.categorie || 'ENSEIGNEMENT GÉNÉRAL'
+  editSubjectForm.coefficient = course.coefficient || 1
+  showEditSubjectModal.value = true
+}
+
+const closeEditSubjectModal = () => {
+  showEditSubjectModal.value = false
+  editingCourse.value = null
+}
+
+const updateSubject = async () => {
+  if (!editingCourse.value || !editingClass.value) return
+  
+  try {
+    // 1. Mettre à jour la matière elle-même (nom et catégorie)
+    await api.updateMatiere(editSubjectForm.matiereId, {
+      nom: editSubjectForm.nom,
+      categorie: editSubjectForm.categorie
+    })
+
+    // 2. Mettre à jour l'affectation (coefficient)
+    await api.updateClasseMatiere(editingClass.value.id, editSubjectForm.id, {
+      coefficient: editSubjectForm.coefficient
+    })
+
+    await fetchClasseCourses(editingClass.value.id)
+    await fetchMatieres()
+    closeEditSubjectModal()
+    alert('Matière mise à jour avec succès !')
+  } catch (error) {
+    console.error('Erreur mise à jour matière:', error)
+    alert(error.response?.data?.error || 'Erreur lors de la mise à jour de la matière')
   }
 }
 

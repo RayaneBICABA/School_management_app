@@ -14,10 +14,7 @@ const MatiereSchema = new mongoose.Schema({
     },
     categorie: {
         type: String,
-        enum: [
-            'ENSEIGNEMENT GÉNÉRAL',
-            'ENSEIGNEMENT TECHNIQUE'
-        ],
+        enum: ['ENSEIGNEMENT GÉNÉRAL', 'ENSEIGNEMENT TECHNIQUE'],
         default: 'ENSEIGNEMENT GÉNÉRAL'
     },
     coefficient: {

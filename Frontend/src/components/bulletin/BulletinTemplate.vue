@@ -82,7 +82,7 @@
               <td class="border border-black p-2 text-left font-bold uppercase">{{ note.matiere?.nom }}</td>
               <td class="border border-black p-1">{{ (note.coeff || note.matiere?.coefficient || 0).toFixed(1) }}</td>
               
-              <td v-if="note.isDispensed" colspan="2" class="border border-black p-2 font-bold italic text-red-600">DISPENSÉ</td>
+              <td v-if="note.isDispensed" colspan="2" class="border border-black p-2 font-bold italic text-red-600">D</td>
               <template v-else>
                 <td class="border border-black p-1">{{ (note.moyenneMatiere || 0).toFixed(2) }}</td>
               </template>
@@ -167,9 +167,9 @@
           </div>
           <div class="w-1/2 p-4 flex flex-col items-center justify-center">
             <div class="font-bold text-sm uppercase">Le Proviseur</div>
-            <div class="font-bold text-xs mt-1">{{ schoolConfig.proviseurName || '' }}</div>
             <!-- Signature space -->
-            <div class="mt-2 h-10 w-full"></div>
+            <div class="mt-2 h-24 w-full"></div>
+            <div class="font-bold text-xs mt-1">{{ schoolConfig.proviseurName || '' }}</div>
             <!-- <div v-if="bulletin.signatureProviseur" class="mt-4 text-blue-700 italic border-2 border-blue-700 rounded-full px-4 py-1 rotate-[-5deg]">Signé Électroniquement</div> -->
           </div>
         </div>

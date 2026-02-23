@@ -9,7 +9,7 @@ const ClasseSchema = new mongoose.Schema({
     serie: {
         type: String,
         trim: true,
-        default: 'Général' // A, C, D, etc. for high school
+        default: 'Général'
     },
     filiere: {
         type: String,
@@ -19,7 +19,7 @@ const ClasseSchema = new mongoose.Schema({
     },
     section: {
         type: String,
-        required: [true, 'La section/nom de classe est requis'], // e.g., 'A', '1', 'Rouge'
+        required: [true, 'La section/nom de classe est requis'],
         trim: true
     },
     anneeScolaire: {
@@ -39,24 +39,18 @@ const ClasseSchema = new mongoose.Schema({
         type: Date,
         default: Date.now
     }
-});
+}, { toJSON: { virtuals: true }, toObject: { virtuals: true } });
 
-// Virtual pour obtenir les périodes selon la filière
 ClasseSchema.virtual('periodes').get(function () {
-    if (this.filiere === 'Générale') {
-        return ['Trimestre 1', 'Trimestre 2', 'Trimestre 3'];
-    } else if (this.filiere === 'Technique') {
-        return ['Semestre 1', 'Semestre 2'];
-    }
+    if (this.filiere === 'Générale') return ['Trimestre 1', 'Trimestre 2', 'Trimestre 3'];
+    if (this.filiere === 'Technique') return ['Semestre 1', 'Semestre 2'];
     return [];
 });
 
-// Virtual pour le nom complet de la classe
 ClasseSchema.virtual('nom').get(function () {
     return `${this.niveau} ${this.section}`;
 });
 
-// Compound index to ensure uniqueness of Class name per year
 ClasseSchema.index({ niveau: 1, serie: 1, section: 1, anneeScolaire: 1 }, { unique: true });
 
 module.exports = mongoose.model('Classe', ClasseSchema);

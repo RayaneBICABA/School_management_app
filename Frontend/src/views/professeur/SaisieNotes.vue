@@ -167,7 +167,7 @@
                 >
                   <template v-if="isDispensed(eleve._id)">
                     <div class="flex flex-col items-center justify-center">
-                      <span class="text-xs font-bold text-rose-500 bg-rose-50 dark:bg-rose-900/20 px-2 py-1 rounded">DISPENSÉ</span>
+                      <span class="text-xl font-black text-rose-600 dark:text-rose-400" title="Élève dispensé dans cette matière">D</span>
                     </div>
                   </template>
                   <input 

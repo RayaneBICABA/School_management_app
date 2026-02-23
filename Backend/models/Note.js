@@ -36,7 +36,6 @@ const NoteSchema = new mongoose.Schema({
         type: {
             type: String,
             required: true
-            // Enum retiré pour permettre des noms d'évaluation personnalisés
         },
         date: {
             type: Date,
@@ -90,29 +89,21 @@ const NoteSchema = new mongoose.Schema({
     }
 });
 
-// Index pour recherche rapide
 NoteSchema.index({ eleve: 1, matiere: 1, periode: 1, anneeScolaire: 1 });
 NoteSchema.index({ classe: 1, periode: 1, statut: 1 });
 NoteSchema.index({ professeur: 1, statut: 1 });
 
-// Méthode pour calculer la moyenne
 NoteSchema.methods.calculerMoyenne = function () {
-    if (this.notes.length === 0) {
-        return 0;
-    }
-
+    if (this.notes.length === 0) return 0;
     let totalPoints = 0;
     let totalCoefficients = 0;
-
     this.notes.forEach(note => {
         totalPoints += note.valeur * (note.coefficient || 1);
         totalCoefficients += (note.coefficient || 1);
     });
-
     return totalCoefficients > 0 ? totalPoints / totalCoefficients : 0;
 };
 
-// Middleware pour mettre à jour updatedAt
 NoteSchema.pre('save', async function () {
     this.updatedAt = Date.now();
 });

@@ -32,7 +32,6 @@ const ClasseMatiereSchema = new mongoose.Schema({
     }
 });
 
-// Ensure a matiere can only be assigned once per class
 ClasseMatiereSchema.index({ classe: 1, matiere: 1 }, { unique: true });
 
 module.exports = mongoose.model('ClasseMatiere', ClasseMatiereSchema);

@@ -7,10 +7,6 @@ exports.register = async (req, res, next) => {
     try {
         const { nom, prenom, email, telephone, password, role } = req.body;
 
-        // Create user
-        // If logic needed: prevent 'ADMIN' registration via public route
-        // For now, we allow it for seeding or basic functionality, but usually ADMIN is manually created
-
         const user = await User.create({
             nom,
             prenom,
@@ -34,12 +30,10 @@ exports.login = async (req, res, next) => {
         const { email, password } = req.body;
         console.log('Login attempt for:', email);
 
-        // Validate email & password
         if (!email || !password) {
             return res.status(400).json({ success: false, error: 'Veuillez fournir un email/matricule et un mot de passe' });
         }
 
-        // Check for user by email OR matricule (case insensitive for matricule)
         const user = await User.findOne({
             $or: [
                 { email: email },
@@ -51,16 +45,13 @@ exports.login = async (req, res, next) => {
             console.log('User not found for identifier:', email);
             return res.status(401).json({ success: false, error: 'Identifiants invalides' });
         }
-        console.log('User found:', user.email);
 
-        // Check if password matches
         const isMatch = await user.matchPassword(password);
 
         if (!isMatch) {
             return res.status(401).json({ success: false, error: 'Identifiants invalides' });
         }
 
-        // Add login history
         if (!user.lastLogins) {
             user.lastLogins = [];
         }
@@ -72,10 +63,7 @@ exports.login = async (req, res, next) => {
         };
 
         user.lastLogins.unshift(loginData);
-        // Keep only last 10
-        if (user.lastLogins.length > 10) {
-            user.lastLogins = user.lastLogins.slice(0, 10);
-        }
+        if (user.lastLogins.length > 10) user.lastLogins = user.lastLogins.slice(0, 10);
 
         await user.save({ validateBeforeSave: false });
 
@@ -133,7 +121,6 @@ exports.updatePassword = async (req, res, next) => {
     try {
         const user = await User.findById(req.user._id).select('+password');
 
-        // Check current password
         if (!(await user.matchPassword(req.body.currentPassword))) {
             return res.status(401).json({ success: false, error: 'Mot de passe actuel incorrect' });
         }
@@ -152,38 +139,23 @@ exports.updatePassword = async (req, res, next) => {
 // @access  Private
 exports.uploadPhoto = async (req, res, next) => {
     try {
-        console.log('📸 [uploadPhoto] Starting photo upload...');
-        console.log('📸 [uploadPhoto] User ID:', req.user?._id);
-        console.log('📸 [uploadPhoto] File received:', req.file ? 'Yes' : 'No');
-
         if (!req.file) {
-            console.log('❌ [uploadPhoto] No file in request');
             return res.status(400).json({ success: false, error: 'Veuillez télécharger un fichier' });
         }
 
-        console.log('📸 [uploadPhoto] File details:', {
-            filename: req.file.filename,
-            size: req.file.size,
-            mimetype: req.file.mimetype
-        });
-
         const photoUrl = `/uploads/profile/${req.file.filename}`;
-        console.log('📸 [uploadPhoto] Photo URL:', photoUrl);
 
-        const updatedUser = await User.findByIdAndUpdate(
+        await User.findByIdAndUpdate(
             req.user._id,
             { photo: photoUrl },
             { new: true }
         );
-
-        console.log('✅ [uploadPhoto] User updated successfully');
 
         res.status(200).json({
             success: true,
             data: photoUrl
         });
     } catch (err) {
-        console.error('❌ [uploadPhoto] Error:', err);
         res.status(500).json({ success: false, error: err.message });
     }
 };
@@ -199,7 +171,6 @@ exports.clearHistory = async (req, res, next) => {
             return res.status(404).json({ success: false, error: 'Utilisateur non trouvé' });
         }
 
-        // Keep only the current session (the most recent login)
         if (user.lastLogins && user.lastLogins.length > 0) {
             user.lastLogins = [user.lastLogins[0]];
         } else {
@@ -219,13 +190,10 @@ exports.clearHistory = async (req, res, next) => {
 
 // Get token from model, create cookie and send response
 const sendTokenResponse = (user, statusCode, res) => {
-    // Create token
     const token = user.getSignedJwtToken();
 
     const options = {
-        expires: new Date(
-            Date.now() + 30 * 24 * 60 * 60 * 1000 // 30 days
-        ),
+        expires: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
         httpOnly: true
     };
 

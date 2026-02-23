@@ -132,7 +132,13 @@
                   :key="eval._id" 
                   class="px-4 py-3 text-center"
                 >
+                  <template v-if="isDispensed(eleve._id)">
+                    <div class="flex flex-col items-center justify-center">
+                      <span class="text-xl font-black text-rose-600 dark:text-rose-400" title="Élève dispensé dans cette matière">D</span>
+                    </div>
+                  </template>
                   <input 
+                    v-else
                     v-model.number="notesData[eleve._id][eval.nom]" 
                     type="number" 
                     min="0" 
@@ -304,6 +310,7 @@ const evaluations = ref([]);
 const periodes = ref([]);
 const notesData = ref({});
 const notesDocs = ref({}); // Pour stocker les documents Note complets (et leurs IDs)
+const allDispensations = ref([]); // Pour stocker les dispensations
 const globalStatus = ref(''); // Statut global de la sélection (basé sur le premier trouvé)
 
 const selectedClasse = ref('');
@@ -403,11 +410,22 @@ const loadData = async () => {
     }
 
     // Charger les notes existantes
-    const notesRes = await api.getNotes({
-      classe: selectedClasse.value,
-      matiere: selectedMatiere.value,
-      periode: selectedPeriode.value
-    });
+    const [notesRes, dispensationsRes] = await Promise.all([
+      api.getNotes({
+        classe: selectedClasse.value,
+        matiere: selectedMatiere.value,
+        periode: selectedPeriode.value
+      }),
+      api.getDispensations({
+        classe: selectedClasse.value,
+        matiere: selectedMatiere.value
+      })
+    ]);
+
+    // Initialiser dispensations
+    if (dispensationsRes.data.success) {
+      allDispensations.value = dispensationsRes.data.data;
+    }
 
     // Initialiser notesData
     const tempNotesData = {};
@@ -443,6 +461,10 @@ const loadData = async () => {
   } finally {
     isLoading.value = false;
   }
+};
+
+const isDispensed = (eleveId) => {
+  return allDispensations.value.some(d => d.eleve._id.toString() === eleveId.toString());
 };
 
 const getStatutClass = (statut) => {

@@ -122,15 +122,20 @@
                 {{ row.nom }} {{ row.prenom }}
               </td>
               <template v-for="m in matieres" :key="'r-'+row.eleveId+'-'+m._id">
-                <td v-for="i in getMaxNotes(m._id)" :key="'rv-'+row.eleveId+'-'+m._id+'-'+i" class="border-r border-b p-1 text-center">
-                  {{ row.matieres[m._id]?.notes[i-1] != null ? row.matieres[m._id].notes[i-1].toFixed(1) : '-' }}
-                </td>
-                <td class="border-r border-b p-1 text-center font-bold" :class="getMoyenneClass(row.matieres[m._id]?.moyenne)">
-                  {{ row.matieres[m._id]?.moyenne != null ? row.matieres[m._id].moyenne.toFixed(2) : '-' }}
-                </td>
-                <td class="border-r border-b p-1 text-center bg-yellow-50 text-yellow-900 font-semibold">
-                  {{ (row.matieres[m._id]?.moyenne != null && row.matieres[m._id]?.coeff) ? (row.matieres[m._id].moyenne * row.matieres[m._id].coeff).toFixed(2) : '-' }}
-                </td>
+                <template v-if="row.matieres[m._id]?.isDispensed">
+                  <td :colspan="getColSpan(m._id)" class="border-r border-b p-1 text-center font-bold italic text-rose-600">D</td>
+                </template>
+                <template v-else>
+                  <td v-for="i in getMaxNotes(m._id)" :key="'rv-'+row.eleveId+'-'+m._id+'-'+i" class="border-r border-b p-1 text-center">
+                    {{ row.matieres[m._id]?.notes[i-1] != null ? row.matieres[m._id].notes[i-1].toFixed(1) : '-' }}
+                  </td>
+                  <td class="border-r border-b p-1 text-center font-bold" :class="getMoyenneClass(row.matieres[m._id]?.moyenne)">
+                    {{ row.matieres[m._id]?.moyenne != null ? row.matieres[m._id].moyenne.toFixed(2) : '-' }}
+                  </td>
+                  <td class="border-r border-b p-1 text-center bg-yellow-50 text-yellow-900 font-semibold">
+                    {{ (row.matieres[m._id]?.moyenne != null && row.matieres[m._id]?.coeff) ? (row.matieres[m._id].moyenne * row.matieres[m._id].coeff).toFixed(2) : '-' }}
+                  </td>
+                </template>
               </template>
               <td class="border-r border-b p-2 text-center font-bold bg-orange-50 text-orange-900">
                 {{ getTotalPond(row) }}
@@ -251,6 +256,9 @@ const ClassTable = defineComponent({
           h('td', { class: 'sticky left-10 z-10 bg-white border-r border-b p-2 font-bold whitespace-nowrap' }, `${row.nom} ${row.prenom}`),
           ...s.matieres.flatMap(m => {
             const sm = row.matieres[m._id];
+            if (sm?.isDispensed) {
+              return [h('td', { colspan: getColSpan(m._id), class: 'border-r border-b p-1 text-center font-bold italic text-rose-600' }, 'D')];
+            }
             const pond = (sm?.moyenne != null && sm?.coeff) ? (sm.moyenne * sm.coeff).toFixed(2) : '-';
             return [
               ...Array.from({ length: getMaxNotes(m._id) }, (_, i) => h('td', { class: 'border-r border-b p-1 text-center' }, sm?.notes?.[i] != null ? sm.notes[i].toFixed(1) : '-')),
@@ -572,8 +580,8 @@ const printSheet = () => {
         </div>
         <div style="text-align: center;">
           <p style="font-weight: bold; text-decoration: underline; text-transform: uppercase;">Le Proviseur</p>
+          <div style="height: 80px;"></div>
           <div style="font-weight: bold; font-size: 10px; margin-top: 5px;">${schoolConfig.value.proviseurName || ''}</div>
-          <div style="height: 50px;"></div>
         </div>
       </div>
     </body>

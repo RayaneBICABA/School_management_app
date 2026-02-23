@@ -178,48 +178,50 @@ exports.getBulletinHTML = (bulletin, schoolConfig) => {
 <head>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: 'Inter', 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; color: #333; font-size: 10px; padding: 10mm; background: white; }
+        body { font-family: 'Inter', 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; color: #333; font-size: 10px; padding: 10mm; background: white; line-height: 1.1; }
         .bulletin-card { width: 100%; }
         
-        /* Header Logic */
-        .header { display: flex; justify-content: space-between; border-bottom: 2px solid #f1f5f9; padding-bottom: 5px; margin-bottom: 10px; }
-        .h-col { width: 33.33%; font-weight: bold; font-size: 9px; line-height: 1.1; text-transform: uppercase; }
-        .h-center { text-align: center; display: flex; flex-direction: column; align-items: center; }
+        /* High-Fidelity Header */
+        .header { display: flex; justify-content: space-between; border-bottom: 2px solid #f1f5f9; padding-bottom: 8px; margin-bottom: 15px; }
+        .h-col { width: 33.33%; font-weight: bold; font-size: 8.5px; line-height: 1.2; text-transform: uppercase; }
+        .h-center { text-align: center; display: flex; flex-direction: column; align-items: center; justify-content: center; width: 40% !important; }
+        .h-col-side { width: 30% !important; }
         .h-right { text-align: right; }
-        .logo-text { font-size: 24px; font-weight: 900; color: #1e3a8a; letter-spacing: -1px; }
-        .motto { font-size: 8px; color: #6b7280; letter-spacing: 1px; margin-top: 2px; }
         
-        .title { text-align: center; margin: 10px 0; }
-        .title h1 { font-size: 20px; font-style: italic; font-weight: bold; }
+        .logo-text { font-size: 26px; font-weight: 900; color: #1e3a8a; letter-spacing: -1px; line-height: 1; }
+        .motto { font-size: 8px; color: #6b7280; letter-spacing: 0.5px; margin-top: 3px; font-weight: bold; }
         
-        .info-bar { display: flex; justify-content: space-between; margin-bottom: 5px; font-size: 11px; }
-        .student-name { margin-bottom: 5px; font-size: 11px; font-weight: bold; padding-top: 5px; }
+        .title { text-align: center; margin: 12px 0; }
+        .title h1 { font-size: 22px; font-style: italic; font-weight: bold; border-top: 1px solid #eee; border-bottom: 1px solid #eee; padding: 5px 0; }
         
-        .grid-info { display: flex; justify-content: space-between; padding-bottom: 5px; margin-bottom: 10px; }
-        .grid-item { font-size: 10px; }
-        .grid-item span { color: #6b7280; font-size: 9px; margin-right: 4px; }
-        .grid-item strong { display: inline; font-size: 10px; }
+        .info-bar { display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 11px; }
+        .student-name { margin-bottom: 8px; font-size: 12px; font-weight: bold; padding-top: 5px; }
+        
+        .grid-info { display: flex; justify-content: space-between; padding-bottom: 8px; margin-bottom: 12px; border-bottom: 1px solid #e2e8f0; }
+        .grid-item { font-size: 10px; display: flex; align-items: baseline; gap: 4px; }
+        .grid-item span { color: #64748b; font-size: 9px; }
         
         /* Table Styles */
         table { width: 100%; border-collapse: collapse; margin-bottom: 15px; border: 1px solid #000; }
-        th, td { border: 1px solid #000; padding: 4px; text-align: center; font-size: 9px; }
-        th { background: #e5e7eb; font-weight: bold; text-transform: uppercase; }
-        .cat-header { background: #d1d5db; font-weight: bold; text-transform: uppercase; }
+        th, td { border: 1px solid #000; padding: 4px; text-align: center; font-size: 9.5px; }
+        th { background: #e5e7eb; font-weight: bold; text-transform: uppercase; font-size: 9px; }
+        .cat-header { background: #d1d5db; font-weight: bold; text-transform: uppercase; font-size: 9px; }
         .text-left { text-align: left; }
         .font-bold { font-weight: bold; }
-        .dispensed { color: #dc2626; font-weight: bold; font-style: italic; }
+        .uppercase { text-transform: uppercase; }
+        .italic { font-style: italic; }
         
         /* Bilan Styles */
-        .bilan-header { background: #d1d5db; font-weight: bold; text-align: center; padding: 6px; border: 1px solid #000; border-bottom: 0; text-transform: uppercase; }
+        .bilan-header { background: #d1d5db; font-weight: bold; text-align: center; padding: 6px; border: 1px solid #000; border-bottom: 0; text-transform: uppercase; font-size: 10px; }
         .bilan-table { width: 100%; border-collapse: collapse; margin-bottom: 15px; }
-        .bilan-table td { border: 1px solid #000; padding: 6px; font-size: 10px; }
-        .lg-val { font-size: 14px; font-weight: bold; }
+        .bilan-table td { border: 1px solid #000; padding: 8px 6px; font-size: 10px; }
+        .lg-val { font-size: 16px; font-weight: bold; }
         
         /* Council Styles */
-        .council-header { background: #d1d5db; text-align: center; font-weight: bold; padding: 6px; border: 1px solid #000; border-bottom: 0; text-transform: uppercase; }
-        .council-box { display: flex; border: 1px solid #000; height: 100px; }
-        .app-box { width: 50%; border-right: 1px solid #000; display: flex; align-items: center; justify-content: center; font-size: 16px; font-weight: bold; }
-        .sig-box { width: 50%; padding: 5px; display: flex; flex-direction: column; align-items: center; justify-content: space-between; }
+        .council-header { background: #d1d5db; text-align: center; font-weight: bold; padding: 6px; border: 1px solid #000; border-bottom: 0; text-transform: uppercase; font-size: 10px; }
+        .council-box { display: flex; border: 1px solid #000; height: 110px; }
+        .app-box { width: 50%; border-right: 1px solid #000; display: flex; align-items: center; justify-content: center; font-size: 18px; font-weight: bold; }
+        .sig-box { width: 50%; padding: 8px; display: flex; flex-direction: column; align-items: center; justify-content: space-between; position: relative; }
         
         .page-break { page-break-after: always; }
     </style>
@@ -227,19 +229,19 @@ exports.getBulletinHTML = (bulletin, schoolConfig) => {
 <body>
     <div class="bulletin-card">
         <div class="header">
-            <div class="h-col">
-                <p>${schoolConfig.region || 'REGION'}</p>
-                <p>${schoolConfig.subRegion || ''}</p>
-                <p>${schoolConfig.schoolName || ''}</p>
-                <p>Tél : ${schoolConfig.phone || ''}</p>
+            <div class="h-col h-col-side">
+                <p>${schoolConfig.region || 'FORMATION PROFESSIONNELLE ET TECHNIQUE'}</p>
+                <p>${schoolConfig.subRegion || 'RÉGION CENTRE'}</p>
+                <p>${schoolConfig.schoolName || 'LYCÉE WEND PUIRÉ DE SAABA'}</p>
+                <p>${schoolConfig.phone ? `TÉL : ${schoolConfig.phone}` : 'TÉL : 51 54 88 11'}</p>
             </div>
             <div class="h-col h-center">
                 <div class="logo-text">${schoolConfig.shortName || 'LWS'}</div>
-                <div class="motto">${schoolConfig.motto || ''}</div>
+                <div class="motto">${schoolConfig.motto || 'DISCIPLINE-TRAVAIL-SUCCES'}</div>
             </div>
-            <div class="h-col h-right">
+            <div class="h-col h-col-side h-right">
                 <p>${schoolConfig.country || 'BURKINA FASO'}</p>
-                <p style="font-style: italic; font-weight: normal; text-transform: none;">${schoolConfig.patrie || ''}</p>
+                <p class="italic" style="font-weight: normal; text-transform: none; font-size: 7.5px;">${schoolConfig.patrie || 'La Patrie ou la Mort, nous Vaincrons'}</p>
             </div>
         </div>
 
@@ -254,7 +256,7 @@ exports.getBulletinHTML = (bulletin, schoolConfig) => {
         </div>
 
         <div class="student-name">
-            <span style="color: #6b7280; font-weight: normal;">Nom de l'élève:</span>
+            <span style="color: #64748b; font-weight: normal; font-size: 10px;">Nom de l'élève:</span>
             <span class="uppercase">${eleve.nom || ''} ${eleve.prenom || ''}</span>
         </div>
 
@@ -268,17 +270,45 @@ exports.getBulletinHTML = (bulletin, schoolConfig) => {
         <table>
             <thead>
                 <tr>
-                    <th class="text-left" style="width: 30%;">Matières</th>
-                    <th style="width: 8%;">Coef</th>
-                    <th style="width: 10%;">Moy</th>
-                    <th style="width: 10%;">Pondérées</th>
+                    <th class="text-left" style="width: 25%;">Matières</th>
+                    <th style="width: 7%;">Coef</th>
+                    <th style="width: 9%;">Moy</th>
+                    <th style="width: 9%;">Pondérées</th>
                     <th colspan="3">Appréciations et signatures</th>
                 </tr>
             </thead>
             <tbody>
-                ${tableRows}
-                <tr class="font-bold" style="background: #f1f5f9;">
-                    <td class="text-left font-bold uppercase">TOTAL GÉNÉRAL</td>
+                ${Object.entries(groupedNotes).map(([catName, notes]) => `
+                    <tr class="cat-header">
+                        <td colspan="7" style="text-align: center;">${catName}</td>
+                    </tr>
+                    ${notes.map(note => {
+        const prof = note.professeur ? `${note.professeur.civilite === 'Mr' ? 'M ' : (note.professeur.civilite ? note.professeur.civilite + ' ' : '')}${note.professeur.nom || ''}`.toUpperCase().trim() : '';
+        const app = note.isDispensed ? '' : getGeneralAppreciation(note.moyenneMatiere || 0);
+        return `
+                            <tr>
+                                <td class="text-left font-bold uppercase" style="font-size: 9px;">${note.matiere?.nom || ''}</td>
+                                <td>${(note.coeff || 1).toFixed(1)}</td>
+                                ${note.isDispensed ?
+                `<td class="italic font-bold">-</td><td class="italic font-bold">-</td>` :
+                `<td>${(note.moyenneMatiere || 0).toFixed(2)}</td><td class="font-bold">${(note.notePonderee || 0).toFixed(2)}</td>`
+            }
+                                <td class="italic" style="width: 75px; font-size: 8.5px;">${app}</td>
+                                <td style="font-size: 8.5px; width: 110px; white-space: nowrap;">${prof}</td>
+                                <td style="width: 35px;"></td>
+                            </tr>
+                        `;
+    }).join('')}
+                    <tr class="font-bold bg-gray-100" style="font-size: 9px; background-color: #f8fafc;">
+                        <td class="text-left uppercase">Total ${catName}</td>
+                        <td>${notes.reduce((sum, n) => sum + (n.coeff || 0), 0).toFixed(1)}</td>
+                        <td></td>
+                        <td>${notes.reduce((sum, n) => sum + (n.notePonderee || 0), 0).toFixed(2)}</td>
+                        <td colspan="3"></td>
+                    </tr>
+                `).join('')}
+                <tr class="font-bold" style="background: #f1f5f9; border-top: 2px solid #000;">
+                    <td class="text-left font-bold uppercase" style="padding: 6px;">TOTAL GÉNÉRAL</td>
                     <td>${(bulletin.totalCoefficients || 0).toFixed(1)}</td>
                     <td></td>
                     <td class="font-bold">${(bulletin.totalPoints || 0).toFixed(2)}</td>
@@ -299,7 +329,7 @@ exports.getBulletinHTML = (bulletin, schoolConfig) => {
             <tr>
                 <td>Moyenne de la classe</td>
                 <td class="font-bold">${(bulletin.moyenneClasse || 0).toFixed(2)}</td>
-                <td style="text-transform: uppercase;">MOYENNE DEFINITIVE</td>
+                <td style="width: 25%; text-transform: uppercase;">MOYENNE DEFINITIVE</td>
                 <td class="lg-val">${((bulletin.moyenneGenerale || 0) - (bulletin.retraitPoints || 0)).toFixed(2)}</td>
                 <td style="width: 10%;">Justifiées</td>
                 <td class="font-bold" style="width: 5%;">${bulletin.absencesJustifiees || 0}</td>
@@ -309,16 +339,16 @@ exports.getBulletinHTML = (bulletin, schoolConfig) => {
             <tr>
                 <td>Meilleure moyenne</td>
                 <td class="font-bold">${(bulletin.meilleureMoyenneClasse || 0).toFixed(2)}</td>
-                <td style="text-transform: uppercase;">Rang du trimestre</td>
-                <td class="font-bold">${bulletin.rang || '-'}</td>
-                <td class="font-bold">Conduite</td>
-                <td colspan="3">${bulletin.conduite || ''}</td>
+                <td style="width: 25%; text-transform: uppercase;">Rang du trimestre</td>
+                <td class="font-bold text-lg">${bulletin.rang || '-'}</td>
+                <td class="font-bold uppercase" style="width: 10%;">Conduite</td>
+                <td colspan="3" class="font-bold">${bulletin.conduite || ''}</td>
             </tr>
             <tr>
                 <td>Moyenne la plus basse</td>
                 <td class="font-bold">${(bulletin.pireMoyenneClasse || 0).toFixed(2)}</td>
                 <td colspan="2"></td>
-                <td class="font-bold">Rappel des Moyennes</td>
+                <td class="font-bold uppercase">Rappel des Moyennes</td>
                 <td colspan="3"></td>
             </tr>
         </table>
@@ -327,9 +357,9 @@ exports.getBulletinHTML = (bulletin, schoolConfig) => {
         <div class="council-box">
             <div class="app-box">${getGeneralAppreciation(bulletin.moyenneGenerale || 0)}</div>
             <div class="sig-box">
-                <div class="font-bold uppercase">Le Proviseur</div>
+                <div class="font-bold uppercase" style="font-size: 11px;">Le Proviseur</div>
                 <div style="height: 60px;"></div>
-                <div class="font-bold">${schoolConfig.proviseurName || ''}</div>
+                <div class="font-bold" style="font-size: 10px;">${schoolConfig.proviseurName || ''}</div>
             </div>
         </div>
     </div>

@@ -258,7 +258,14 @@
           </div>
           <div class="flex flex-col gap-2">
             <label class="text-sm font-medium text-[#0e141b] dark:text-slate-200">Coefficient</label>
-            <input v-model.number="newMatiere.coefficient" class="form-input rounded-lg border-[#d0dbe7] dark:border-slate-700 bg-slate-50 dark:bg-slate-800 h-12 px-4 focus:ring-primary focus:border-primary" type="number" min="1" required/>
+            <input v-model.number="newMatiere.coefficient" class="form-input rounded-lg border-[#d0dbe7] dark:border-slate-700 bg-slate-50 dark:bg-slate-800 h-10 px-4 focus:ring-primary focus:border-primary" type="number" min="1" required/>
+          </div>
+          <div class="flex flex-col gap-2">
+            <label class="text-sm font-medium text-[#0e141b] dark:text-slate-200">Catégorie</label>
+            <select v-model="newMatiere.categorie" class="form-select rounded-lg border-[#d0dbe7] dark:border-slate-700 bg-slate-50 dark:bg-slate-800 h-10 px-3">
+              <option value="ENSEIGNEMENT GÉNÉRAL">Enseignement Général</option>
+              <option value="ENSEIGNEMENT TECHNIQUE">Enseignement Technique</option>
+            </select>
           </div>
           <div class="flex flex-col gap-2">
             <label class="text-sm font-medium text-[#0e141b] dark:text-slate-200">Couleur</label>
@@ -407,6 +414,7 @@ const itemToDelete = ref(null)
 const newMatiere = reactive({
   nom: '',
   coefficient: 1,
+  categorie: 'ENSEIGNEMENT GÉNÉRAL',
   couleur: 'blue'
 })
 
@@ -850,6 +858,7 @@ const addMatiere = async () => {
         nom: newMatiere.nom,
         code: newMatiere.nom.substring(0, 3).toUpperCase(),
         coefficient: newMatiere.coefficient,
+        categorie: newMatiere.categorie,
         description: 'Matière créée depuis Emploi du Temps'
       })
       

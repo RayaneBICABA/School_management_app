@@ -436,12 +436,8 @@
             class="w-full bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 rounded-lg text-sm focus:ring-primary focus:border-primary h-10 px-3"
           >
             <option value="">Sélectionner une catégorie</option>
-            <option value="MATIÈRES LITTÉRAIRES">Matières Littéraires</option>
-            <option value="MATIÈRES SCIENTIFIQUES">Matières Scientifiques</option>
-            <option value="ÉDUCATION PHYSIQUE ET SPORTIVE">Éducation Physique et Sportive</option>
             <option value="ENSEIGNEMENT GÉNÉRAL">Enseignement Général</option>
             <option value="ENSEIGNEMENT TECHNIQUE">Enseignement Technique</option>
-            <option value="AUTRES">Autres</option>
           </select>
         </div>
 

@@ -161,8 +161,9 @@ const createOrUpdateBulletin = async (eleveId, classeId, periode, anneeScolaire,
     let bulletin = await Bulletin.findOne({ eleve: eleveId, periode, anneeScolaire: year });
 
     if (bulletin) {
-        // Mise à jour si non finalisé
-        if (bulletin.statut === 'BROUILLON') {
+        // Aggressive Refresh: Update notes if NOT already distributed
+        // This fixes stale data on production for bulletins that were already FINALISE
+        if (bulletin.statut !== 'DISTRIBUE') {
             bulletin.notes = mappedNotes;
             if (genereeParId) bulletin.genereePar = genereeParId;
         }
@@ -345,17 +346,17 @@ exports.getBulletinsByClasse = asyncHandler(async (req, res, next) => {
         .populate('notes.professeur', 'nom prenom')
         .sort({ moyenneGenerale: -1 });
 
-    // Proactive Refresh: Ensure ALL draft bulletins have the latest data/averages
+    // Aggressive Refresh: Ensure ALL draft/finalized bulletins have the latest data/averages
     // This addresses the discrepancy between local and production data
     for (let i = 0; i < bulletins.length; i++) {
         const b = bulletins[i];
-        if (b.statut === 'BROUILLON') {
+        if (b.statut !== 'DISTRIBUE') {
             await createOrUpdateBulletin(b.eleve._id, b.classe, b.periode, b.anneeScolaire);
         }
     }
 
-    // Refresh the list after updates if any drafts were found
-    if (bulletins.some(b => b.statut === 'BROUILLON')) {
+    // Refresh the list after updates if any refreshes actually happened
+    if (bulletins.some(b => b.statut !== 'DISTRIBUE')) {
         bulletins = await Bulletin.find(query)
             .populate('eleve', 'nom prenom matricule dateNaissance lieuNaissance photo redoublant')
             .populate('classe', 'niveau section filiere')
@@ -440,11 +441,11 @@ exports.getBulletinsByEleve = asyncHandler(async (req, res, next) => {
         }
     }
 
-    // Proactive Refresh: Refresh draft bulletins before returning to ensure data consistency
+    // Aggressive Refresh: Refresh non-distributed bulletins before returning
     let updatedCount = 0;
     for (let i = 0; i < bulletins.length; i++) {
         const b = bulletins[i];
-        if (b.statut === 'BROUILLON') {
+        if (b.statut !== 'DISTRIBUE') {
             await createOrUpdateBulletin(b.eleve._id, b.classe, b.periode, b.anneeScolaire);
             updatedCount++;
         }

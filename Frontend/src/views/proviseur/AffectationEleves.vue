@@ -194,7 +194,7 @@
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
-import * as XLSX from 'xlsx'
+import ExcelJS from 'exceljs'
 import api from '@/services/api'
 import { useToast } from '@/composables/useToast'
 import ConfirmationModal from '@/components/modals/ConfirmationModal.vue'
@@ -354,10 +354,30 @@ const handleFileUpload = async (event) => {
   }
 
   try {
-    const data = await file.arrayBuffer()
-    const workbook = XLSX.read(data)
-    const worksheet = workbook.Sheets[workbook.SheetNames[0]]
-    const jsonData = XLSX.utils.sheet_to_json(worksheet)
+    const workbook = new ExcelJS.Workbook();
+    await workbook.xlsx.load(file);
+    const worksheet = workbook.getWorksheet(1);
+    
+    const jsonData = [];
+    const headers = {};
+    
+    // Get headers
+    worksheet.getRow(1).eachCell((cell, colNumber) => {
+      headers[colNumber] = cell.value;
+    });
+
+    // Get data rows
+    worksheet.eachRow((row, rowNumber) => {
+      if (rowNumber === 1) return;
+      const rowData = {};
+      row.eachCell((cell, colNumber) => {
+        const header = headers[colNumber];
+        if (header) {
+          rowData[header] = cell.value;
+        }
+      });
+      jsonData.push(rowData);
+    });
 
     // Validate columns
     if (jsonData.length === 0) {

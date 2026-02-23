@@ -3,24 +3,23 @@ const puppeteer = require('puppeteer');
 const BULLETIN_STYLES = `
     @page { size: A4; margin: 10mm; }
     * { margin: 0; padding: 0; box-sizing: border-box; }
-    body { font-family: Georgia, 'Times New Roman', Times, serif; font-size: 11px; line-height: 1.3; color: #333333; background: white; -webkit-print-color-adjust: exact; }
+    body { font-family: Arial, Helvetica, sans-serif; font-size: 11px; line-height: 1.0; color: #333333; background: white; -webkit-print-color-adjust: exact; }
     .bulletin-container { width: 100%; max-width: 190mm; margin: 0 auto; position: relative; }
     
-    .header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 20px; border-bottom: 2px solid #f3f4f6; padding-bottom: 10px; }
-    .header-left, .header-right { width: 33%; font-size: 10px; font-weight: bold; text-transform: uppercase; line-height: 1.2; }
-    .header-left p, .header-right p { margin: 0 0 4px 0; }
+    .header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px; border-bottom: 2px solid #f3f4f6; padding-bottom: 8px; }
+    .header-left, .header-right { width: 30%; font-size: 8px; font-weight: bold; line-height: 1.0; }
+    .header-left p, .header-right p { margin: 0; }
     .header-right { text-align: right; }
     .sub-motto { font-size: 8px; font-style: italic; text-transform: none; font-weight: normal; }
-    .header-center { width: 34%; display: flex; flex-direction: column; align-items: center; text-align: center; }
-    .logo-text { font-size: 32px; font-weight: 900; color: #1e3a8a; letter-spacing: -0.05em; line-height: 1; }
-    .motto { font-size: 9px; font-weight: bold; color: #6b7280; text-transform: uppercase; letter-spacing: 0.1em; margin-top: 4px; line-height: 1; }
+    .header-center { width: 40%; display: flex; flex-direction: column; align-items: center; text-align: center; }
+    .logo-text { font-size: 24px; font-weight: 900; color: #1e3a8a; }
+    .motto { font-size: 8px; font-weight: bold; color: #6b7280; margin-top: 0; }
 
-    .title-section { width: 100%; text-align: center; margin: 25px 0; display: block; }
-    .title-section h1 { font-size: 24px; font-style: italic; font-weight: bold; margin: 0 auto; color: #333333; display: inline-block; border-bottom: 1px solid #333; line-height: 1; }
+    .title-section { width: 100%; text-align: center; margin: 15px 0; display: block; }
+    .title-section h1 { font-size: 18px; font-weight: bold; margin: 0 auto; color: #333333; text-decoration: underline; line-height: 1; }
 
-    .info-row { display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 10px; }
-    .student-name-row { margin-bottom: 10px; font-size: 13px; text-transform: uppercase; font-weight: bold; }
-    .info-eleve-row { display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 15px; padding-bottom: 10px; border-bottom: 1px solid #e5e7eb; }
+    .info-row { display: flex; justify-content: space-between; font-size: 11px; margin-bottom: 5px; }
+    .student-name-row { margin-bottom: 5px; font-size: 11px; display: flex; align-items: baseline; gap: 4px; }
     
     table { width: 100%; border-collapse: collapse; font-size: 10px; border: 1px solid black; }
     th, td { border: 1px solid black; padding: 4px; }
@@ -35,15 +34,21 @@ const BULLETIN_STYLES = `
     .bg-gray-100 { background-color: #f3f4f6 !important; }
     .cat-header { font-weight: bold; text-align: center; text-transform: uppercase; padding: 5px; }
 
+    /* Student info grid like frontend */
+    .info-eleve-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; font-size: 11px; margin-bottom: 10px; padding-bottom: 4px; border-bottom: 1px solid #e5e7eb; }
+    .info-item { display: flex; flex-direction: row; align-items: baseline; gap: 4px; }
+    .info-label { color: #6b7280; font-size: 10px; }
+    .info-value { font-weight: bold; }
+
     .bilan-section { margin-top: 15px; }
     .bilan-table td { padding: 6px; }
 
     .council-section { margin-top: 15px; border: 1px solid black; page-break-inside: avoid; }
-    .council-header { background: #d1d5db !important; text-align: center; font-weight: bold; padding: 6px; border-bottom: 1px solid black; text-transform: uppercase; }
-    .council-content { display: flex; height: 140px; }
-    .council-left { width: 50%; border-right: 1px solid black; display: flex; flex-direction: column; justify-content: center; align-items: center; padding: 10px; }
-    .council-right { width: 50%; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 10px; }
-    .appreciation-box { border: 4px double #333; padding: 10px; text-align: center; min-width: 180px; }
+    .council-header { background: #e5e7eb !important; text-align: center; font-weight: bold; padding: 6px; border-bottom: 1px solid black; text-transform: uppercase; }
+    .council-content { display: flex; min-height: 110px; }
+    .council-left { width: 60%; border-right: 1px solid black; display: flex; flex-direction: column; justify-content: center; align-items: center; padding: 10px; }
+    .council-right { width: 40%; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; padding: 10px; }
+    .appreciation-box { padding: 10px; text-align: center; min-width: 180px; font-size: 14px; font-weight: bold; }
     
     .footer { margin-top: 15px; font-size: 9px; color: #6b7280; display: flex; justify-content: space-between; border-top: 1px solid #e5e7eb; padding-top: 5px; }
     .page-break { page-break-after: always; display: block; height: 0; }
@@ -127,24 +132,10 @@ const generateBulletinContent = (bulletinData, schoolConfig = {}) => {
 
     const formatDate = (date) => date ? new Date(date).toLocaleDateString('fr-FR') : '--/--/----';
 
-    let maxInt = 0, maxDev = 0, maxCompo = 0;
-    if (bulletinData.notes) {
-        bulletinData.notes.forEach(note => {
-            maxInt = Math.max(maxInt, note.interroGrades?.length || (note.int !== undefined ? 1 : 0));
-            maxDev = Math.max(maxDev, note.devoirGrades?.length || (note.dev !== undefined ? 1 : 0));
-            maxCompo = Math.max(maxCompo, note.compoGrades?.length || (note.compo !== undefined ? 1 : 0));
-        });
-    }
-
-    const totalCols = 7 + maxInt + maxDev + maxCompo;
+    const totalCols = 7;
 
     return `
     <div class="bulletin-container">
-        ${(bulletinData.statut !== 'DISTRIBUE' && bulletinData.statut !== 'FINALISE') ? `
-        <div style="position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; pointer-events: none; opacity: 0.1; transform: rotate(-30deg); z-index: 0;">
-            <span style="font-size: 80px; font-weight: 900; letter-spacing: 0.2rem; border: 10px solid black; padding: 20px 40px; text-transform: uppercase;">PROVISOIRE</span>
-        </div>
-        ` : ''}
 
         ${generateHeaderHTML(schoolConfig)}
 
@@ -159,38 +150,36 @@ const generateBulletinContent = (bulletinData, schoolConfig = {}) => {
         </div>
 
         <div class="student-name-row">
-            Nom de l'élève: <strong>${eleve.nom || ''} ${eleve.prenom || ''}</strong>
+            <span class="info-label">Nom de l'élève:</span>
+            <strong class="uppercase">${eleve.nom || ''} ${eleve.prenom || ''}</strong>
         </div>
 
-        <div class="info-eleve-row">
-            <div style="display: flex; flex-direction: column;">
-                <span style="color: #666; font-size: 10px;">Né(e) le:</span>
-                <strong>${formatDate(eleve.dateNaissance)}</strong>
+        <div class="info-eleve-grid">
+            <div class="info-item">
+                <span class="info-label">Né(e) le:</span>
+                <span class="info-value">${formatDate(eleve.dateNaissance)}</span>
             </div>
-            <div style="display: flex; flex-direction: column;">
-                <span style="color: #666; font-size: 10px;">Matricule:</span>
-                <strong>${eleve.matricule || 'N/A'}</strong>
+            <div class="info-item">
+                <span class="info-label">Matricule:</span>
+                <strong class="info-value">${eleve.matricule || 'N/A'}</strong>
             </div>
-            <div style="display: flex; flex-direction: column; text-align: right;">
-                <span style="color: #666; font-size: 10px;">Classe:</span>
-                <strong>${classe.niveau || ''} ${classe.section || ''}</strong>
+            <div class="info-item" style="justify-content: flex-end;">
+                <span class="info-label">Classe:</span>
+                <strong class="info-value">${classe.niveau || ''} ${classe.section || ''}</strong>
             </div>
-            <div style="display: flex; flex-direction: column; text-align: right;">
-                <span style="color: #666; font-size: 10px;">Redoublant:</span>
-                <strong>${eleve.redoublant ? 'OUI' : 'NON'}</strong>
+            <div class="info-item" style="justify-content: flex-end;">
+                <span class="info-label">Redoublant:</span>
+                <strong class="info-value">${eleve.redoublant ? 'OUI' : 'NON'}</strong>
             </div>
         </div>
 
         <table>
             <thead>
                 <tr>
-                    <th class="text-left">Matières</th>
-                    <th>Coef</th>
-                    ${Array.from({ length: maxInt }, (_, i) => `<th>Int ${i + 1}</th>`).join('')}
-                    ${Array.from({ length: maxDev }, (_, i) => `<th>Dev ${i + 1}</th>`).join('')}
-                    ${Array.from({ length: maxCompo }, (_, i) => `<th>Comp ${i + 1}</th>`).join('')}
-                    <th>Moy</th>
-                    <th>Pond.</th>
+                    <th class="text-left" style="width: 200px;">Matières</th>
+                    <th style="width: 40px;">Coef</th>
+                    <th style="width: 40px;">Moy</th>
+                    <th style="width: 60px;">Pond.</th>
                     <th colspan="3">Appréciations & Signatures</th>
                 </tr>
             </thead>
@@ -200,25 +189,19 @@ const generateBulletinContent = (bulletinData, schoolConfig = {}) => {
                     <td colspan="${totalCols}" class="cat-header">${catName}</td>
                 </tr>
                 ${notes.map(note => {
-        const noteInts = (note.interroGrades && note.interroGrades.length > 0) ? note.interroGrades : (note.int !== undefined ? [note.int] : []);
-        const noteDevs = (note.devoirGrades && note.devoirGrades.length > 0) ? note.devoirGrades : (note.dev !== undefined ? [note.dev] : []);
-        const noteCompos = (note.compoGrades && note.compoGrades.length > 0) ? note.compoGrades : (note.compo !== undefined ? [note.compo] : []);
         const moy = note.moyenneMatiere || 0;
         const appr = getAppre(moy);
         return `
                     <tr>
-                        <td class="text-left bold uppercase">${note.matiere?.nom || 'N/A'}</td>
+                        <td class="text-left bold uppercase" style="padding: 6px;">${note.matiere?.nom || 'N/A'}</td>
                         <td>${(note.coeff || note.matiere?.coefficient || 0).toFixed(1)}</td>
-                        ${note.isDispensed ? `<td colspan="${maxInt + maxDev + maxCompo + 1}" class="bold italic">DISPENSÉ</td>` : `
-                            ${Array.from({ length: maxInt }, (_, i) => `<td>${noteInts[i] != null ? noteInts[i].toFixed(2) : ''}</td>`).join('')}
-                            ${Array.from({ length: maxDev }, (_, i) => `<td>${noteDevs[i] != null ? noteDevs[i].toFixed(2) : ''}</td>`).join('')}
-                            ${Array.from({ length: maxCompo }, (_, i) => `<td>${noteCompos[i] != null ? noteCompos[i].toFixed(2) : ''}</td>`).join('')}
+                        ${note.isDispensed ? `<td colspan="2" class="bold italic">DISPENSÉ</td>` : `
                             <td>${moy.toFixed(2)}</td>
+                            <td class="bold">${(note.notePonderee || 0).toFixed(2)}</td>
                         `}
-                        <td class="bold">${note.isDispensed ? '-' : (note.notePonderee || 0).toFixed(2)}</td>
                         <td class="italic" style="${note.isDispensed ? '' : getAppreciationColor(appr)}">${note.isDispensed ? 'DISPENSÉ' : appr}</td>
-                        <td style="width: 50px;"></td>
-                        <td class="text-xs uppercase">${note.professeur ? `${note.professeur.nom}` : ''}</td>
+                        <td class="text-xs uppercase" style="width: 80px; white-space: nowrap;">${note.professeur ? note.professeur.nom : ''}</td>
+                        <td class="signature-cell" style="width: 60px;"></td>
                     </tr>
                     `;
     }).join('')}
@@ -310,57 +293,56 @@ const getMasterSheetHTML = (data, schoolConfig) => {
     return `
     <!DOCTYPE html>
     <html>
-    <head>
-        <meta charset="UTF-8">
-        <style>
-            @page { size: A3 landscape; margin: 0; }
-            body { font-family: Georgia, serif; font-size: 8px; line-height: 1.2; padding: 15px; color: #333; margin: 0; zoom: ${zoomRatio}; }
-            table { width: 100%; border-collapse: collapse; margin-top: 10px; border: 1px solid black; }
-            th, td { border: 1px solid black; padding: 2px; text-align: center; }
-            th { background: #f3f4f6 !important; font-weight: bold; font-size: 8px; }
-            .bg-blue-50 { background: #dbeafe !important; }
-            .bg-yellow-50 { background: #fef9c3 !important; }
-            .bg-orange-50 { background: #fff7ed !important; }
-            .bg-gray-50 { background: #f9fafb !important; }
-            .text-left { text-align: left; }
-            .bold { font-weight: bold; }
-            .uppercase { text-transform: uppercase; }
-            ${BULLETIN_STYLES}
-        </style>
-    </head>
-    <body>
-        ${generateHeaderHTML(schoolConfig)}
-        <h1 style="text-align: center; margin: 10px 0; font-size: 20px; font-weight: bold; text-decoration: underline;">RELEVÉ DE NOTES GÉNÉRAL (MASTER SHEET)</h1>
-        <div style="margin-bottom: 8px; display: flex; justify-content: space-between; font-size: 11px; font-weight: bold; border-bottom: 1px solid black; padding-bottom: 5px;">
-            <span>CLASSE: ${data.classe?.niveau} ${data.classe?.section}</span>
-            <span>PÉRIODE: ${data.periode}</span>
-            <span>ANNÉE SCOLAIRE: ${data.anneeScolaire}</span>
-        </div>
-        </div>
-        <table style="width: 100%;">
-            <thead>
-                <tr>
-                    <th rowspan="2" style="width: 20px;">RANG</th>
-                    <th rowspan="2" style="width: 55px;">MATRICULE</th>
-                    <th rowspan="2" class="text-left" style="width: 110px;">NOM ET PRÉNOMS</th>
-                    ${data.matieres.map(m => `<th colspan="${subjectColCounts[m._id]}" class="bg-blue-50" style="white-space: normal; max-width: 65px; word-wrap: break-word;">${m.nom}<br>(Coef: ${m.coefficient})</th>`).join('')}
-                    <th rowspan="2" class="bg-orange-50" style="width: 45px;">TOTAL DES<br>POINTS</th>
-                    <th rowspan="2" style="width: 45px;">MOYENNE<br>GÉNÉRALE</th>
-                </tr>
-                <tr>
-                    ${data.matieres.map(m => {
+        <head>
+            <meta charset="UTF-8">
+            <style>
+                @page { size: A3 landscape; margin: 0; }
+                body { font-family: Georgia, serif; font-size: 8px; line-height: 1.2; padding: 15px; color: #333; margin: 0; zoom: ${zoomRatio}; }
+                table { width: 100%; border-collapse: collapse; margin-top: 10px; border: 1px solid black; }
+                th, td { border: 1px solid black; padding: 2px; text-align: center; }
+                th { background: #f3f4f6 !important; font-weight: bold; font-size: 8px; }
+                .bg-blue-50 { background: #dbeafe !important; }
+                .bg-yellow-50 { background: #fef9c3 !important; }
+                .bg-orange-50 { background: #fff7ed !important; }
+                .bg-gray-50 { background: #f9fafb !important; }
+                .text-left { text-align: left; }
+                .bold { font-weight: bold; }
+                .uppercase { text-transform: uppercase; }
+                ${BULLETIN_STYLES}
+            </style>
+        </head>
+        <body>
+            ${generateHeaderHTML(schoolConfig)}
+            <h1 style="text-align: center; margin: 10px 0; font-size: 20px; font-weight: bold; text-decoration: underline;">RELEVÉ DE NOTES GÉNÉRAL (MASTER SHEET)</h1>
+            <div style="margin-bottom: 8px; display: flex; justify-content: space-between; font-size: 11px; font-weight: bold; border-bottom: 1px solid black; padding-bottom: 5px;">
+                <span>CLASSE: ${data.classe?.niveau} ${data.classe?.section}</span>
+                <span>PÉRIODE: ${data.periode}</span>
+                <span>ANNÉE SCOLAIRE: ${data.anneeScolaire}</span>
+            </div>
+            <table style="width: 100%;">
+                <thead>
+                    <tr>
+                        <th rowspan="2" style="width: 20px;">RANG</th>
+                        <th rowspan="2" style="width: 55px;">MATRICULE</th>
+                        <th rowspan="2" class="text-left" style="width: 110px;">NOM ET PRÉNOMS</th>
+                        ${data.matieres.map(m => `<th colspan="${subjectColCounts[m._id]}" class="bg-blue-50" style="white-space: normal; max-width: 65px; word-wrap: break-word;">${m.nom}<br>(Coef: ${m.coefficient})</th>`).join('')}
+                        <th rowspan="2" class="bg-orange-50" style="width: 45px;">TOTAL DES<br>POINTS</th>
+                        <th rowspan="2" style="width: 45px;">MOYENNE<br>GÉNÉRALE</th>
+                    </tr>
+                    <tr>
+                        ${data.matieres.map(m => {
         let sub = '';
         for (let i = 1; i <= subjectColCounts[m._id] - 2; i++) sub += `<th>N${i}</th>`;
         return sub + '<th>Moy</th><th class="bg-yellow-50">Pond.</th>';
     }).join('')}
-                </tr>
-            </thead>
-            <tbody>
-                ${data.matrix.map((row, idx) => `
-                <tr>
-                    <td>${idx + 1}</td>
-                    <td style="white-space: nowrap;">${row.matricule || '-'}</td>
-                    <td class="text-left bold uppercase" style="white-space: nowrap;">${row.nom} ${row.prenom}</td>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${data.matrix.map((row, idx) => `
+                    <tr>
+                        <td>${idx + 1}</td>
+                        <td style="white-space: nowrap;">${row.matricule || '-'}</td>
+                        <td class="text-left bold uppercase" style="white-space: nowrap;">${row.nom} ${row.prenom}</td>
                     ${data.matieres.map(m => {
         const mRow = row.matieres[m._id] || { notes: [], moyenne: null, coeff: m.coefficient };
         let cells = '';
@@ -374,61 +356,61 @@ const getMasterSheetHTML = (data, schoolConfig) => {
                             <td class="bg-yellow-50 font-bold">${pond}</td>
                         `;
     }).join('')}
-                    <td class="bold bg-orange-50">${(() => {
+                        <td class="bold bg-orange-50">${(() => {
             let total = 0; let hasAny = false;
             data.matieres.forEach(m => { const sm = row.matieres[m._id]; if (sm?.moyenne != null && sm?.coeff) { total += sm.moyenne * sm.coeff; hasAny = true; } });
             return hasAny ? total.toFixed(2) : '-';
         })()}</td>
-                    <td class="bold bg-gray-50">${row.moyenneGenerale ? row.moyenneGenerale.toFixed(2) : '-'}</td>
-                </tr>
-                `).join('')}
-            </tbody>
-            <tfoot style="background: #f9fafb; font-weight: bold;">
-                <tr>
-                    <td colspan="3" style="text-align: left;">MOYENNE DE CLASSE</td>
-                    ${data.matieres.map(m => `
+                        <td class="bold bg-gray-50">${row.moyenneGenerale ? row.moyenneGenerale.toFixed(2) : '-'}</td>
+                    </tr>
+                    `).join('')}
+                </tbody>
+                <tfoot style="background: #f9fafb; font-weight: bold;">
+                    <tr>
+                        <td colspan="3" style="text-align: left;">MOYENNE DE CLASSE</td>
+                        ${data.matieres.map(m => `
                         <td colspan="${subjectColCounts[m._id] - 2}"></td>
                         <td style="background: #dbeafe;">${data.subjectStats?.[m._id]?.avg?.toFixed(2) || '-'}</td>
                         <td class="bg-yellow-50"></td>
                     `).join('')}
-                    <td class="bg-orange-50"></td>
-                    <td style="background: #bfdbfe;">${data.overallStats?.classAverage?.toFixed(2) || '-'}</td>
-                </tr>
-                <tr style="font-size: 7px; color: #666;">
-                    <td colspan="3" style="text-align: left;">Plus forte moyenne</td>
-                    ${data.matieres.map(m => `
+                        <td class="bg-orange-50"></td>
+                        <td style="background: #bfdbfe;">${data.overallStats?.classAverage?.toFixed(2) || '-'}</td>
+                    </tr>
+                    <tr style="font-size: 7px; color: #666;">
+                        <td colspan="3" style="text-align: left;">Plus forte moyenne</td>
+                        ${data.matieres.map(m => `
                         <td colspan="${subjectColCounts[m._id] - 2}"></td>
                         <td style="background: #f0fdf4;">${data.subjectStats?.[m._id]?.max?.toFixed(2) || '-'}</td>
                         <td class="bg-yellow-50"></td>
                     `).join('')}
-                    <td class="bg-orange-50"></td>
-                    <td style="background: #dcfce7;">${data.overallStats?.maxAverage?.toFixed(2) || '-'}</td>
-                </tr>
-                <tr style="font-size: 7px; color: #666;">
-                    <td colspan="3" style="text-align: left;">Plus faible moyenne</td>
-                    ${data.matieres.map(m => `
+                        <td class="bg-orange-50"></td>
+                        <td style="background: #dcfce7;">${data.overallStats?.maxAverage?.toFixed(2) || '-'}</td>
+                    </tr>
+                    <tr style="font-size: 7px; color: #666;">
+                        <td colspan="3" style="text-align: left;">Plus faible moyenne</td>
+                        ${data.matieres.map(m => `
                         <td colspan="${subjectColCounts[m._id] - 2}"></td>
                         <td style="background: #fef2f2;">${data.subjectStats?.[m._id]?.min?.toFixed(2) || '-'}</td>
                         <td class="bg-yellow-50"></td>
                     `).join('')}
-                    <td class="bg-orange-50"></td>
-                    <td style="background: #fee2e2;">${data.overallStats?.minAverage?.toFixed(2) || '-'}</td>
-                </tr>
-            </tfoot>
-        </table>
+                        <td class="bg-orange-50"></td>
+                        <td style="background: #fee2e2;">${data.overallStats?.minAverage?.toFixed(2) || '-'}</td>
+                    </tr>
+                </tfoot>
+            </table>
 
-        <div style="margin-top: 30px; display: flex; justify-content: space-between; padding: 0 50px;">
-            <div style="text-align: center;">
-                <p style="font-weight: bold; text-decoration: underline; text-transform: uppercase;">Le Censeur</p>
-                <div style="height: 60px;"></div>
+            <div style="margin-top: 30px; display: flex; justify-content: space-between; padding: 0 50px;">
+                <div style="text-align: center;">
+                    <p style="font-weight: bold; text-decoration: underline; text-transform: uppercase;">Le Censeur</p>
+                    <div style="height: 60px;"></div>
+                </div>
+                <div style="text-align: center;">
+                    <p style="font-weight: bold; text-decoration: underline; text-transform: uppercase;">Le Proviseur</p>
+                    <div style="font-weight: bold; font-size: 10px; margin-top: 5px;">${schoolConfig.proviseurName || ''}</div>
+                    <div style="height: 50px;"></div>
+                </div>
             </div>
-            <div style="text-align: center;">
-                <p style="font-weight: bold; text-decoration: underline; text-transform: uppercase;">Le Proviseur</p>
-                <div style="font-weight: bold; font-size: 10px; margin-top: 5px;">${schoolConfig.proviseurName || ''}</div>
-                <div style="height: 50px;"></div>
-            </div>
-        </div>
-    </body>
+        </body>
     </html>`;
 };
 

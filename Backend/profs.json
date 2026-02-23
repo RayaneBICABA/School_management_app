@@ -1,0 +1,26 @@
+[
+  {
+    "_id": "699ba3a3376c0d1739ed9f36",
+    "nom": "Dupont",
+    "prenom": "Jean",
+    "email": "jean.dupont@ecole.com"
+  },
+  {
+    "_id": "699ba3a3376c0d1739ed9f39",
+    "nom": "Durand",
+    "prenom": "Marie",
+    "email": "marie.durand@ecole.com"
+  },
+  {
+    "_id": "699ba3a4376c0d1739ed9f3c",
+    "nom": "Lefebvre",
+    "prenom": "Robert",
+    "email": "robert.lefebvre@ecole.com"
+  },
+  {
+    "_id": "699ba3a4376c0d1739ed9f3f",
+    "nom": "Moreau",
+    "prenom": "Sophie",
+    "email": "sophie.moreau@ecole.com"
+  }
+]

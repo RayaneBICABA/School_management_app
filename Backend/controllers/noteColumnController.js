@@ -3,7 +3,7 @@ const Note = require('../models/Note');
 const User = require('../models/User');
 const ErrorResponse = require('../utils/errorResponse');
 const asyncHandler = require('../middleware/async');
-const xlsx = require('xlsx');
+const ExcelJS = require('exceljs');
 
 // @desc    Créer une colonne de note
 // @route   POST /api/v1/note-columns
@@ -65,7 +65,7 @@ exports.getNoteColumns = asyncHandler(async (req, res, next) => {
 
     const columns = await NoteColumn.find({
         ...query,
-        anneeScolaire: req.body.anneeScolaire || currentYear
+        anneeScolaire: req.query.anneeScolaire || currentYear
     })
         .populate('matiere', 'nom')
         .populate('classe', 'nom')
@@ -188,11 +188,27 @@ exports.importNotesFromExcel = asyncHandler(async (req, res, next) => {
     }
 
     try {
-        // Lire le fichier Excel
-        const workbook = xlsx.read(file.data, { type: 'buffer' });
-        const sheetName = workbook.SheetNames[0];
-        const sheet = workbook.Sheets[sheetName];
-        const data = xlsx.utils.sheet_to_json(sheet);
+        const workbook = new ExcelJS.Workbook();
+        await workbook.xlsx.load(file.data);
+        const worksheet = workbook.getWorksheet(1);
+
+        const data = [];
+        const headers = [];
+        worksheet.getRow(1).eachCell((cell, colNumber) => {
+            headers[colNumber] = cell.value;
+        });
+
+        worksheet.eachRow((row, rowNumber) => {
+            if (rowNumber === 1) return;
+            const rowData = {};
+            row.eachCell((cell, colNumber) => {
+                const header = headers[colNumber];
+                if (header) {
+                    rowData[header] = cell.value;
+                }
+            });
+            data.push(rowData);
+        });
 
         const importedNotes = [];
         const errors = [];

@@ -36,24 +36,29 @@
         <span>Effectif: <strong>{{ bulletin.effectif }}</strong></span>
       </div>
 
-      <div class="student-name mb-4 text-sm uppercase">Nom de l'élève: <strong>{{ eleve.nom || 'Non renseigné' }} {{ eleve.prenom || 'Non renseigné' }}</strong></div>
+      <!-- Student Name -->
+      <div class="student-name mb-1 flex items-baseline gap-1 text-[11px] font-medium leading-tight">
+        <span class="text-[10px] text-gray-500">Nom de l'élève:</span>
+        <strong class="uppercase">{{ eleve.nom || 'Non renseigné' }} {{ eleve.prenom || 'Non renseigné' }}</strong>
+      </div>
 
-      <div class="info-eleve grid grid-cols-2 lg:grid-cols-4 gap-4 text-sm mb-6 pb-4 border-b border-gray-200">
-        <div class="flex flex-col">
-          <span class="text-gray-500 text-xs">Né(e) le:</span>
-          <strong>{{ formatDate(eleve.dateNaissance) || 'Non renseigné' }}</strong>
+      <!-- Info Eleve -->
+      <div class="info-eleve grid grid-cols-4 gap-1 mb-2 pb-1 border-b border-gray-200">
+        <div class="info-item flex items-baseline gap-1">
+          <span class="text-[10px] text-gray-500 text-xs">Né(e) le:</span>
+          <span class="font-bold text-[11px]">{{ formatDate(eleve.dateNaissance) || 'Non renseigné' }}</span>
         </div>
-        <div class="flex flex-col">
-          <span class="text-gray-500 text-xs">Matricule:</span>
-          <strong>{{ eleve.matricule || 'Non renseigné' }}</strong>
+        <div class="info-item flex items-baseline gap-1">
+          <span class="text-[10px] text-gray-500 text-xs">Matricule:</span>
+          <strong class="text-[11px]">{{ eleve.matricule || 'Non renseigné' }}</strong>
         </div>
-        <div class="flex flex-col text-right lg:text-left">
-          <span class="text-gray-500 text-xs">Classe:</span>
-          <strong>{{ classe.niveau || 'N/A' }} {{ classe.section || '' }}</strong>
+        <div class="info-item flex items-baseline gap-1 justify-end lg:justify-start">
+          <span class="text-[10px] text-gray-500 text-xs">Classe:</span>
+          <strong class="text-[11px]">{{ classe.niveau || 'N/A' }} {{ classe.section || '' }}</strong>
         </div>
-        <div class="flex flex-col text-right">
-          <span class="text-gray-500 text-xs">Redoublant:</span>
-          <strong>{{ eleve.redoublant ? 'OUI' : 'NON' }}</strong>
+        <div class="info-item flex items-baseline gap-1 justify-end">
+          <span class="text-[10px] text-gray-500 text-xs">Redoublant:</span>
+          <strong class="text-[11px] font-bold">{{ eleve.redoublant ? 'OUI' : 'NON' }}</strong>
         </div>
       </div>
 
@@ -63,9 +68,6 @@
           <tr class="bg-gray-200 text-center font-bold">
             <th class="border border-black p-2 text-left w-1/4">Matières</th>
             <th class="border border-black p-1 w-12">Coef</th>
-            <th v-for="i in maxInt" :key="'int-head-'+i" class="border border-black p-1 w-12">Int {{ i }}</th>
-            <th v-for="i in maxDev" :key="'dev-head-'+i" class="border border-black p-1 w-12">Dev {{ i }}</th>
-            <th v-for="i in maxCompo" :key="'comp-head-'+i" class="border border-black p-1 w-12">Comp {{ i }}</th>
             <th class="border border-black p-1 w-12">Moy</th>
             <th class="border border-black p-1 w-20">Notes pondérées</th>
             <th class="border border-black p-1" colspan="3">Appréciations et signatures</th>
@@ -81,25 +83,13 @@
               <td class="border border-black p-1">{{ (note.coeff || note.matiere?.coefficient || 0).toFixed(1) }}</td>
               
               <!-- Dynamic Interros -->
-              <td v-for="i in maxInt" :key="'int-'+note.matiere?._id+'-'+i" class="border border-black p-1">
-                {{ getGradeAt(note, 'interro', i-1) }}
+              <td class="border border-black p-1">
+                {{ (note.moyenneMatiere || 0).toFixed(2) }}
               </td>
-              
-              <!-- Dynamic Devoirs -->
-              <td v-for="i in maxDev" :key="'dev-'+note.matiere?._id+'-'+i" class="border border-black p-1">
-                {{ getGradeAt(note, 'devoir', i-1) }}
-              </td>
-              
-              <!-- Dynamic Compos -->
-              <td v-for="i in maxCompo" :key="'comp-'+note.matiere?._id+'-'+i" class="border border-black p-1">
-                {{ getGradeAt(note, 'compo', i-1) }}
-              </td>
-              
-              <td class="border border-black p-1">{{ (note.moyenneMatiere || 0).toFixed(2) }}</td>
               <td class="border border-black p-1 font-bold">{{ (note.notePonderee || 0).toFixed(2) }}</td>
               <td class="border border-black p-1 w-24 italic" :class="getAppreciationColor(getSubjectAppreciation(note.moyenneMatiere || 0))">{{ getSubjectAppreciation(note.moyenneMatiere || 0) }}</td>
-              <td class="border border-black p-1 w-16"></td>
-              <td class="border border-black p-1 text-[9px] uppercase">{{ note.professeur ? note.professeur.nom : '' }}</td>
+              <td class="border border-black p-1 text-[9px] uppercase" style="min-width: 80px; white-space: nowrap;">{{ note.professeur ? note.professeur.nom : '' }}</td>
+              <td class="border border-black p-1 w-20"></td>
             </tr>
             <!-- Category Totals -->
             <tr class="bg-gray-100 font-bold">
@@ -298,7 +288,7 @@ const maxCompo = computed(() => {
   return max;
 });
 
-const totalCols = computed(() => 7 + maxInt.value + maxDev.value + maxCompo.value);
+const totalCols = computed(() => 7);
 
 const getGradeAt = (note, type, index) => {
   let grades = [];

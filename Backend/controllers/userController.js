@@ -1,5 +1,5 @@
 const User = require('../models/User');
-const xlsx = require('xlsx');
+const ExcelJS = require('exceljs');
 
 // @desc    Get all users
 // @route   GET /api/v1/users
@@ -142,11 +142,28 @@ exports.importStudents = async (req, res, next) => {
 
         let students = [];
         try {
-            // express-fileupload provides .data buffer
-            const workbook = xlsx.read(req.files.file.data, { type: 'buffer' });
-            const sheetName = workbook.SheetNames[0];
-            const sheet = workbook.Sheets[sheetName];
-            students = xlsx.utils.sheet_to_json(sheet);
+            const workbook = new ExcelJS.Workbook();
+            await workbook.xlsx.load(req.files.file.data);
+            const worksheet = workbook.getWorksheet(1); // Get first sheet
+            
+            // Get headers from first row
+            const headers = [];
+            worksheet.getRow(1).eachCell((cell, colNumber) => {
+                headers[colNumber] = cell.value;
+            });
+
+            // Parse rows to objects
+            worksheet.eachRow((row, rowNumber) => {
+                if (rowNumber === 1) return; // Skip header row
+                const student = {};
+                row.eachCell((cell, colNumber) => {
+                    const header = headers[colNumber];
+                    if (header) {
+                        student[header] = cell.value;
+                    }
+                });
+                students.push(student);
+            });
         } catch (parseError) {
             console.error('Error parsing Excel file:', parseError);
             return res.status(400).json({ success: false, error: 'Le fichier Excel est corrompu ou illisible.' });
@@ -170,12 +187,12 @@ exports.importStudents = async (req, res, next) => {
         // Helper to parse date from Excel serial or string
         const parseDate = (excelDate) => {
             if (!excelDate) return undefined;
-            // If number (Excel serial date)
+            // ExcelJS handles date parsing from cells of type 'date' automatically to JS Date objects
+            if (excelDate instanceof Date) {
+                return excelDate;
+            }
+            // If number (Excel serial date) - though ExcelJS usually converts it
             if (typeof excelDate === 'number') {
-                // Excel base date is Dec 30 1899
-                // JavaScript Date is milliseconds since Jan 1 1970
-                // Difference in days is 25569
-                // 86400000 ms per day
                 const date = new Date((excelDate - 25569) * 86400 * 1000);
                 return date;
             }

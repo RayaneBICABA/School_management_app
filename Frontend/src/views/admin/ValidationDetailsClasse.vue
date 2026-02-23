@@ -186,19 +186,19 @@ const students = ref([])
 // Voir le bulletin d'un élève
 const voirBulletin = async (student) => {
   if (student.bulletinId) {
-    router.push(`/proviseur/bulletin/${student.bulletinId}`)
+    router.push(`/admin/bulletin/${student.bulletinId}`);
   } else {
     try {
-        const res = await api.getBulletinsByEleve(student.id);
-        const bulletins = res.data?.data || [];
-        if (bulletins && bulletins.length > 0) {
-            student.bulletinId = bulletins[0]._id;
-            router.push(`/proviseur/bulletin/${student.bulletinId}`);
-        } else {
-            showError("Aucun bulletin trouvé pour cet élève, même par défaut.");
-        }
-    } catch(e) {
-        showError("Erreur lors de la récupération du bulletin de base.");
+      const res = await api.getBulletinsByEleve(student.id);
+      const bulletins = res.data?.data || [];
+      if (bulletins && bulletins.length > 0) {
+        student.bulletinId = bulletins[0]._id;
+        router.push(`/admin/bulletin/${student.bulletinId}`);
+      } else {
+        showError("Aucun bulletin trouvé pour cet élève, même par défaut.");
+      }
+    } catch (e) {
+      showError("Erreur lors de la récupération du bulletin de base.");
     }
   }
 }

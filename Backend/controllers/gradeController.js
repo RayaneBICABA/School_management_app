@@ -1,6 +1,6 @@
 const Grade = require('../models/Grade');
 const User = require('../models/User');
-const xlsx = require('xlsx');
+const ExcelJS = require('exceljs');
 
 // @desc    Get all grades
 // @route   GET /api/v1/grades
@@ -64,10 +64,27 @@ exports.importGrades = async (req, res) => {
             return res.status(400).json({ success: false, error: 'Classe, Matière, Période et Type sont requis' });
         }
 
-        const workbook = xlsx.read(req.file.buffer, { type: 'buffer' });
-        const sheetName = workbook.SheetNames[0];
-        const sheet = workbook.Sheets[sheetName];
-        const rows = xlsx.utils.sheet_to_json(sheet);
+        const workbook = new ExcelJS.Workbook();
+        await workbook.xlsx.load(req.file.buffer);
+        const worksheet = workbook.getWorksheet(1);
+
+        const rows = [];
+        const headers = [];
+        worksheet.getRow(1).eachCell((cell, colNumber) => {
+            headers[colNumber] = cell.value;
+        });
+
+        worksheet.eachRow((row, rowNumber) => {
+            if (rowNumber === 1) return;
+            const rowData = {};
+            row.eachCell((cell, colNumber) => {
+                const header = headers[colNumber];
+                if (header) {
+                    rowData[header] = cell.value;
+                }
+            });
+            rows.push(rowData);
+        });
 
         if (!rows || rows.length === 0) {
             return res.status(400).json({ success: false, error: 'Fichier vide' });

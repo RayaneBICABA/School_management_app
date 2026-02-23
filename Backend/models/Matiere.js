@@ -14,7 +14,14 @@ const MatiereSchema = new mongoose.Schema({
     },
     categorie: {
         type: String,
-        enum: ['MATIÈRES LITTÉRAIRES', 'MATIÈRES SCIENTIFIQUES', 'ÉDUCATION PHYSIQUE ET SPORTIVE', 'AUTRES'],
+        enum: [
+            'MATIÈRES LITTÉRAIRES',
+            'MATIÈRES SCIENTIFIQUES',
+            'ÉDUCATION PHYSIQUE ET SPORTIVE',
+            'ENSEIGNEMENT GÉNÉRAL',
+            'ENSEIGNEMENT TECHNIQUE',
+            'AUTRES'
+        ],
         default: 'AUTRES'
     },
     coefficient: {

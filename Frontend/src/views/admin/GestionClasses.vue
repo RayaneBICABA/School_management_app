@@ -427,6 +427,24 @@
           </select>
         </div>
 
+        <!-- Categorie - only for new matière -->
+        <div v-if="courseForm.isNew" class="flex flex-col gap-2">
+          <label class="text-sm font-semibold text-[#0e141b] dark:text-slate-200">Catégorie</label>
+          <select 
+            v-model="courseForm.categorie"
+            required
+            class="w-full bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 rounded-lg text-sm focus:ring-primary focus:border-primary h-10 px-3"
+          >
+            <option value="">Sélectionner une catégorie</option>
+            <option value="MATIÈRES LITTÉRAIRES">Matières Littéraires</option>
+            <option value="MATIÈRES SCIENTIFIQUES">Matières Scientifiques</option>
+            <option value="ÉDUCATION PHYSIQUE ET SPORTIVE">Éducation Physique et Sportive</option>
+            <option value="ENSEIGNEMENT GÉNÉRAL">Enseignement Général</option>
+            <option value="ENSEIGNEMENT TECHNIQUE">Enseignement Technique</option>
+            <option value="AUTRES">Autres</option>
+          </select>
+        </div>
+
         <div class="flex flex-col gap-2">
           <label class="text-sm font-semibold text-[#0e141b] dark:text-slate-200">Coefficient</label>
           <input 
@@ -667,7 +685,8 @@ const courseForm = reactive({
   matiereId: '',
   coefficient: 1,
   isNew: false,
-  newNom: ''
+  newNom: '',
+  categorie: ''
 })
 
 const isCustomNiveau = ref(false)
@@ -976,6 +995,7 @@ const closeAddCourseModal = () => {
   courseForm.coefficient = 1
   courseForm.isNew = false
   courseForm.newNom = ''
+  courseForm.categorie = ''
 }
 
 const addCourseToClass = async () => {
@@ -997,7 +1017,8 @@ const addCourseToClass = async () => {
       const res = await api.createMatiere({
         nom: courseForm.newNom,
         code: courseForm.newNom.substring(0, 3).toUpperCase(),
-        coefficient: courseForm.coefficient
+        coefficient: courseForm.coefficient,
+        categorie: courseForm.categorie || 'AUTRES'
       })
       matiereId = res.data.data._id
       // Refresh global list

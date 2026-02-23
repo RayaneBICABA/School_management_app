@@ -139,6 +139,7 @@ const routes = [
       { path: 'droits', name: 'AdminDroits', component: AdminDroits },
       { path: 'notifications', name: 'AdminNotifications', component: () => import('@/views/common/GlobalNotifications.vue') },
       { path: 'master-sheet', name: 'AdminMasterSheet', component: () => import('@/views/common/MasterGradeSheet.vue') },
+      { path: 'bulletin/:id', name: 'AdminBulletinDetails', component: () => import('@/views/proviseur/BulletinDetails.vue') },
       { path: 'profil', name: 'AdminProfil', component: AdminProfil }
     ]
   },

@@ -306,8 +306,8 @@ const getMasterSheetHTML = (data, schoolConfig) => {
     <head>
         <meta charset="UTF-8">
         <style>
-            @page { size: A3 landscape; margin: 8mm; }
-            body { font-family: Georgia, serif; font-size: 8px; line-height: 1.2; padding: 5mm; color: #333; }
+            @page { size: A3 landscape; margin: 0; }
+            body { font-family: Georgia, serif; font-size: 8px; line-height: 1.2; padding: 10px; color: #333; margin: 0; }
             table { width: 100%; border-collapse: collapse; margin-top: 10px; border: 1px solid black; }
             th, td { border: 1px solid black; padding: 2px; text-align: center; }
             th { background: #f3f4f6 !important; font-weight: bold; font-size: 8px; }
@@ -334,12 +334,12 @@ const getMasterSheetHTML = (data, schoolConfig) => {
         <table>
             <thead>
                 <tr>
-                    <th rowspan="2" style="width: 25px;">RANG</th>
-                    <th rowspan="2" style="width: 70px;">MATRICULE</th>
-                    <th rowspan="2" class="text-left" style="width: 130px;">NOM ET PRÉNOMS</th>
-                    ${data.matieres.map(m => `<th colspan="${subjectColCounts[m._id]}" class="bg-blue-50" style="white-space: normal; max-width: 80px; word-wrap: break-word;">${m.nom}<br>(Coef: ${m.coefficient})</th>`).join('')}
-                    <th rowspan="2" class="bg-orange-50" style="width: 50px;">TOTAL DES<br>POINTS</th>
-                    <th rowspan="2" style="width: 50px;">MOYENNE<br>GÉNÉRALE</th>
+                    <th rowspan="2" style="width: 20px;">RANG</th>
+                    <th rowspan="2" style="width: 55px;">MATRICULE</th>
+                    <th rowspan="2" class="text-left" style="width: 110px;">NOM ET PRÉNOMS</th>
+                    ${data.matieres.map(m => `<th colspan="${subjectColCounts[m._id]}" class="bg-blue-50" style="white-space: normal; max-width: 65px; word-wrap: break-word;">${m.nom}<br>(Coef: ${m.coefficient})</th>`).join('')}
+                    <th rowspan="2" class="bg-orange-50" style="width: 45px;">TOTAL DES<br>POINTS</th>
+                    <th rowspan="2" style="width: 45px;">MOYENNE<br>GÉNÉRALE</th>
                 </tr>
                 <tr>
                     ${data.matieres.map(m => {
@@ -464,7 +464,11 @@ const generateMasterGradeSheetPDF = async (data, schoolConfig = {}) => {
 
         // Calculate dynamic scale based on number of subjects
         const subjectCount = data.matieres ? data.matieres.length : 10;
-        const scale = subjectCount > 10 ? 0.60 : (subjectCount > 7 ? 0.70 : 0.85);
+        const scale = subjectCount >= 18 ? 0.45 :
+            subjectCount >= 15 ? 0.50 :
+                subjectCount >= 12 ? 0.55 :
+                    subjectCount >= 9 ? 0.65 :
+                        subjectCount >= 7 ? 0.75 : 0.90;
 
         return await page.pdf({
             format: 'A3',
@@ -497,7 +501,11 @@ const generateBulkMasterGradeSheetPDF = async (sheetsData, schoolConfig = {}) =>
         // Calculate average subjects config for bulk
         let maxSubjects = 0;
         sheetsData.forEach(d => { if (d.matieres && d.matieres.length > maxSubjects) maxSubjects = d.matieres.length; });
-        const scale = maxSubjects > 10 ? 0.60 : (maxSubjects > 7 ? 0.70 : 0.85);
+        const scale = maxSubjects >= 18 ? 0.45 :
+            maxSubjects >= 15 ? 0.50 :
+                maxSubjects >= 12 ? 0.55 :
+                    maxSubjects >= 9 ? 0.65 :
+                        maxSubjects >= 7 ? 0.75 : 0.90;
 
         return await page.pdf({
             format: 'A3',

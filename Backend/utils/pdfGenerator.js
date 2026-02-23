@@ -183,11 +183,7 @@ const generateBulletinContent = (bulletinData, schoolConfig = {}) => {
                 </tr>
             </thead>
             <tbody>
-                ${Object.entries(groupedNotes).map(([catName, notes]) => `
-                <tr class="bg-gray-300">
-                    <td colspan="${totalCols}" class="cat-header">${catName}</td>
-                </tr>
-                ${notes.map(note => {
+                ${(bulletinData.notes || []).map(note => {
         const moy = note.moyenneMatiere || 0;
         const appr = getAppre(moy);
         return `
@@ -204,7 +200,6 @@ const generateBulletinContent = (bulletinData, schoolConfig = {}) => {
                     </tr>
                     `;
     }).join('')}
-                `).join('')}
             </tbody>
         </table>
 
@@ -212,11 +207,7 @@ const generateBulletinContent = (bulletinData, schoolConfig = {}) => {
             <table class="bilan-table">
                 <tbody>
                     <tr class="bg-gray-300 text-center">
-                        <td colspan="8" class="bold uppercase">BILAN TRIMESTRIEL</td>
-                    </tr>
-                    <tr class="bold">
-                        <td colspan="4">TOTAL COEFFICIENT : <strong>${(bulletinData.totalCoefficients || 0).toFixed(2)}</strong></td>
-                        <td colspan="4" class="text-right">TOTAL NOTES PONDEREES: <strong>${(bulletinData.totalPoints || 0).toFixed(2)}</strong></td>
+                        <td colspan="8" class="bold uppercase">BILAN ${classe.filiere === 'Technique' ? 'SEMESTRIEL' : 'TRIMESTRIEL'}</td>
                     </tr>
                     <tr>
                         <td>Moyenne de l'élève</td>

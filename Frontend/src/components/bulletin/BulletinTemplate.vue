@@ -74,11 +74,7 @@
           </tr>
         </thead>
         <tbody>
-          <template v-for="(category, catName) in groupedNotes" :key="catName">
-            <tr class="bg-gray-300">
-              <td :colspan="totalCols" class="border border-black p-2 font-bold text-center uppercase">{{ catName }}</td>
-            </tr>
-            <tr v-for="note in category" :key="note.matiere?._id" class="text-center">
+            <tr v-for="note in bulletin.notes" :key="note.matiere?._id" class="text-center">
               <td class="border border-black p-2 text-left font-bold uppercase">{{ note.matiere?.nom }}</td>
               <td class="border border-black p-1">{{ (note.coeff || note.matiere?.coefficient || 0).toFixed(1) }}</td>
               
@@ -91,14 +87,14 @@
               <td class="border border-black p-1 text-[9px] uppercase" style="min-width: 80px; white-space: nowrap;">{{ note.professeur ? note.professeur.nom : '' }}</td>
               <td class="border border-black p-1 w-20"></td>
             </tr>
-            <!-- Category Totals -->
-            <tr class="bg-gray-100 font-bold">
+            <!-- Global Totals -->
+            <tr class="bg-gray-100 font-bold text-center">
               <td class="border border-black p-2 text-left uppercase">Total</td>
-              <td class="border border-black p-1">{{ getCategoryTotalCoeff(category) }}</td>
-              <td class="border border-black p-1" colspan="2"></td>
+              <td class="border border-black p-1">{{ (bulletin.totalCoefficients || 0).toFixed(1) }}</td>
+              <td class="border border-black p-1"></td>
+              <td class="border border-black p-1 font-bold">{{ (bulletin.totalPoints || 0).toFixed(2) }}</td>
               <td class="border border-black p-1" colspan="3"></td>
             </tr>
-          </template>
         </tbody>
       </table>
  
@@ -107,11 +103,7 @@
         <table class="w-full border-collapse border border-black text-[11px]">
           <tbody>
             <tr class="bg-gray-300 font-bold text-center">
-              <td colspan="8" class="border border-black p-2 uppercase">BILAN TRIMESTRIEL</td>
-            </tr>
-            <tr class="font-bold">
-              <td colspan="4" class="border border-black p-2 uppercase">TOTAL COEFFICIENT : <strong>{{ (bulletin.totalCoefficients || 0).toFixed(2) }}</strong></td>
-              <td colspan="4" class="border border-black p-2 uppercase text-right">TOTAL NOTES PONDEREES: <strong>{{ (bulletin.totalPoints || 0).toFixed(2) }}</strong></td>
+              <td colspan="8" class="border border-black p-2 uppercase">BILAN {{ classe.filiere === 'Technique' ? 'SEMESTRIEL' : 'TRIMESTRIEL' }}</td>
             </tr>
             <tr>
               <td class="border border-black p-2">Moyenne de l'élève</td>

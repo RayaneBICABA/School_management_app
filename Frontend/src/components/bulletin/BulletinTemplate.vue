@@ -66,11 +66,11 @@
       <table class="w-full border-collapse border border-black text-[10px]">
         <thead>
           <tr class="bg-gray-200 text-center font-bold">
-            <th class="border border-black p-2 text-left w-1/4">Matières</th>
-            <th class="border border-black p-1 w-12">Coef</th>
-            <th class="border border-black p-1 w-12">Moy</th>
-            <th class="border border-black p-1 w-20">Notes pondérées</th>
-            <th class="border border-black p-1" colspan="3">Appréciations et signatures</th>
+              <th class="border border-black p-2 text-left" style="width: 30%;">Matières</th>
+              <th class="border border-black p-1 text-center" style="width: 8%;">Coef</th>
+              <th class="border border-black p-1 text-center" style="width: 10%;">Moy</th>
+              <th class="border border-black p-1 text-center" style="width: 10%;">Pondérées</th>
+              <th class="border border-black p-1 text-center" colspan="3">Appréciations et signatures</th>
           </tr>
         </thead>
         <tbody>
@@ -93,7 +93,7 @@
               <td class="border border-black p-1 w-24 italic" :class="note.isDispensed ? '' : getAppreciationColor(getSubjectAppreciation(note.moyenneMatiere || 0))">
                 {{ note.isDispensed ? '' : getSubjectAppreciation(note.moyenneMatiere || 0) }}
               </td>
-              <td class="border border-black p-1 text-[9px]" style="min-width: 80px; white-space: nowrap;">{{ note.professeur ? (note.professeur.civilite === 'Mr' ? 'M ' : (note.professeur.civilite ? note.professeur.civilite + ' ' : '')) + (note.professeur.nom || '').toUpperCase() : '' }}</td>
+              <td class="border border-black p-1 text-[9px]" style="width: 60px; white-space: nowrap;">{{ note.professeur ? (note.professeur.civilite === 'Mr' ? 'M ' : (note.professeur.civilite ? note.professeur.civilite + ' ' : '')) + (note.professeur.nom || '').toUpperCase() : '' }}</td>
               <td class="border border-black p-1 w-20"></td>
             </tr>
             <!-- Category Totals -->

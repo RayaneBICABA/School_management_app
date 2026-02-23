@@ -161,7 +161,7 @@ exports.getBulletinHTML = (bulletin, schoolConfig) => {
                     `<td>${(note.moyenneMatiere || 0).toFixed(2)}</td><td>${(note.notePonderee || 0).toFixed(2)}</td>`
                 }
                     <td class="italic">${app}</td>
-                    <td style="font-size: 8px;">${prof}</td>
+                    <td style="font-size: 8px; width: 60px;">${prof}</td>
                     <td></td>
                 </tr>
             `;
@@ -271,7 +271,7 @@ exports.getBulletinHTML = (bulletin, schoolConfig) => {
                     <th class="text-left" style="width: 30%;">Matières</th>
                     <th style="width: 8%;">Coef</th>
                     <th style="width: 10%;">Moy</th>
-                    <th style="width: 15%;">Notes pondérées</th>
+                    <th style="width: 10%;">Pondérées</th>
                     <th colspan="3">Appréciations et signatures</th>
                 </tr>
             </thead>

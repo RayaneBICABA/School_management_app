@@ -301,6 +301,11 @@ const getMasterSheetHTML = (data, schoolConfig) => {
     });
 
     const subjectCount = data.matieres ? data.matieres.length : 10;
+    const zoomRatio = subjectCount >= 18 ? 0.35 :
+        subjectCount >= 14 ? 0.40 :
+            subjectCount >= 11 ? 0.45 :
+                subjectCount >= 8 ? 0.55 :
+                    subjectCount >= 6 ? 0.75 : 0.95;
 
     return `
     <!DOCTYPE html>
@@ -309,7 +314,7 @@ const getMasterSheetHTML = (data, schoolConfig) => {
         <meta charset="UTF-8">
         <style>
             @page { size: A3 landscape; margin: 0; }
-            body { font-family: Georgia, serif; font-size: 8px; line-height: 1.2; padding: 15px; color: #333; margin: 0; }
+            body { font-family: Georgia, serif; font-size: 8px; line-height: 1.2; padding: 15px; color: #333; margin: 0; zoom: ${zoomRatio}; }
             table { width: 100%; border-collapse: collapse; margin-top: 10px; border: 1px solid black; }
             th, td { border: 1px solid black; padding: 2px; text-align: center; }
             th { background: #f3f4f6 !important; font-weight: bold; font-size: 8px; }
@@ -462,19 +467,10 @@ const generateMasterGradeSheetPDF = async (data, schoolConfig = {}) => {
         const html = getMasterSheetHTML(data, schoolConfig);
         await page.setContent(html, { waitUntil: 'networkidle0' });
 
-        // Calculate aggressive dynamic scale to prevent truncation
-        const subjectCount = data.matieres ? data.matieres.length : 10;
-        const scale = subjectCount >= 18 ? 0.35 :
-            subjectCount >= 15 ? 0.45 :
-                subjectCount >= 12 ? 0.55 :
-                    subjectCount >= 9 ? 0.70 :
-                        subjectCount >= 7 ? 0.85 : 0.95;
-
         return await page.pdf({
             format: 'A3',
             landscape: true,
             printBackground: true,
-            scale: scale,
             margin: { top: '5mm', right: '5mm', bottom: '5mm', left: '5mm' }
         });
     } finally { if (browser) await browser.close(); }
@@ -498,20 +494,10 @@ const generateBulkMasterGradeSheetPDF = async (sheetsData, schoolConfig = {}) =>
         fullHtml += '</body></html>';
         await page.setContent(fullHtml, { waitUntil: 'networkidle0' });
 
-        // Calculate aggressive average scale for bulk
-        let maxSubjects = 0;
-        sheetsData.forEach(d => { if (d.matieres && d.matieres.length > maxSubjects) maxSubjects = d.matieres.length; });
-        const scale = maxSubjects >= 18 ? 0.35 :
-            maxSubjects >= 15 ? 0.45 :
-                maxSubjects >= 12 ? 0.55 :
-                    maxSubjects >= 9 ? 0.70 :
-                        maxSubjects >= 7 ? 0.85 : 0.95;
-
         return await page.pdf({
             format: 'A3',
             landscape: true,
             printBackground: true,
-            scale: scale,
             margin: { top: '5mm', right: '5mm', bottom: '5mm', left: '5mm' }
         });
     } finally { if (browser) await browser.close(); }

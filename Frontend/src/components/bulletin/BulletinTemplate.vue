@@ -1,9 +1,9 @@
 <template>
-  <div class="bulletin-container p-4 bg-gray-100 min-h-screen">
+  <div class="bulletin-container p-4 bg-gray-100 min-h-screen" :class="compactClasses">
     <div ref="bulletinRef" class="bulletin max-w-[900px] mx-auto bg-white p-8 shadow-lg text-[#333] font-serif leading-tight">
       <!-- Header -->
-      <div class="header flex justify-between items-start mb-5 border-b-2 border-gray-100 pb-5">
-        <div class="header-left w-[30%] text-[11px] font-bold uppercase space-y-1">
+      <div class="header flex justify-between items-start mb-2 border-b-2 border-gray-100 pb-2">
+        <div class="header-left w-[30%] text-[9px] font-bold uppercase leading-[1.1]">
           <p>{{ schoolConfig.region }}</p>
           <p>{{ schoolConfig.subRegion }}</p>
           <p>{{ schoolConfig.schoolName }}</p>
@@ -18,19 +18,19 @@
           <div v-if="schoolConfig.motto" class="text-[9px] font-bold text-gray-500 mt-1 uppercase tracking-widest leading-none">{{ schoolConfig.motto }}</div>
         </div>
 
-        <div class="header-right w-[30%] text-right text-[11px] font-bold uppercase space-y-1">
+        <div class="header-right w-[30%] text-right text-[9px] font-bold uppercase leading-[1.1]">
           <p>{{ schoolConfig.country }}</p>
-          <p class="text-[9px] italic normal-case font-normal">{{ schoolConfig.patrie }}</p>
+          <p class="text-[8px] italic normal-case font-normal">{{ schoolConfig.patrie }}</p>
         </div>
       </div>
 
       <!-- Title -->
-      <div class="title text-center my-8">
-        <h1 class="text-2xl font-serif italic font-bold">BULLETIN DE NOTES</h1>
+      <div class="title text-center my-2">
+        <h1 class="text-xl font-serif italic font-bold">BULLETIN DE NOTES</h1>
       </div>
 
       <!-- General Info -->
-      <div class="info-trimestre flex justify-between text-sm mb-4">
+      <div class="info-trimestre flex justify-between text-xs mb-1">
         <span>Année scolaire: <strong>{{ bulletin.anneeScolaire }}</strong></span>
         <span><strong>{{ bulletin.periode }}</strong></span>
         <span>Effectif: <strong>{{ bulletin.effectif }}</strong></span>
@@ -63,7 +63,7 @@
       </div>
 
       <!-- Grades Table -->
-      <table class="w-full border-collapse border border-black text-[11px]">
+      <table class="w-full border-collapse border border-black text-[10px]">
         <thead>
           <tr class="bg-gray-200 text-center font-bold">
             <th class="border border-black p-2 text-left w-1/4">Matières</th>
@@ -82,10 +82,10 @@
               <td class="border border-black p-2 text-left font-bold uppercase">{{ note.matiere?.nom }}</td>
               <td class="border border-black p-1">{{ (note.coeff || note.matiere?.coefficient || 0).toFixed(1) }}</td>
               
-              <!-- Dynamic Interros -->
-              <td class="border border-black p-1">
-                {{ (note.moyenneMatiere || 0).toFixed(2) }}
-              </td>
+              <td v-if="note.isDispensed" colspan="2" class="border border-black p-2 font-bold italic text-red-600">DISPENSÉ</td>
+              <template v-else>
+                <td class="border border-black p-1">{{ (note.moyenneMatiere || 0).toFixed(2) }}</td>
+              </template>
               <td class="border border-black p-1 font-bold">{{ (note.notePonderee || 0).toFixed(2) }}</td>
               <td class="border border-black p-1 w-24 italic" :class="getAppreciationColor(getSubjectAppreciation(note.moyenneMatiere || 0))">{{ getSubjectAppreciation(note.moyenneMatiere || 0) }}</td>
               <td class="border border-black p-1 text-[9px] uppercase" style="min-width: 80px; white-space: nowrap;">{{ note.professeur ? note.professeur.nom : '' }}</td>
@@ -95,8 +95,7 @@
             <tr class="bg-gray-100 font-bold">
               <td class="border border-black p-2 text-left uppercase">Total</td>
               <td class="border border-black p-1">{{ getCategoryTotalCoeff(category) }}</td>
-              <td class="border border-black p-1" :colspan="maxInt + maxDev + maxCompo + 1"></td>
-              <td class="border border-black p-1">{{ getCategoryTotalPoints(category) }}</td>
+              <td class="border border-black p-1" colspan="2"></td>
               <td class="border border-black p-1" colspan="3"></td>
             </tr>
           </template>
@@ -152,16 +151,11 @@
 
       <!-- Appreciation & Signatures -->
       <div class="council mt-6 relative overflow-hidden">
-        <!-- Filigrane Provisoire -->
-        <div v-if="bulletin.statut !== 'VALIDE' && bulletin.statut !== 'FINALISE'" 
-             class="absolute inset-0 flex items-center justify-center pointer-events-none opacity-[0.08] rotate-[-30deg]">
-          <span class="text-[120px] font-black tracking-widest border-[15px] border-black p-10 uppercase">PROVISOIRE</span>
-        </div>
 
         <h3 class="bg-gray-300 text-center font-bold p-2 border border-black uppercase text-sm">Appréciations du conseil de classe</h3>
-        <div class="flex border border-black border-t-0 h-40">
+        <div class="flex border border-black border-t-0 h-28">
           <div class="w-1/2 p-4 border-r border-black flex flex-col items-center justify-center gap-4">
-               <div class="border-4 border-double border-gray-800 rounded p-4 text-center min-w-[200px]">
+               <div class="text-center min-w-[200px]">
                   <div class="font-bold text-lg">{{ getGeneralAppreciation(bulletin.moyenneGenerale) }}</div>
                </div>
           </div>
@@ -258,25 +252,8 @@ const groupedNotes = computed(() => {
   return groups;
 });
 
-const maxInt = computed(() => {
-  let max = 0;
-  if (!props.bulletin.notes) return 0;
-  props.bulletin.notes.forEach(note => {
-    const n = (note.interroGrades?.length || (note.int !== undefined ? 1 : 0));
-    if (n > max) max = n;
-  });
-  return max;
-});
-
-const maxDev = computed(() => {
-  let max = 0;
-  if (!props.bulletin.notes) return 0;
-  props.bulletin.notes.forEach(note => {
-    const n = (note.devoirGrades?.length || (note.dev !== undefined ? 1 : 0));
-    if (n > max) max = n;
-  });
-  return max;
-});
+const maxInt = computed(() => 0);
+const maxDev = computed(() => 0);
 
 const maxCompo = computed(() => {
   let max = 0;
@@ -289,6 +266,12 @@ const maxCompo = computed(() => {
 });
 
 const totalCols = computed(() => 7);
+const compactClasses = computed(() => {
+  const count = props.bulletin.notes?.length || 0;
+  if (count > 20) return 'compact-level-2';
+  if (count > 14) return 'compact-level-1';
+  return '';
+});
 
 const getGradeAt = (note, type, index) => {
   let grades = [];
@@ -436,4 +419,34 @@ td, th {
   .text-green-700 { color: #15803d !important; }
   .text-blue-900 { color: #1e3a8a !important; }
 }
+
+/* Dynamic Compact Styling */
+.compact-level-1 .bulletin {
+  padding: 1.5rem !important;
+}
+.compact-level-1 .header { margin-bottom: 0.25rem !important; pb: 0.25rem !important; }
+.compact-level-1 .title { margin-top: 0.25rem !important; margin-bottom: 0.25rem !important; }
+.compact-level-1 .title h1 { font-size: 1.125rem !important; }
+.compact-level-1 .info-eleve { margin-bottom: 0.5rem !important; pb: 0.25rem !important; font-size: 0.75rem !important; }
+.compact-level-1 table { font-size: 9px !important; }
+.compact-level-1 th, .compact-level-1 td { padding: 2px !important; }
+.compact-level-1 .bilan { mt: 0.5rem !important; }
+.compact-level-1 .council { mt: 0.5rem !important; }
+.compact-level-1 .council-content { height: 80px !important; }
+
+.compact-level-2 .bulletin {
+  padding: 1rem !important;
+}
+.compact-level-2 .header { margin-bottom: 0 !important; pb: 0 !important; font-size: 8px !important; }
+.compact-level-2 .header-left, .compact-level-2 .header-right { font-size: 8px !important; }
+.compact-level-2 .title { margin-top: 0 !important; margin-bottom: 0 !important; }
+.compact-level-2 .title h1 { font-size: 1rem !important; }
+.compact-level-2 .info-trimestre, .compact-level-2 .student-name { font-size: 10px !important; margin-bottom: 2px !important; }
+.compact-level-2 .info-eleve { margin-bottom: 0.25rem !important; pb: 0.125rem !important; font-size: 9px !important; gap: 4px !important; }
+.compact-level-2 table { font-size: 8px !important; }
+.compact-level-2 th, .compact-level-2 td { padding: 1px 2px !important; }
+.compact-level-2 .bilan { mt: 0.25rem !important; }
+.compact-level-2 .bilan table { font-size: 9px !important; }
+.compact-level-2 .council { mt: 0.25rem !important; }
+.compact-level-2 .council-content { height: 60px !important; }
 </style>

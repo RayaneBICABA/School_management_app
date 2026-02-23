@@ -131,7 +131,6 @@ const generateBulletinContent = (bulletinData, schoolConfig = {}) => {
     }
 
     const formatDate = (date) => date ? new Date(date).toLocaleDateString('fr-FR') : '--/--/----';
-
     const totalCols = 7;
 
     return `
@@ -210,10 +209,10 @@ const generateBulletinContent = (bulletinData, schoolConfig = {}) => {
         </table>
 
         <div class="bilan-section">
-            <table>
+            <table class="bilan-table">
                 <tbody>
-                    <tr class="bg-gray-300">
-                        <td colspan="8" class="text-center bold uppercase">BILAN TRIMESTRIEL</td>
+                    <tr class="bg-gray-300 text-center">
+                        <td colspan="8" class="bold uppercase">BILAN TRIMESTRIEL</td>
                     </tr>
                     <tr class="bold">
                         <td colspan="4">TOTAL COEFFICIENT : <strong>${(bulletinData.totalCoefficients || 0).toFixed(2)}</strong></td>
@@ -272,7 +271,14 @@ const generateBulletinContent = (bulletinData, schoolConfig = {}) => {
     `;
 };
 
-const getMasterSheetHTML = (data, schoolConfig) => {
+const getMasterSheetHTML = (data, schoolConfig = {}) => {
+    const subjectCount = data.matieres ? data.matieres.length : 10;
+    const zoomRatio = subjectCount >= 18 ? 0.35 :
+        subjectCount >= 14 ? 0.40 :
+            subjectCount >= 11 ? 0.45 :
+                subjectCount >= 8 ? 0.55 :
+                    subjectCount >= 6 ? 0.75 : 0.95;
+
     const subjectColCounts = {};
     data.matieres.forEach(m => {
         let max = 0;
@@ -280,15 +286,8 @@ const getMasterSheetHTML = (data, schoolConfig) => {
             const mRow = r.matieres[m._id] || { notes: [] };
             if (mRow.notes.length > max) max = mRow.notes.length;
         });
-        subjectColCounts[m._id] = max + 2; // notes + moyenne + pondération
+        subjectColCounts[m._id] = max + 2;
     });
-
-    const subjectCount = data.matieres ? data.matieres.length : 10;
-    const zoomRatio = subjectCount >= 18 ? 0.35 :
-        subjectCount >= 14 ? 0.40 :
-            subjectCount >= 11 ? 0.45 :
-                subjectCount >= 8 ? 0.55 :
-                    subjectCount >= 6 ? 0.75 : 0.95;
 
     return `
     <!DOCTYPE html>
@@ -297,7 +296,7 @@ const getMasterSheetHTML = (data, schoolConfig) => {
             <meta charset="UTF-8">
             <style>
                 @page { size: A3 landscape; margin: 0; }
-                body { font-family: Georgia, serif; font-size: 8px; line-height: 1.2; padding: 15px; color: #333; margin: 0; zoom: ${zoomRatio}; }
+                body { font-family: Arial, Helvetica, sans-serif; font-size: 8px; line-height: 1.2; padding: 15px; color: #333; margin: 0; zoom: ${zoomRatio}; }
                 table { width: 100%; border-collapse: collapse; margin-top: 10px; border: 1px solid black; }
                 th, td { border: 1px solid black; padding: 2px; text-align: center; }
                 th { background: #f3f4f6 !important; font-weight: bold; font-size: 8px; }
@@ -343,7 +342,7 @@ const getMasterSheetHTML = (data, schoolConfig) => {
                         <td>${idx + 1}</td>
                         <td style="white-space: nowrap;">${row.matricule || '-'}</td>
                         <td class="text-left bold uppercase" style="white-space: nowrap;">${row.nom} ${row.prenom}</td>
-                    ${data.matieres.map(m => {
+                        ${data.matieres.map(m => {
         const mRow = row.matieres[m._id] || { notes: [], moyenne: null, coeff: m.coefficient };
         let cells = '';
         const maxN = subjectColCounts[m._id] - 2;
@@ -352,9 +351,9 @@ const getMasterSheetHTML = (data, schoolConfig) => {
         }
         const pond = (mRow.moyenne != null && mRow.coeff) ? (mRow.moyenne * mRow.coeff).toFixed(2) : '-';
         return cells + `
-                            <td class="bold">${mRow.moyenne != null ? mRow.moyenne.toFixed(2) : '-'}</td>
-                            <td class="bg-yellow-50 font-bold">${pond}</td>
-                        `;
+                                <td class="bold">${mRow.moyenne != null ? mRow.moyenne.toFixed(2) : '-'}</td>
+                                <td class="bg-yellow-50 font-bold">${pond}</td>
+                            `;
     }).join('')}
                         <td class="bold bg-orange-50">${(() => {
             let total = 0; let hasAny = false;
@@ -372,29 +371,9 @@ const getMasterSheetHTML = (data, schoolConfig) => {
                         <td colspan="${subjectColCounts[m._id] - 2}"></td>
                         <td style="background: #dbeafe;">${data.subjectStats?.[m._id]?.avg?.toFixed(2) || '-'}</td>
                         <td class="bg-yellow-50"></td>
-                    `).join('')}
+                        `).join('')}
                         <td class="bg-orange-50"></td>
                         <td style="background: #bfdbfe;">${data.overallStats?.classAverage?.toFixed(2) || '-'}</td>
-                    </tr>
-                    <tr style="font-size: 7px; color: #666;">
-                        <td colspan="3" style="text-align: left;">Plus forte moyenne</td>
-                        ${data.matieres.map(m => `
-                        <td colspan="${subjectColCounts[m._id] - 2}"></td>
-                        <td style="background: #f0fdf4;">${data.subjectStats?.[m._id]?.max?.toFixed(2) || '-'}</td>
-                        <td class="bg-yellow-50"></td>
-                    `).join('')}
-                        <td class="bg-orange-50"></td>
-                        <td style="background: #dcfce7;">${data.overallStats?.maxAverage?.toFixed(2) || '-'}</td>
-                    </tr>
-                    <tr style="font-size: 7px; color: #666;">
-                        <td colspan="3" style="text-align: left;">Plus faible moyenne</td>
-                        ${data.matieres.map(m => `
-                        <td colspan="${subjectColCounts[m._id] - 2}"></td>
-                        <td style="background: #fef2f2;">${data.subjectStats?.[m._id]?.min?.toFixed(2) || '-'}</td>
-                        <td class="bg-yellow-50"></td>
-                    `).join('')}
-                        <td class="bg-orange-50"></td>
-                        <td style="background: #fee2e2;">${data.overallStats?.minAverage?.toFixed(2) || '-'}</td>
                     </tr>
                 </tfoot>
             </table>
@@ -448,13 +427,7 @@ const generateMasterGradeSheetPDF = async (data, schoolConfig = {}) => {
         const page = await browser.newPage();
         const html = getMasterSheetHTML(data, schoolConfig);
         await page.setContent(html, { waitUntil: 'networkidle0' });
-
-        return await page.pdf({
-            format: 'A3',
-            landscape: true,
-            printBackground: true,
-            margin: { top: '5mm', right: '5mm', bottom: '5mm', left: '5mm' }
-        });
+        return await page.pdf({ format: 'A3', landscape: true, printBackground: true, margin: { top: '5mm', right: '5mm', bottom: '5mm', left: '5mm' } });
     } finally { if (browser) await browser.close(); }
 };
 
@@ -465,23 +438,16 @@ const generateBulkMasterGradeSheetPDF = async (sheetsData, schoolConfig = {}) =>
         const page = await browser.newPage();
         let fullHtml = `<!DOCTYPE html><html><head><meta charset="UTF-8"></head><body>`;
         sheetsData.forEach((data, i) => {
-            // Extract body content from getMasterSheetHTML
             const sheetHtml = getMasterSheetHTML(data, schoolConfig);
-            const bodyContent = sheetHtml.match(/<body>([\s\S]*)<\/body>/)[1];
+            const bodyMatch = sheetHtml.match(/<body>([\s\S]*)<\/body>/);
             const styleMatch = sheetHtml.match(/<style>([\s\S]*)<\/style>/);
             if (i === 0 && styleMatch) fullHtml = `<!DOCTYPE html><html><head><style>${styleMatch[1]}</style></head><body>`;
-            fullHtml += bodyContent;
+            if (bodyMatch) fullHtml += bodyMatch[1];
             if (i < sheetsData.length - 1) fullHtml += '<div class="page-break"></div>';
         });
         fullHtml += '</body></html>';
         await page.setContent(fullHtml, { waitUntil: 'networkidle0' });
-
-        return await page.pdf({
-            format: 'A3',
-            landscape: true,
-            printBackground: true,
-            margin: { top: '5mm', right: '5mm', bottom: '5mm', left: '5mm' }
-        });
+        return await page.pdf({ format: 'A3', landscape: true, printBackground: true, margin: { top: '5mm', right: '5mm', bottom: '5mm', left: '5mm' } });
     } finally { if (browser) await browser.close(); }
 };
 

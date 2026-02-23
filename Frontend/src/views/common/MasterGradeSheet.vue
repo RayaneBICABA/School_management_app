@@ -96,12 +96,13 @@
           <thead class="sticky top-0 z-20 bg-gray-50">
             <tr>
               <th rowspan="2" class="sticky left-0 z-30 bg-gray-50 border-r border-b p-2 w-10">N°</th>
-              <th rowspan="2" class="sticky left-10 z-30 bg-gray-50 border-r border-b p-2 min-w-[200px] text-left">Élève</th>
+              <th rowspan="2" class="sticky left-[40px] z-30 bg-gray-50 border-r border-b p-2 w-24">Matricule</th>
+              <th rowspan="2" class="sticky left-[136px] z-30 bg-gray-50 border-r border-b p-2 min-w-[200px] text-left">Élève</th>
               <th v-for="m in matieres" :key="'h1-'+m._id" :colspan="getColSpan(m._id)" class="border-r border-b p-2 text-center uppercase font-bold bg-blue-50 text-blue-900">
                 {{ m.nom }}
               </th>
-              <th rowspan="2" class="border-r border-b p-2 bg-orange-50 text-orange-800 font-bold min-w-[65px]">Total Pond.</th>
-              <th rowspan="2" class="border-b p-2 bg-gray-100 font-bold min-w-[60px]">MOY. GEN</th>
+              <th rowspan="2" class="border-r border-b p-2 bg-orange-50 text-orange-800 font-bold min-w-[80px]">TOTAL DES<br>POINTS</th>
+              <th rowspan="2" class="border-b p-2 bg-gray-100 font-bold min-w-[80px]">MOYENNE<br>GÉNÉRALE</th>
             </tr>
             <tr>
               <template v-for="m in matieres" :key="'h2-'+m._id">
@@ -116,7 +117,8 @@
           <tbody>
             <tr v-for="(row, idx) in matrix" :key="row.eleveId" class="hover:bg-gray-50 transition-colors">
               <td class="sticky left-0 z-10 bg-white border-r border-b p-2 text-center">{{ idx + 1 }}</td>
-              <td class="sticky left-10 z-10 bg-white border-r border-b p-2 font-bold whitespace-nowrap">
+              <td class="sticky left-[40px] z-10 bg-white border-r border-b p-2 text-center whitespace-nowrap">{{ row.matricule || '-' }}</td>
+              <td class="sticky left-[136px] z-10 bg-white border-r border-b p-2 font-bold whitespace-nowrap">
                 {{ row.nom }} {{ row.prenom }}
               </td>
               <template v-for="m in matieres" :key="'r-'+row.eleveId+'-'+m._id">
@@ -140,7 +142,7 @@
           </tbody>
           <tfoot class="sticky bottom-0 z-20 bg-gray-50 font-bold border-t-2 border-gray-300">
             <tr>
-              <td colspan="2" class="sticky left-0 z-30 bg-gray-50 border-r p-2">MOYENNE DE CLASSE</td>
+              <td colspan="3" class="sticky left-0 z-30 bg-gray-50 border-r p-2 text-left">MOYENNE DE CLASSE</td>
               <template v-for="m in matieres" :key="'f1-'+m._id">
                 <td :colspan="getMaxNotes(m._id)" class="border-r"></td>
                 <td class="border-r p-2 text-center bg-blue-100 text-blue-900">
@@ -154,7 +156,7 @@
               </td>
             </tr>
             <tr class="text-[10px] text-gray-600">
-              <td colspan="2" class="sticky left-0 z-30 bg-gray-50 border-r p-1">Plus forte moyenne</td>
+              <td colspan="3" class="sticky left-0 z-30 bg-gray-50 border-r p-1 text-left">Plus forte moyenne</td>
               <template v-for="m in matieres" :key="'f2-'+m._id">
                 <td :colspan="getMaxNotes(m._id)" class="border-r"></td>
                 <td class="border-r p-1 text-center bg-green-50">
@@ -168,7 +170,7 @@
               </td>
             </tr>
             <tr class="text-[10px] text-gray-600">
-              <td colspan="2" class="sticky left-0 z-30 bg-gray-50 border-r p-1 border-b">Plus faible moyenne</td>
+              <td colspan="3" class="sticky left-0 z-30 bg-gray-50 border-r p-1 border-b text-left">Plus faible moyenne</td>
               <template v-for="m in matieres" :key="'f3-'+m._id">
                 <td :colspan="getMaxNotes(m._id)" class="border-r border-b"></td>
                 <td class="border-r border-b p-1 text-center bg-red-50">
@@ -544,6 +546,9 @@ const printSheet = () => {
         .text-blue-100 { color: #dbeafe !important; }
         .text-blue-900 { color: #1e3a8a !important; }
         .bg-blue-900 { background: #1e3a8a !important; }
+        
+        /* Show signatures only in print window */
+        .print-signatures { display: flex !important; justify-content: space-between; margin-top: 30px; padding: 0 50px; }
       </style>
     </head>
     <body>
@@ -552,6 +557,17 @@ const printSheet = () => {
         RÉCAPITULATIF DES NOTES — ${className} — ${filters.value.periode} ${filters.value.anneeScolaire}
       </div>
       ${printArea.innerHTML}
+      <div class="print-signatures" style="display: none;">
+        <div style="text-align: center;">
+          <p style="font-weight: bold; text-decoration: underline; text-transform: uppercase;">Le Censeur</p>
+          <div style="height: 60px;"></div>
+        </div>
+        <div style="text-align: center;">
+          <p style="font-weight: bold; text-decoration: underline; text-transform: uppercase;">Le Proviseur</p>
+          <div style="font-weight: bold; font-size: 10px; margin-top: 5px;">${schoolConfig.value.proviseurName || ''}</div>
+          <div style="height: 50px;"></div>
+        </div>
+      </div>
     </body>
     </html>
   `);

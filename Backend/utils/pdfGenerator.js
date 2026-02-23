@@ -323,8 +323,8 @@ const getMasterSheetHTML = (data, schoolConfig) => {
     </head>
     <body>
         ${generateHeaderHTML(schoolConfig)}
-        <h1 style="text-align: center; margin: 15px 0; font-size: 22px;">RELEVÉ DE NOTES GÉNÉRAL (MASTER SHEET)</h1>
-        <div style="margin-bottom: 10px; display: flex; justify-content: space-between; font-size: 12px; font-weight: bold;">
+        <h1 style="text-align: center; margin: 10px 0; font-size: 20px; font-weight: bold; text-decoration: underline;">RELEVÉ DE NOTES GÉNÉRAL (MASTER SHEET)</h1>
+        <div style="margin-bottom: 8px; display: flex; justify-content: space-between; font-size: 11px; font-weight: bold; border-bottom: 1px solid black; padding-bottom: 5px;">
             <span>CLASSE: ${data.classe?.niveau} ${data.classe?.section}</span>
             <span>PÉRIODE: ${data.periode}</span>
             <span>ANNÉE SCOLAIRE: ${data.anneeScolaire}</span>
@@ -332,12 +332,12 @@ const getMasterSheetHTML = (data, schoolConfig) => {
         <table>
             <thead>
                 <tr>
-                    <th rowspan="2" style="width: 30px;">RANG</th>
-                    <th rowspan="2" class="text-left" style="min-width: 150px;">NOM ET PRÉNOMS</th>
+                    <th rowspan="2" style="width: 25px;">RANG</th>
+                    <th rowspan="2" style="width: 80px;">MATRICULE</th>
+                    <th rowspan="2" class="text-left" style="min-width: 130px;">NOM ET PRÉNOMS</th>
                     ${data.matieres.map(m => `<th colspan="${subjectColCounts[m._id]}" class="bg-blue-50">${m.nom} (Coef: ${m.coefficient})</th>`).join('')}
-                    <th rowspan="2" class="bg-orange-50">TOTAL POND.</th>
-                    <th rowspan="2">MOY GEN</th>
-                    <th rowspan="2">OBSERVATIONS</th>
+                    <th rowspan="2" class="bg-orange-50" style="width: 60px;">TOTAL DES POINTS</th>
+                    <th rowspan="2" style="width: 60px;">MOYENNE GÉNÉRALE</th>
                 </tr>
                 <tr>
                     ${data.matieres.map(m => {
@@ -351,6 +351,7 @@ const getMasterSheetHTML = (data, schoolConfig) => {
                 ${data.matrix.map((row, idx) => `
                 <tr>
                     <td>${idx + 1}</td>
+                    <td style="white-space: nowrap;">${row.matricule || '-'}</td>
                     <td class="text-left bold uppercase" style="white-space: nowrap;">${row.nom} ${row.prenom}</td>
                     ${data.matieres.map(m => {
         const mRow = row.matieres[m._id] || { notes: [], moyenne: null, coeff: m.coefficient };
@@ -371,13 +372,12 @@ const getMasterSheetHTML = (data, schoolConfig) => {
             return hasAny ? total.toFixed(2) : '-';
         })()}</td>
                     <td class="bold bg-gray-50">${row.moyenneGenerale ? row.moyenneGenerale.toFixed(2) : '-'}</td>
-                    <td>${getAppre(row.moyenneGenerale)}</td>
                 </tr>
                 `).join('')}
             </tbody>
             <tfoot style="background: #f9fafb; font-weight: bold;">
                 <tr>
-                    <td colspan="2" style="text-align: left;">MOYENNE DE CLASSE</td>
+                    <td colspan="3" style="text-align: left;">MOYENNE DE CLASSE</td>
                     ${data.matieres.map(m => `
                         <td colspan="${subjectColCounts[m._id] - 2}"></td>
                         <td style="background: #dbeafe;">${data.subjectStats?.[m._id]?.avg?.toFixed(2) || '-'}</td>
@@ -385,10 +385,9 @@ const getMasterSheetHTML = (data, schoolConfig) => {
                     `).join('')}
                     <td class="bg-orange-50"></td>
                     <td style="background: #bfdbfe;">${data.overallStats?.classAverage?.toFixed(2) || '-'}</td>
-                    <td></td>
                 </tr>
                 <tr style="font-size: 7px; color: #666;">
-                    <td colspan="2" style="text-align: left;">Plus forte moyenne</td>
+                    <td colspan="3" style="text-align: left;">Plus forte moyenne</td>
                     ${data.matieres.map(m => `
                         <td colspan="${subjectColCounts[m._id] - 2}"></td>
                         <td style="background: #f0fdf4;">${data.subjectStats?.[m._id]?.max?.toFixed(2) || '-'}</td>
@@ -396,10 +395,9 @@ const getMasterSheetHTML = (data, schoolConfig) => {
                     `).join('')}
                     <td class="bg-orange-50"></td>
                     <td style="background: #dcfce7;">${data.overallStats?.maxAverage?.toFixed(2) || '-'}</td>
-                    <td></td>
                 </tr>
                 <tr style="font-size: 7px; color: #666;">
-                    <td colspan="2" style="text-align: left;">Plus faible moyenne</td>
+                    <td colspan="3" style="text-align: left;">Plus faible moyenne</td>
                     ${data.matieres.map(m => `
                         <td colspan="${subjectColCounts[m._id] - 2}"></td>
                         <td style="background: #fef2f2;">${data.subjectStats?.[m._id]?.min?.toFixed(2) || '-'}</td>
@@ -407,10 +405,21 @@ const getMasterSheetHTML = (data, schoolConfig) => {
                     `).join('')}
                     <td class="bg-orange-50"></td>
                     <td style="background: #fee2e2;">${data.overallStats?.minAverage?.toFixed(2) || '-'}</td>
-                    <td></td>
                 </tr>
             </tfoot>
         </table>
+
+        <div style="margin-top: 30px; display: flex; justify-content: space-between; padding: 0 50px;">
+            <div style="text-align: center;">
+                <p style="font-weight: bold; text-decoration: underline; text-transform: uppercase;">Le Censeur</p>
+                <div style="height: 60px;"></div>
+            </div>
+            <div style="text-align: center;">
+                <p style="font-weight: bold; text-decoration: underline; text-transform: uppercase;">Le Proviseur</p>
+                <div style="font-weight: bold; font-size: 10px; margin-top: 5px;">${schoolConfig.proviseurName || ''}</div>
+                <div style="height: 50px;"></div>
+            </div>
+        </div>
     </body>
     </html>`;
 };

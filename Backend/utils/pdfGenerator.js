@@ -264,11 +264,22 @@ const generateBulletinContent = (bulletinData, schoolConfig = {}) => {
 
 const getMasterSheetHTML = (data, schoolConfig = {}) => {
     const subjectCount = data.matieres ? data.matieres.length : 10;
-    const zoomRatio = subjectCount >= 18 ? 0.35 :
-        subjectCount >= 14 ? 0.40 :
-            subjectCount >= 11 ? 0.45 :
-                subjectCount >= 8 ? 0.55 :
-                    subjectCount >= 6 ? 0.75 : 0.95;
+
+    // Dynamically choose format based on subject count
+    const format = subjectCount > 12 ? 'A3' : 'A4';
+
+    // Optimized zoom ratios for landscape
+    // A4 Landscape is ~297mm, A3 Landscape is ~420mm
+    let zoomRatio = 1.0;
+    if (format === 'A4') {
+        zoomRatio = subjectCount >= 10 ? 0.75 :
+            subjectCount >= 7 ? 0.85 :
+                subjectCount >= 5 ? 0.95 : 1.0;
+    } else { // A3
+        zoomRatio = subjectCount >= 20 ? 0.65 :
+            subjectCount >= 16 ? 0.75 :
+                subjectCount >= 13 ? 0.85 : 0.95;
+    }
 
     const subjectColCounts = {};
     data.matieres.forEach(m => {
@@ -280,15 +291,18 @@ const getMasterSheetHTML = (data, schoolConfig = {}) => {
         subjectColCounts[m._id] = max + 2;
     });
 
-    return `
+    return {
+        format,
+        html: `
     <!DOCTYPE html>
     <html>
         <head>
             <meta charset="UTF-8">
             <style>
-                @page { size: A3 landscape; margin: 0; }
-                body { font-family: Arial, Helvetica, sans-serif; font-size: 8px; line-height: 1.2; padding: 15px; color: #333; margin: 0; zoom: ${zoomRatio}; }
-                table { width: 100%; border-collapse: collapse; margin-top: 10px; border: 1px solid black; }
+                ${BULLETIN_STYLES}
+                @page { size: ${format} landscape; margin: 5mm; }
+                body { font-family: Arial, Helvetica, sans-serif; font-size: 8px; line-height: 1.2; padding: 0; color: #333; margin: 0; zoom: ${zoomRatio}; }
+                table { width: 100%; border-collapse: collapse; margin-top: 5px; border: 1px solid black; }
                 th, td { border: 1px solid black; padding: 2px; text-align: center; }
                 th { background: #f3f4f6 !important; font-weight: bold; font-size: 8px; }
                 .bg-blue-50 { background: #dbeafe !important; }
@@ -298,7 +312,6 @@ const getMasterSheetHTML = (data, schoolConfig = {}) => {
                 .text-left { text-align: left; }
                 .bold { font-weight: bold; }
                 .uppercase { text-transform: uppercase; }
-                ${BULLETIN_STYLES}
             </style>
         </head>
         <body>
@@ -321,10 +334,10 @@ const getMasterSheetHTML = (data, schoolConfig = {}) => {
                     </tr>
                     <tr>
                         ${data.matieres.map(m => {
-        let sub = '';
-        for (let i = 1; i <= subjectColCounts[m._id] - 2; i++) sub += `<th>N${i}</th>`;
-        return sub + '<th>Moy</th><th class="bg-yellow-50">Pond.</th>';
-    }).join('')}
+            let sub = '';
+            for (let i = 1; i <= subjectColCounts[m._id] - 2; i++) sub += `<th>N${i}</th>`;
+            return sub + '<th>Moy</th><th class="bg-yellow-50">Pond.</th>';
+        }).join('')}
                     </tr>
                 </thead>
                 <tbody>
@@ -334,23 +347,23 @@ const getMasterSheetHTML = (data, schoolConfig = {}) => {
                         <td style="white-space: nowrap;">${row.matricule || '-'}</td>
                         <td class="text-left bold uppercase" style="white-space: nowrap;">${row.nom} ${row.prenom}</td>
                         ${data.matieres.map(m => {
-        const mRow = row.matieres[m._id] || { notes: [], moyenne: null, coeff: m.coefficient };
-        let cells = '';
-        const maxN = subjectColCounts[m._id] - 2;
-        for (let i = 0; i < maxN; i++) {
-            cells += `<td>${mRow.notes[i] != null ? mRow.notes[i].toFixed(1) : '-'}</td>`;
-        }
-        const pond = (mRow.moyenne != null && mRow.coeff) ? (mRow.moyenne * mRow.coeff).toFixed(2) : '-';
-        return cells + `
+            const mRow = row.matieres[m._id] || { notes: [], moyenne: null, coeff: m.coefficient };
+            let cells = '';
+            const maxN = subjectColCounts[m._id] - 2;
+            for (let i = 0; i < maxN; i++) {
+                cells += `<td>${mRow.notes[i] != null ? mRow.notes[i].toFixed(1) : '-'}</td>`;
+            }
+            const pond = (mRow.moyenne != null && mRow.coeff) ? (mRow.moyenne * mRow.coeff).toFixed(2) : '-';
+            return cells + `
                                 <td class="bold">${mRow.moyenne != null ? mRow.moyenne.toFixed(2) : '-'}</td>
                                 <td class="bg-yellow-50 font-bold">${pond}</td>
                             `;
-    }).join('')}
+        }).join('')}
                         <td class="bold bg-orange-50">${(() => {
-            let total = 0; let hasAny = false;
-            data.matieres.forEach(m => { const sm = row.matieres[m._id]; if (sm?.moyenne != null && sm?.coeff) { total += sm.moyenne * sm.coeff; hasAny = true; } });
-            return hasAny ? total.toFixed(2) : '-';
-        })()}</td>
+                let total = 0; let hasAny = false;
+                data.matieres.forEach(m => { const sm = row.matieres[m._id]; if (sm?.moyenne != null && sm?.coeff) { total += sm.moyenne * sm.coeff; hasAny = true; } });
+                return hasAny ? total.toFixed(2) : '-';
+            })()}</td>
                         <td class="bold bg-gray-50">${row.moyenneGenerale ? row.moyenneGenerale.toFixed(2) : '-'}</td>
                     </tr>
                     `).join('')}
@@ -381,7 +394,8 @@ const getMasterSheetHTML = (data, schoolConfig = {}) => {
                 </div>
             </div>
         </body>
-    </html>`;
+    </html>`
+    };
 };
 
 const generateBulletinPDF = async (bulletinData, schoolConfig = {}) => {
@@ -416,9 +430,9 @@ const generateMasterGradeSheetPDF = async (data, schoolConfig = {}) => {
     try {
         browser = await puppeteer.launch({ headless: true, args: ['--no-sandbox', '--disable-setuid-sandbox'] });
         const page = await browser.newPage();
-        const html = getMasterSheetHTML(data, schoolConfig);
+        const { html, format } = getMasterSheetHTML(data, schoolConfig);
         await page.setContent(html, { waitUntil: 'networkidle0' });
-        return await page.pdf({ format: 'A3', landscape: true, printBackground: true, margin: { top: '5mm', right: '5mm', bottom: '5mm', left: '5mm' } });
+        return await page.pdf({ format, landscape: true, printBackground: true, margin: { top: '5mm', right: '5mm', bottom: '5mm', left: '5mm' } });
     } finally { if (browser) await browser.close(); }
 };
 
@@ -428,17 +442,19 @@ const generateBulkMasterGradeSheetPDF = async (sheetsData, schoolConfig = {}) =>
         browser = await puppeteer.launch({ headless: true, args: ['--no-sandbox', '--disable-setuid-sandbox'] });
         const page = await browser.newPage();
         let fullHtml = `<!DOCTYPE html><html><head><meta charset="UTF-8"></head><body>`;
+        let finalFormat = 'A3';
         sheetsData.forEach((data, i) => {
-            const sheetHtml = getMasterSheetHTML(data, schoolConfig);
-            const bodyMatch = sheetHtml.match(/<body>([\s\S]*)<\/body>/);
-            const styleMatch = sheetHtml.match(/<style>([\s\S]*)<\/style>/);
+            const { html, format } = getMasterSheetHTML(data, schoolConfig);
+            if (i === 0) finalFormat = format;
+            const bodyMatch = html.match(/<body>([\s\S]*)<\/body>/);
+            const styleMatch = html.match(/<style>([\s\S]*)<\/style>/);
             if (i === 0 && styleMatch) fullHtml = `<!DOCTYPE html><html><head><style>${styleMatch[1]}</style></head><body>`;
             if (bodyMatch) fullHtml += bodyMatch[1];
             if (i < sheetsData.length - 1) fullHtml += '<div class="page-break"></div>';
         });
         fullHtml += '</body></html>';
         await page.setContent(fullHtml, { waitUntil: 'networkidle0' });
-        return await page.pdf({ format: 'A3', landscape: true, printBackground: true, margin: { top: '5mm', right: '5mm', bottom: '5mm', left: '5mm' } });
+        return await page.pdf({ format: finalFormat, landscape: true, printBackground: true, margin: { top: '5mm', right: '5mm', bottom: '5mm', left: '5mm' } });
     } finally { if (browser) await browser.close(); }
 };
 

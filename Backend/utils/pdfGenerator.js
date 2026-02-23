@@ -218,7 +218,7 @@ const generateBulletinContent = (bulletinData, schoolConfig = {}) => {
                         <td class="bold">${note.isDispensed ? '-' : (note.notePonderee || 0).toFixed(2)}</td>
                         <td class="italic" style="${note.isDispensed ? '' : getAppreciationColor(appr)}">${note.isDispensed ? 'DISPENSÉ' : appr}</td>
                         <td style="width: 50px;"></td>
-                        <td class="text-xs uppercase">${note.professeur ? `${note.professeur.prenom} ${note.professeur.nom}` : ''}</td>
+                        <td class="text-xs uppercase">${note.professeur ? `${note.professeur.nom}` : ''}</td>
                     </tr>
                     `;
     }).join('')}
@@ -275,7 +275,8 @@ const generateBulletinContent = (bulletinData, schoolConfig = {}) => {
                 </div>
                 <div class="council-right">
                     <div style="font-weight: bold; font-size: 12px; text-transform: uppercase;">Le Proviseur</div>
-                    <div style="height: 50px;"></div>
+                    <div style="font-weight: bold; font-size: 11px; margin-top: 5px;">${schoolConfig.proviseurName || ''}</div>
+                    <div style="height: 40px;"></div>
                 </div>
             </div>
         </div>
@@ -296,7 +297,7 @@ const getMasterSheetHTML = (data, schoolConfig) => {
             const mRow = r.matieres[m._id] || { notes: [] };
             if (mRow.notes.length > max) max = mRow.notes.length;
         });
-        subjectColCounts[m._id] = max + 1; // notes + moyenne
+        subjectColCounts[m._id] = max + 2; // notes + moyenne + pondération
     });
 
     return `
@@ -305,13 +306,18 @@ const getMasterSheetHTML = (data, schoolConfig) => {
     <head>
         <meta charset="UTF-8">
         <style>
-            @page { size: A3 landscape; margin: 10mm; }
-            body { font-family: Georgia, serif; font-size: 9px; line-height: 1.2; padding: 10mm; }
-            table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+            @page { size: A3 landscape; margin: 8mm; }
+            body { font-family: Georgia, serif; font-size: 8px; line-height: 1.2; padding: 5mm; color: #333; }
+            table { width: 100%; border-collapse: collapse; margin-top: 10px; border: 1px solid black; }
             th, td { border: 1px solid black; padding: 2px; text-align: center; }
-            th { background: #f3f4f6 !important; font-weight: bold; }
+            th { background: #f3f4f6 !important; font-weight: bold; font-size: 8px; }
+            .bg-blue-50 { background: #dbeafe !important; }
+            .bg-yellow-50 { background: #fef9c3 !important; }
+            .bg-orange-50 { background: #fff7ed !important; }
+            .bg-gray-50 { background: #f9fafb !important; }
             .text-left { text-align: left; }
             .bold { font-weight: bold; }
+            .uppercase { text-transform: uppercase; }
             ${BULLETIN_STYLES}
         </style>
     </head>
@@ -326,17 +332,18 @@ const getMasterSheetHTML = (data, schoolConfig) => {
         <table>
             <thead>
                 <tr>
-                    <th rowspan="2">RANG</th>
-                    <th rowspan="2" class="text-left">NOM ET PRÉNOMS</th>
-                    ${data.matieres.map(m => `<th colspan="${subjectColCounts[m._id]}">${m.nom} (Coef: ${m.coefficient})</th>`).join('')}
+                    <th rowspan="2" style="width: 30px;">RANG</th>
+                    <th rowspan="2" class="text-left" style="min-width: 150px;">NOM ET PRÉNOMS</th>
+                    ${data.matieres.map(m => `<th colspan="${subjectColCounts[m._id]}" class="bg-blue-50">${m.nom} (Coef: ${m.coefficient})</th>`).join('')}
+                    <th rowspan="2" class="bg-orange-50">TOTAL POND.</th>
                     <th rowspan="2">MOY GEN</th>
                     <th rowspan="2">OBSERVATIONS</th>
                 </tr>
                 <tr>
                     ${data.matieres.map(m => {
         let sub = '';
-        for (let i = 1; i < subjectColCounts[m._id]; i++) sub += `<th>N${i}</th>`;
-        return sub + '<th>Moy</th>';
+        for (let i = 1; i <= subjectColCounts[m._id] - 2; i++) sub += `<th>N${i}</th>`;
+        return sub + '<th>Moy</th><th class="bg-yellow-50">Pond.</th>';
     }).join('')}
                 </tr>
             </thead>
@@ -344,20 +351,65 @@ const getMasterSheetHTML = (data, schoolConfig) => {
                 ${data.matrix.map((row, idx) => `
                 <tr>
                     <td>${idx + 1}</td>
-                    <td class="text-left bold uppercase">${row.nom} ${row.prenom}</td>
+                    <td class="text-left bold uppercase" style="white-space: nowrap;">${row.nom} ${row.prenom}</td>
                     ${data.matieres.map(m => {
-        const mData = row.matieres[m._id] || { notes: [], moyenne: null };
+        const mRow = row.matieres[m._id] || { notes: [], moyenne: null, coeff: m.coefficient };
         let cells = '';
-        for (let i = 0; i < subjectColCounts[m._id] - 1; i++) {
-            cells += `<td>${mData.notes[i] != null ? mData.notes[i].toFixed(1) : '-'}</td>`;
+        const maxN = subjectColCounts[m._id] - 2;
+        for (let i = 0; i < maxN; i++) {
+            cells += `<td>${mRow.notes[i] != null ? mRow.notes[i].toFixed(1) : '-'}</td>`;
         }
-        return cells + `<td class="bold">${mData.moyenne != null ? mData.moyenne.toFixed(2) : '-'}</td>`;
+        const pond = (mRow.moyenne != null && mRow.coeff) ? (mRow.moyenne * mRow.coeff).toFixed(2) : '-';
+        return cells + `
+                            <td class="bold">${mRow.moyenne != null ? mRow.moyenne.toFixed(2) : '-'}</td>
+                            <td class="bg-yellow-50 font-bold">${pond}</td>
+                        `;
     }).join('')}
-                    <td class="bold bg-gray-100">${row.moyenneGenerale.toFixed(2)}</td>
+                    <td class="bold bg-orange-50">${(() => {
+            let total = 0; let hasAny = false;
+            data.matieres.forEach(m => { const sm = row.matieres[m._id]; if (sm?.moyenne != null && sm?.coeff) { total += sm.moyenne * sm.coeff; hasAny = true; } });
+            return hasAny ? total.toFixed(2) : '-';
+        })()}</td>
+                    <td class="bold bg-gray-50">${row.moyenneGenerale ? row.moyenneGenerale.toFixed(2) : '-'}</td>
                     <td>${getAppre(row.moyenneGenerale)}</td>
                 </tr>
                 `).join('')}
             </tbody>
+            <tfoot style="background: #f9fafb; font-weight: bold;">
+                <tr>
+                    <td colspan="2" style="text-align: left;">MOYENNE DE CLASSE</td>
+                    ${data.matieres.map(m => `
+                        <td colspan="${subjectColCounts[m._id] - 2}"></td>
+                        <td style="background: #dbeafe;">${data.subjectStats?.[m._id]?.avg?.toFixed(2) || '-'}</td>
+                        <td class="bg-yellow-50"></td>
+                    `).join('')}
+                    <td class="bg-orange-50"></td>
+                    <td style="background: #bfdbfe;">${data.overallStats?.classAverage?.toFixed(2) || '-'}</td>
+                    <td></td>
+                </tr>
+                <tr style="font-size: 7px; color: #666;">
+                    <td colspan="2" style="text-align: left;">Plus forte moyenne</td>
+                    ${data.matieres.map(m => `
+                        <td colspan="${subjectColCounts[m._id] - 2}"></td>
+                        <td style="background: #f0fdf4;">${data.subjectStats?.[m._id]?.max?.toFixed(2) || '-'}</td>
+                        <td class="bg-yellow-50"></td>
+                    `).join('')}
+                    <td class="bg-orange-50"></td>
+                    <td style="background: #dcfce7;">${data.overallStats?.maxAverage?.toFixed(2) || '-'}</td>
+                    <td></td>
+                </tr>
+                <tr style="font-size: 7px; color: #666;">
+                    <td colspan="2" style="text-align: left;">Plus faible moyenne</td>
+                    ${data.matieres.map(m => `
+                        <td colspan="${subjectColCounts[m._id] - 2}"></td>
+                        <td style="background: #fef2f2;">${data.subjectStats?.[m._id]?.min?.toFixed(2) || '-'}</td>
+                        <td class="bg-yellow-50"></td>
+                    `).join('')}
+                    <td class="bg-orange-50"></td>
+                    <td style="background: #fee2e2;">${data.overallStats?.minAverage?.toFixed(2) || '-'}</td>
+                    <td></td>
+                </tr>
+            </tfoot>
         </table>
     </body>
     </html>`;

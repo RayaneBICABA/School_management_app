@@ -286,6 +286,10 @@
                   <label class="text-xs font-bold text-slate-500 uppercase tracking-widest mb-1 block">Région (En-tête haut)</label>
                   <input v-model="schoolConfig.region" class="w-full bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 rounded-lg text-sm" type="text" placeholder="ex: RÉGION CENTRE" />
                 </div>
+                <div>
+                  <label class="text-xs font-bold text-slate-500 uppercase tracking-widest mb-1 block">Nom du Proviseur</label>
+                  <input v-model="schoolConfig.proviseurName" class="w-full bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 rounded-lg text-sm" type="text" placeholder="ex: M. Jean DUPONT" />
+                </div>
               </div>
             </div>
             
@@ -333,7 +337,8 @@ const schoolConfig = ref({
     subRegion: 'RÉGION CENTRE',
     country: 'BURKINA FASO',
     patrie: 'La Patrie ou la Mort, nous Vaincrons',
-    logo: ''
+    logo: '',
+    proviseurName: ''
 });
 
 const config = ref({

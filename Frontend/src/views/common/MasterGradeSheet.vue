@@ -470,6 +470,9 @@ const printSheet = () => {
   const printArea = document.getElementById('master-sheet-print-area');
   if (!printArea) return;
 
+  const selectedClass = classes.value.find(c => c._id === filters.value.classe);
+  const className = selectedClass ? `${selectedClass.niveau} ${selectedClass.section}` : 'Toutes les classes';
+
   const win = window.open('', '_blank', 'width=1400,height=900');
   
   const headerHtml = `
@@ -478,6 +481,7 @@ const printSheet = () => {
         <p style="margin: 0 0 2px 0;">${schoolConfig.value.region || 'LA FORMATION PROFESSIONNELLE ET TECHNIQUE'}</p>
         <p style="margin: 0 0 2px 0;">${schoolConfig.value.subRegion || 'RÉGION CENTRE'}</p>
         <p style="margin: 0 0 2px 0;">${schoolConfig.value.schoolName || 'LYCÉE WEND PUIRÉ DE SAABA'}</p>
+        <p style="margin: 4px 0 0 0; font-size: 9px;">Proviseur: ${schoolConfig.value.proviseurName || ''}</p>
       </div>
       <div style="width: 40%; display: flex; flex-direction: column; align-items: center; text-align: center;">
         ${schoolConfig.value.logo ? 

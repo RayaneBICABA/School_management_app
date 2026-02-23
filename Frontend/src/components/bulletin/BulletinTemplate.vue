@@ -99,7 +99,7 @@
               <td class="border border-black p-1 font-bold">{{ (note.notePonderee || 0).toFixed(2) }}</td>
               <td class="border border-black p-1 w-24 italic" :class="getAppreciationColor(getSubjectAppreciation(note.moyenneMatiere || 0))">{{ getSubjectAppreciation(note.moyenneMatiere || 0) }}</td>
               <td class="border border-black p-1 w-16"></td>
-              <td class="border border-black p-1 text-[9px] uppercase">{{ note.professeur ? `${note.professeur.nom} ${note.professeur.prenom}` : '' }}</td>
+              <td class="border border-black p-1 text-[9px] uppercase">{{ note.professeur ? note.professeur.nom : '' }}</td>
             </tr>
             <!-- Category Totals -->
             <tr class="bg-gray-100 font-bold">
@@ -177,8 +177,9 @@
           </div>
           <div class="w-1/2 p-4 flex flex-col items-center justify-center">
             <div class="font-bold text-sm uppercase">Le Proviseur</div>
+            <div class="font-bold text-xs mt-1">{{ schoolConfig.proviseurName || '' }}</div>
             <!-- Signature space -->
-            <div class="mt-4 h-10 w-full"></div>
+            <div class="mt-2 h-10 w-full"></div>
             <!-- <div v-if="bulletin.signatureProviseur" class="mt-4 text-blue-700 italic border-2 border-blue-700 rounded-full px-4 py-1 rotate-[-5deg]">Signé Électroniquement</div> -->
           </div>
         </div>
@@ -232,7 +233,8 @@ const schoolConfig = ref({
   subRegion: 'RÉGION CENTRE',
   country: 'BURKINA FASO',
   patrie: 'La Patrie ou la Mort, nous Vaincrons',
-  logo: ''
+  logo: '',
+  proviseurName: ''
 });
 
 onMounted(async () => {

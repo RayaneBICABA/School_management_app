@@ -474,6 +474,14 @@ const printSheet = () => {
 
   const selectedClass = classes.value.find(c => c._id === filters.value.classe);
   const className = selectedClass ? `${selectedClass.niveau} ${selectedClass.section}` : 'Toutes les classes';
+  const subjectCount = matieres.value.length || 10;
+  
+  // Apply a dynamic zoom ratio for the print window to simulate Puppeteer scaling
+  const zoomRatio = subjectCount >= 18 ? 0.45 :
+                    subjectCount >= 15 ? 0.50 :
+                    subjectCount >= 12 ? 0.55 :
+                    subjectCount >= 9  ? 0.70 :
+                    subjectCount >= 7  ? 0.85 : 1;
 
   const win = window.open('', '_blank', 'width=1400,height=900');
   
@@ -506,9 +514,9 @@ const printSheet = () => {
       <meta charset="UTF-8">
       <title>Récapitulatif des Notes - ${className} - ${filters.value.periode} ${filters.value.anneeScolaire}</title>
       <style>
-        @page { size: A3 landscape; margin: 8mm; }
+        @page { size: A3 landscape; margin: 5mm; }
         * { box-sizing: border-box; }
-        body { font-family: Arial, Helvetica, sans-serif; font-size: 8px; margin: 0; color: #333; }
+        body { font-family: Arial, Helvetica, sans-serif; font-size: 8px; margin: 0; color: #333; zoom: ${zoomRatio}; }
         /* Each class block = direct child div of the print area */
         #master-sheet-print-area > div { page-break-after: always; margin-bottom: 0; }
         #master-sheet-print-area > div:last-child { page-break-after: avoid; }

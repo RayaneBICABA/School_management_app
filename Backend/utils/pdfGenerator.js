@@ -518,28 +518,28 @@ exports.getMasterSheetHTML = (sheetsData, schoolConfig) => {
 <html>
 <head>
     <style>
-        @page { size: A3 landscape; margin: 10mm; }
+        @page { size: A3 landscape; margin: 5mm; }
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: 'Arial', sans-serif; font-size: 8px; color: #333; }
+        body { font-family: 'Arial', sans-serif; font-size: 6px; color: #333; }
         
-        .sheet-page { width: 100%; border-radius: 12px; }
+        .sheet-page { width: 100%; padding: 5mm; }
         
-        table { width: 100%; border-collapse: collapse; margin-top: 10px; table-layout: fixed; border: 1px solid #555; }
-        th, td { border: 1px solid #555; padding: 3px; text-align: center; vertical-align: middle; font-size: 7.5px; }
+        table { width: 100%; border-collapse: collapse; margin-top: 5px; table-layout: fixed; border: 1px solid #333; }
+        th, td { border: 1px solid #333; padding: 1px 0.5px; text-align: center; vertical-align: middle; font-size: 5.5px; overflow: hidden; white-space: nowrap; text-overflow: clip; }
         
-        thead th { background-color: #f9fafb; font-weight: bold; }
-        .matiere-group-header { background-color: #eff6ff !important; color: #1e3a8a; text-transform: uppercase; }
+        thead th { background-color: #f9fafb; font-weight: bold; font-size: 6px; }
+        .matiere-group-header { background-color: #eff6ff !important; color: #1e3a8a; text-transform: uppercase; font-size: 5.5px; white-space: normal; line-height: 1; }
         
-        .sub-header-n { font-weight: normal; color: #6b7280; width: 25px; }
-        .sub-header-moy { background-color: #f9fafb; width: 35px; }
-        .sub-header-pond { background-color: #fefce8; color: #854d0e; width: 40px; }
+        .sub-header-n { font-weight: normal; color: #6b7280; width: 18px; }
+        .sub-header-moy { background-color: #f9fafb; width: 24px; font-weight: bold; }
+        .sub-header-pond { background-color: #fefce8; color: #854d0e; width: 28px; font-weight: bold; }
         
-        .name-col { text-align: left; padding-left: 8px; }
-        .total-pts-header { background-color: #fff7ed; color: #9a3412; }
-        .moy-gen-header { background-color: #f3f4f6; }
+        .name-col { text-align: left; padding-left: 2px; width: 120px; text-overflow: ellipsis; white-space: nowrap; }
+        .total-pts-header { background-color: #fff7ed; color: #9a3412; width: 35px; }
+        .moy-gen-header { background-color: #f3f4f6; width: 35px; }
         
         .pond-cell { background-color: #fefce8; color: #854d0e; font-weight: 600; }
-        .total-pts-cell { background-color: #fff7ed; color: #9a3412; }
+        .total-pts-cell { background-color: #fff7ed; color: #9a3412; font-weight: bold; }
         .moy-gen-cell { background-color: #f9fafb; font-weight: 900; }
         
         .dispensed { font-weight: bold; color: #e11d48; font-style: italic; }
@@ -552,12 +552,12 @@ exports.getMasterSheetHTML = (sheetsData, schoolConfig) => {
         .text-orange { color: #ea580c !important; }
         .text-red { color: #dc2626 !important; }
         
-        tfoot tr td { font-weight: bold; padding: 4px; }
-        .footer-avg { background-color: #f9fafb; border-top: 2px solid #94a3b8; }
-        .footer-max, .footer-min { font-size: 7px; color: #4b5563; }
+        tfoot tr td { font-weight: bold; padding: 1px 0.5px; font-size: 6px; }
+        .footer-avg { background-color: #f9fafb; border-top: 1.5px solid #94a3b8; }
+        .footer-max, .footer-min { font-size: 5.5px; color: #4b5563; }
         
         .bg-blue-100 { background-color: #dbeafe !important; color: #1e3a8a; }
-        .bg-blue-200 { background-color: #bfdbfe !important; color: #1e3a8a; font-size: 9px; }
+        .bg-blue-200 { background-color: #bfdbfe !important; color: #1e3a8a; font-size: 7px; }
         .bg-yellow-50 { background-color: #fefce8 !important; }
         .bg-orange-50 { background-color: #fff7ed !important; }
         
@@ -567,10 +567,10 @@ exports.getMasterSheetHTML = (sheetsData, schoolConfig) => {
         .bg-red-50 { background-color: #fef2f2 !important; color: #dc2626; }
         .bg-red-100 { background-color: #fee2e2 !important; color: #7f1d1d; }
         
-        .footer-sig { margin-top: 30px; }
-        .sig-section { display: flex; justify-content: space-between; padding: 0 100px; }
-        .sig-box { text-align: center; width: 250px; }
-        .sig-space { height: 70px; }
+        .footer-sig { margin-top: 15px; }
+        .sig-section { display: flex; justify-content: space-between; padding: 0 50px; }
+        .sig-box { text-align: center; width: 150px; font-size: 7px; }
+        .sig-space { height: 40px; }
     </style>
 </head>
 <body>

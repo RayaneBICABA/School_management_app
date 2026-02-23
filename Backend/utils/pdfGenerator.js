@@ -329,6 +329,8 @@ const getMasterSheetHTML = (data, schoolConfig) => {
             <span>PÉRIODE: ${data.periode}</span>
             <span>ANNÉE SCOLAIRE: ${data.anneeScolaire}</span>
         </div>
+        <!-- Wrap table to ensure it takes its natural width and doesn't get cut by page boundaries before scaling -->
+        <div style="width: max-content; padding-right: 20px;">
         <table>
             <thead>
                 <tr>
@@ -408,6 +410,7 @@ const getMasterSheetHTML = (data, schoolConfig) => {
                 </tr>
             </tfoot>
         </table>
+        </div>
 
         <div style="margin-top: 30px; display: flex; justify-content: space-between; padding: 0 50px;">
             <div style="text-align: center;">
@@ -458,7 +461,18 @@ const generateMasterGradeSheetPDF = async (data, schoolConfig = {}) => {
         const page = await browser.newPage();
         const html = getMasterSheetHTML(data, schoolConfig);
         await page.setContent(html, { waitUntil: 'networkidle0' });
-        return await page.pdf({ format: 'A3', landscape: true, printBackground: true, scale: 0.75, margin: { top: '5mm', right: '5mm', bottom: '5mm', left: '5mm' } });
+
+        // Calculate dynamic scale based on number of subjects
+        const subjectCount = data.matieres ? data.matieres.length : 10;
+        const scale = subjectCount > 10 ? 0.60 : (subjectCount > 7 ? 0.70 : 0.85);
+
+        return await page.pdf({
+            format: 'A3',
+            landscape: true,
+            printBackground: true,
+            scale: scale,
+            margin: { top: '5mm', right: '5mm', bottom: '5mm', left: '5mm' }
+        });
     } finally { if (browser) await browser.close(); }
 };
 
@@ -479,7 +493,19 @@ const generateBulkMasterGradeSheetPDF = async (sheetsData, schoolConfig = {}) =>
         });
         fullHtml += '</body></html>';
         await page.setContent(fullHtml, { waitUntil: 'networkidle0' });
-        return await page.pdf({ format: 'A3', landscape: true, printBackground: true, scale: 0.75, margin: { top: '5mm', right: '5mm', bottom: '5mm', left: '5mm' } });
+
+        // Calculate average subjects config for bulk
+        let maxSubjects = 0;
+        sheetsData.forEach(d => { if (d.matieres && d.matieres.length > maxSubjects) maxSubjects = d.matieres.length; });
+        const scale = maxSubjects > 10 ? 0.60 : (maxSubjects > 7 ? 0.70 : 0.85);
+
+        return await page.pdf({
+            format: 'A3',
+            landscape: true,
+            printBackground: true,
+            scale: scale,
+            margin: { top: '5mm', right: '5mm', bottom: '5mm', left: '5mm' }
+        });
     } finally { if (browser) await browser.close(); }
 };
 

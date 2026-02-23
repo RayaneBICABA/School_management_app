@@ -300,6 +300,13 @@ const getMasterSheetHTML = (data, schoolConfig) => {
         subjectColCounts[m._id] = max + 2; // notes + moyenne + pondération
     });
 
+    const subjectCount = data.matieres ? data.matieres.length : 10;
+    const zoomRatio = subjectCount >= 18 ? 0.45 :
+        subjectCount >= 15 ? 0.50 :
+            subjectCount >= 12 ? 0.55 :
+                subjectCount >= 9 ? 0.65 :
+                    subjectCount >= 7 ? 0.75 : 0.90;
+
     return `
     <!DOCTYPE html>
     <html>
@@ -307,7 +314,7 @@ const getMasterSheetHTML = (data, schoolConfig) => {
         <meta charset="UTF-8">
         <style>
             @page { size: A3 landscape; margin: 0; }
-            body { font-family: Georgia, serif; font-size: 8px; line-height: 1.2; padding: 15px; color: #333; margin: 0; }
+            body { font-family: Georgia, serif; font-size: 8px; line-height: 1.2; padding: 15px; color: #333; margin: 0; zoom: ${zoomRatio}; }
             table { width: 100%; border-collapse: collapse; margin-top: 10px; border: 1px solid black; }
             th, td { border: 1px solid black; padding: 2px; text-align: center; }
             th { background: #f3f4f6 !important; font-weight: bold; font-size: 8px; }
@@ -329,9 +336,8 @@ const getMasterSheetHTML = (data, schoolConfig) => {
             <span>PÉRIODE: ${data.periode}</span>
             <span>ANNÉE SCOLAIRE: ${data.anneeScolaire}</span>
         </div>
-        <!-- Wrap table to ensure it takes its natural width and doesn't get cut by page boundaries before scaling -->
-        <div style="width: max-content; padding-right: 20px;">
-        <table>
+        </div>
+        <table style="width: 100%;">
             <thead>
                 <tr>
                     <th rowspan="2" style="width: 20px;">RANG</th>
@@ -410,7 +416,6 @@ const getMasterSheetHTML = (data, schoolConfig) => {
                 </tr>
             </tfoot>
         </table>
-        </div>
 
         <div style="margin-top: 30px; display: flex; justify-content: space-between; padding: 0 50px;">
             <div style="text-align: center;">
@@ -463,18 +468,12 @@ const generateMasterGradeSheetPDF = async (data, schoolConfig = {}) => {
         await page.setContent(html, { waitUntil: 'networkidle0' });
 
         // Calculate dynamic scale based on number of subjects for landscape
-        const subjectCount = data.matieres ? data.matieres.length : 10;
-        const scale = subjectCount >= 18 ? 0.45 :
-            subjectCount >= 15 ? 0.50 :
-                subjectCount >= 12 ? 0.55 :
-                    subjectCount >= 9 ? 0.65 :
-                        subjectCount >= 7 ? 0.75 : 0.90;
-
+        // The scale is now handled by CSS 'zoom' inside getMasterSheetHTML, so puppeteer scale is 1
         return await page.pdf({
             format: 'A3',
             landscape: true,
             printBackground: true,
-            scale: scale,
+            scale: 1,
             margin: { top: '5mm', right: '5mm', bottom: '5mm', left: '5mm' }
         });
     } finally { if (browser) await browser.close(); }
@@ -499,19 +498,12 @@ const generateBulkMasterGradeSheetPDF = async (sheetsData, schoolConfig = {}) =>
         await page.setContent(fullHtml, { waitUntil: 'networkidle0' });
 
         // Calculate average subjects config for bulk in landscape
-        let maxSubjects = 0;
-        sheetsData.forEach(d => { if (d.matieres && d.matieres.length > maxSubjects) maxSubjects = d.matieres.length; });
-        const scale = maxSubjects >= 18 ? 0.45 :
-            maxSubjects >= 15 ? 0.50 :
-                maxSubjects >= 12 ? 0.55 :
-                    maxSubjects >= 9 ? 0.65 :
-                        maxSubjects >= 7 ? 0.75 : 0.90;
-
+        // The scale is now handled by CSS 'zoom' inside getMasterSheetHTML, so puppeteer scale is 1
         return await page.pdf({
             format: 'A3',
             landscape: true,
             printBackground: true,
-            scale: scale,
+            scale: 1,
             margin: { top: '5mm', right: '5mm', bottom: '5mm', left: '5mm' }
         });
     } finally { if (browser) await browser.close(); }

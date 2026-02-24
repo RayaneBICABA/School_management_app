@@ -4,8 +4,9 @@
       <!-- Header -->
       <div class="header flex justify-between items-start mb-2 border-b-2 border-gray-100 pb-2">
         <div class="header-left w-[30%] text-[9px] font-bold uppercase leading-[1.1]">
+          <p>{{ schoolConfig.ministryName }}</p>
           <p>{{ schoolConfig.region }}</p>
-          <p>{{ schoolConfig.subRegion }}</p>
+          <p>{{ schoolConfig.city }}</p>
           <p>{{ schoolConfig.schoolName }}</p>
           <p v-if="schoolConfig.phone">Tél : {{ schoolConfig.phone }}</p>
         </div>
@@ -83,8 +84,8 @@
               <td class="border border-black p-1">{{ (note.coeff || note.matiere?.coefficient || 0).toFixed(1) }}</td>
               
               <template v-if="note.isDispensed">
-                <td class="border border-black p-2 font-bold italic">-</td>
-                <td class="border border-black p-1 font-bold">-</td>
+                <td class="border border-black p-1 font-bold italic text-rose-600 text-center">D</td>
+                <td class="border border-black p-1 font-bold italic text-rose-600 text-center">D</td>
               </template>
               <template v-else>
                 <td class="border border-black p-1">{{ (note.moyenneMatiere || 0).toFixed(2) }}</td>
@@ -175,9 +176,16 @@
             <!-- Signature space -->
             <div class="mt-2 h-24 w-full"></div>
             <div class="font-bold text-xs mt-1">{{ schoolConfig.proviseurName || '' }}</div>
+            <div class="italic text-[10px] text-gray-700 font-normal mt-0.5">{{ schoolConfig.proviseurTitle || 'Chevalier de l\'Ordre des Palmes Académiques' }}</div>
             <!-- <div v-if="bulletin.signatureProviseur" class="mt-4 text-blue-700 italic border-2 border-blue-700 rounded-full px-4 py-1 rotate-[-5deg]">Signé Électroniquement</div> -->
           </div>
         </div>
+      </div>
+
+      <!-- Footer Info -->
+      <div class="flex justify-between items-center mt-6 text-[9px] text-gray-500 font-sans">
+        <div>Le : {{ new Date().toLocaleDateString('fr-FR') }}</div>
+        <div class="font-bold italic">Généré par Unica</div>
       </div>
     </div>
 
@@ -220,16 +228,19 @@ const bulletinRef = ref(null);
 const isExporting = ref(false);
 
 const schoolConfig = ref({
+  ministryName: 'MINISTÈRE DE L\'ENSEIGNEMENT...',
   schoolName: 'LYCÉE WEND PUIRÉ DE SAABA',
   shortName: 'LWS',
   motto: 'DISCIPLINE-TRAVAIL-SUCCES',
   phone: '51 54 88 11',
+  city: 'OUAGADOUGOU',
   region: 'LA FORMATION PROFESSIONNELLE ET TECHNIQUE',
   subRegion: 'RÉGION CENTRE',
   country: 'BURKINA FASO',
   patrie: 'La Patrie ou la Mort, nous Vaincrons',
   logo: '',
-  proviseurName: ''
+  proviseurName: '',
+  proviseurTitle: 'Chevalier de l\'Ordre des Palmes Académiques'
 });
 
 onMounted(async () => {
@@ -237,9 +248,10 @@ onMounted(async () => {
     const res = await api.getSetting('school_config');
     if (res.data.success && res.data.data && res.data.data.value) {
       const config = res.data.data.value;
-      // Ne pas écraser les par défaut si les champs sont vides
+      // Ne pas écraser les par défaut si les champs ne sont pas définis du tout, 
+      // mais on accepte les chaines vides (notamment pour motto et logo)
       Object.keys(config).forEach(key => {
-        if (config[key] !== null && config[key] !== undefined && config[key] !== '') {
+        if (config[key] !== undefined && config[key] !== null) {
           schoolConfig.value[key] = config[key];
         }
       });

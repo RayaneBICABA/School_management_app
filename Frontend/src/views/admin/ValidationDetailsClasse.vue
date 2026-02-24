@@ -87,7 +87,7 @@
               </tr>
             </thead>
             <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
-              <tr v-for="student in students" :key="student.id" class="hover:bg-slate-50 dark:hover:bg-slate-900/40 transition-colors">
+              <tr v-for="student in paginatedStudents" :key="student.id" class="hover:bg-slate-50 dark:hover:bg-slate-900/40 transition-colors">
                 <td class="px-6 py-4 text-center">
                   <span class="inline-flex items-center justify-center size-8 rounded-full bg-slate-100 text-slate-600 font-bold text-sm" :class="{'bg-yellow-100 text-yellow-700': student.rang === 1}">
                     {{ student.rangText }}
@@ -130,7 +130,22 @@
           </table>
         </div>
         <div class="px-6 py-4 border-t border-slate-100 dark:border-slate-800 flex justify-between items-center bg-slate-50/50 dark:bg-slate-900/30">
-          <p class="text-xs text-slate-500 font-medium">Affichage de {{ students.length }} élèves sur {{ classeInfo.totalEleves }}</p>
+          <p class="text-xs text-slate-500 font-medium">Affichage de {{ Math.min(startItem, totalItems) }} à {{ Math.min(endItem, totalItems) }} sur {{ totalItems }} élèves</p>
+          <div class="flex items-center gap-4">
+            <div class="flex items-center gap-2">
+              <span class="text-xs text-slate-500 font-medium">Afficher:</span>
+              <select v-model="itemsPerPage" class="h-8 rounded border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs font-bold px-2 focus:ring-primary focus:border-primary">
+                <option :value="10">10</option>
+                <option :value="25">25</option>
+                <option :value="50">50</option>
+                <option :value="100">100</option>
+              </select>
+            </div>
+            <div class="flex gap-2">
+              <button @click="prevPage" :disabled="currentPage === 1" class="px-3 py-1 border border-slate-200 dark:border-slate-700 rounded text-xs font-bold disabled:opacity-50 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">Précédent</button>
+              <button @click="nextPage" :disabled="currentPage === totalPages || totalPages === 0" class="px-3 py-1 border border-slate-200 dark:border-slate-700 rounded text-xs font-bold disabled:opacity-50 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">Suivant</button>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -154,7 +169,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import api from '@/services/api'
 import { useToast } from '@/composables/useToast'
@@ -182,6 +197,38 @@ const stats = ref({
 })
 
 const students = ref([])
+
+// Pagination variables
+const currentPage = ref(1)
+const itemsPerPage = ref(10)
+
+const totalItems = computed(() => students.value.length)
+const totalPages = computed(() => Math.ceil(totalItems.value / itemsPerPage.value))
+
+const startItem = computed(() => (currentPage.value - 1) * itemsPerPage.value + 1)
+const endItem = computed(() => currentPage.value * itemsPerPage.value)
+
+const paginatedStudents = computed(() => {
+  const start = (currentPage.value - 1) * itemsPerPage.value
+  const end = start + itemsPerPage.value
+  return students.value.slice(start, end)
+})
+
+const nextPage = () => {
+  if (currentPage.value < totalPages.value) {
+    currentPage.value++
+  }
+}
+
+const prevPage = () => {
+  if (currentPage.value > 1) {
+    currentPage.value--
+  }
+}
+
+watch(itemsPerPage, () => {
+  currentPage.value = 1
+})
 
 // Voir le bulletin d'un élève
 const voirBulletin = async (student) => {

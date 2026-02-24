@@ -115,7 +115,7 @@
               </tr>
             </thead>
             <tbody class="divide-y divide-slate-100 dark:divide-slate-700">
-              <tr v-for="anomalie in filteredAnomalies" :key="anomalie.id" class="hover:bg-slate-50/50 dark:hover:bg-slate-900/50 transition-colors">
+              <tr v-for="anomalie in paginatedAnomalies" :key="anomalie.id" class="hover:bg-slate-50/50 dark:hover:bg-slate-900/50 transition-colors">
                 <td class="px-6 py-4">
                   <div class="flex flex-col">
                     <span class="font-bold text-slate-900 dark:text-white">{{ anomalie.eleve }}</span>
@@ -151,17 +151,25 @@
           
           <!-- Footer Pagination -->
           <div class="px-6 py-4 bg-slate-50 dark:bg-slate-900/50 flex justify-between items-center border-t border-slate-200 dark:border-slate-700 mt-auto">
-            <p class="text-xs text-slate-500 dark:text-slate-400">Affichage de 1-{{ filteredAnomalies.length }} sur {{ stats.anomaliesTotales }} anomalies</p>
-            <div class="flex gap-1">
-              <button class="p-2 rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-transparent text-slate-400 disabled:opacity-50" disabled>
-                <span class="material-symbols-outlined text-[18px]">chevron_left</span>
-              </button>
-              <button class="p-2 rounded-lg bg-primary text-white font-bold text-xs px-4">1</button>
-              <button class="p-2 rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-transparent text-slate-600 dark:text-white font-bold text-xs px-4">2</button>
-              <button class="p-2 rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-transparent text-slate-600 dark:text-white font-bold text-xs px-4">3</button>
-              <button class="p-2 rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-transparent text-slate-400">
-                <span class="material-symbols-outlined text-[18px]">chevron_right</span>
-              </button>
+            <p class="text-xs text-slate-500 dark:text-slate-400">Affichage de {{ Math.min(startItem, totalItems) }} à {{ Math.min(endItem, totalItems) }} sur {{ totalItems }} anomalies</p>
+            <div class="flex items-center gap-4">
+              <div class="flex items-center gap-2">
+                <span class="text-xs text-slate-500 dark:text-slate-400 font-medium tracking-tight">Afficher:</span>
+                <select v-model="itemsPerPage" class="h-8 rounded border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs font-bold px-2 focus:ring-primary focus:border-primary">
+                  <option :value="10">10</option>
+                  <option :value="25">25</option>
+                  <option :value="50">50</option>
+                  <option :value="100">100</option>
+                </select>
+              </div>
+              <div class="flex gap-2">
+                <button @click="prevPage" :disabled="currentPage === 1" class="p-2 rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-transparent text-slate-700 dark:text-slate-300 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors">
+                  <span class="material-symbols-outlined text-[18px]">chevron_left</span>
+                </button>
+                <button @click="nextPage" :disabled="currentPage === totalPages || totalPages === 0" class="p-2 rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-transparent text-slate-700 dark:text-slate-300 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors">
+                  <span class="material-symbols-outlined text-[18px]">chevron_right</span>
+                </button>
+              </div>
             </div>
           </div>
         </div>
@@ -196,6 +204,10 @@ const searchQuery = ref('')
 const selectedClasse = ref('')
 const selectedSeverite = ref('')
 const selectedType = ref('tous')
+
+// Pagination variables
+const currentPage = ref(1)
+const itemsPerPage = ref(10)
 
 // Statistiques
 const stats = ref({
@@ -302,6 +314,37 @@ const filteredAnomalies = computed(() => {
   }
 
   return filtered
+})
+
+// Pagination logic
+const totalItems = computed(() => filteredAnomalies.value.length)
+const totalPages = computed(() => Math.ceil(totalItems.value / itemsPerPage.value))
+
+const startItem = computed(() => (currentPage.value - 1) * itemsPerPage.value + 1)
+const endItem = computed(() => currentPage.value * itemsPerPage.value)
+
+const paginatedAnomalies = computed(() => {
+  const start = (currentPage.value - 1) * itemsPerPage.value
+  const end = start + itemsPerPage.value
+  return filteredAnomalies.value.slice(start, end)
+})
+
+const nextPage = () => {
+  if (currentPage.value < totalPages.value) {
+    currentPage.value++
+  }
+}
+
+const prevPage = () => {
+  if (currentPage.value > 1) {
+    currentPage.value--
+  }
+}
+
+// Check for changes in filters and reset pagination
+import { watch } from 'vue'
+watch([searchQuery, selectedClasse, selectedSeverite, selectedType, itemsPerPage], () => {
+  currentPage.value = 1
 })
 
 // Fonctions utilitaires

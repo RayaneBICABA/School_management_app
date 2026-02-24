@@ -115,7 +115,7 @@
           </tr>
         </thead>
         <tbody class="divide-y divide-slate-100 dark:divide-slate-700">
-          <tr v-for="classe in filteredClasses" :key="classe.id" class="hover:bg-slate-50/50 dark:hover:bg-slate-700/20 transition-colors group" :class="classe.statut === 'Retard' ? 'bg-red-50/30 dark:bg-red-900/5' : ''">
+          <tr v-for="classe in paginatedClasses" :key="classe.id" class="hover:bg-slate-50/50 dark:hover:bg-slate-700/20 transition-colors group" :class="classe.statut === 'Retard' ? 'bg-red-50/30 dark:bg-red-900/5' : ''">
             <td class="px-6 py-4">
               <div class="flex flex-col">
                 <span class="text-sm font-bold text-slate-900 dark:text-white">{{ classe.nom }}</span>
@@ -150,14 +150,25 @@
       
       <!-- Pagination -->
       <div class="px-6 py-4 flex items-center justify-between border-t border-slate-100 dark:border-slate-700">
-        <p class="text-xs text-slate-500 font-medium tracking-tight">Affichage de 1 à {{ filteredClasses.length }} sur {{ classes.length }} classes</p>
-        <div class="flex gap-2">
-          <button class="p-2 rounded border border-slate-200 dark:border-slate-700 text-slate-400 disabled:opacity-50" disabled>
-            <span class="material-symbols-outlined text-sm">chevron_left</span>
-          </button>
-          <button class="p-2 rounded border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300">
-            <span class="material-symbols-outlined text-sm">chevron_right</span>
-          </button>
+        <p class="text-xs text-slate-500 font-medium tracking-tight">Affichage de {{ Math.min(startItem, totalItems) }} à {{ Math.min(endItem, totalItems) }} sur {{ totalItems }} classes</p>
+        <div class="flex items-center gap-4">
+          <div class="flex items-center gap-2">
+            <span class="text-xs text-slate-500 font-medium">Afficher:</span>
+            <select v-model="itemsPerPage" class="h-8 rounded border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs font-bold px-2 focus:ring-primary focus:border-primary">
+              <option :value="10">10</option>
+              <option :value="25">25</option>
+              <option :value="50">50</option>
+              <option :value="100">100</option>
+            </select>
+          </div>
+          <div class="flex gap-2">
+            <button @click="prevPage" :disabled="currentPage === 1" class="p-2 rounded border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors">
+              <span class="material-symbols-outlined text-sm">chevron_left</span>
+            </button>
+            <button @click="nextPage" :disabled="currentPage === totalPages || totalPages === 0" class="p-2 rounded border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors">
+              <span class="material-symbols-outlined text-sm">chevron_right</span>
+            </button>
+          </div>
         </div>
       </div>
     </div>
@@ -228,6 +239,10 @@ const selectedStatut = ref(route.query.statut || 'Tous les statuts')
 const selectedPeriode = ref(route.query.periode || 'Trimestre 1')
 const sortAscending = ref(true)
 const loading = ref(false)
+
+// Pagination variables
+const currentPage = ref(1)
+const itemsPerPage = ref(10)
 
 // Statistiques
 const stats = ref({
@@ -316,6 +331,35 @@ const filteredClasses = computed(() => {
   })
 
   return filtered
+})
+
+// Pagination logic
+const totalItems = computed(() => filteredClasses.value.length)
+const totalPages = computed(() => Math.ceil(totalItems.value / itemsPerPage.value))
+
+const startItem = computed(() => (currentPage.value - 1) * itemsPerPage.value + 1)
+const endItem = computed(() => currentPage.value * itemsPerPage.value)
+
+const paginatedClasses = computed(() => {
+  const start = (currentPage.value - 1) * itemsPerPage.value
+  const end = start + itemsPerPage.value
+  return filteredClasses.value.slice(start, end)
+})
+
+const nextPage = () => {
+  if (currentPage.value < totalPages.value) {
+    currentPage.value++
+  }
+}
+
+const prevPage = () => {
+  if (currentPage.value > 1) {
+    currentPage.value--
+  }
+}
+
+watch([searchQuery, selectedNiveau, selectedStatut, selectedPeriode, sortAscending, itemsPerPage], () => {
+  currentPage.value = 1 // Reset to page 1 on filter or sort change
 })
 
 // Fonctions utilitaires

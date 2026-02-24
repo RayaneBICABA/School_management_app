@@ -97,7 +97,7 @@
               </tr>
             </thead>
             <tbody class="divide-y divide-[#d0dbe7] dark:divide-slate-700">
-              <tr v-for="student in students" :key="student.id" class="hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors">
+              <tr v-for="student in paginatedStudents" :key="student.id" class="hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors">
                 <td class="px-6 py-4">
                   <div class="flex items-center gap-3">
                     <div class="w-8 h-8 bg-primary/10 rounded-full flex items-center justify-center">
@@ -128,13 +128,32 @@
             </tbody>
           </table>
         </div>
+        <!-- Pagination Footer -->
+        <div class="px-6 py-4 border-t border-[#d0dbe7] dark:border-slate-800 flex justify-between items-center bg-slate-50 dark:bg-slate-800/50">
+          <p class="text-xs text-[#4e7397] dark:text-slate-400 font-medium">Affichage de {{ Math.min(startItem, totalItems) }} à {{ Math.min(endItem, totalItems) }} sur {{ totalItems }} élèves</p>
+          <div class="flex items-center gap-4">
+            <div class="flex items-center gap-2">
+              <span class="text-xs text-[#4e7397] dark:text-slate-400 font-medium">Afficher:</span>
+              <select v-model="itemsPerPage" class="h-8 rounded border border-[#d0dbe7] dark:border-slate-700 bg-white dark:bg-slate-900 text-xs font-bold px-2 focus:ring-primary focus:border-primary">
+                <option :value="10">10</option>
+                <option :value="25">25</option>
+                <option :value="50">50</option>
+                <option :value="100">100</option>
+              </select>
+            </div>
+            <div class="flex gap-2">
+              <button @click="prevPage" :disabled="currentPage === 1" class="px-3 py-1 border border-[#d0dbe7] dark:border-slate-700 rounded text-xs font-bold disabled:opacity-50 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors">Précédent</button>
+              <button @click="nextPage" :disabled="currentPage === totalPages || totalPages === 0" class="px-3 py-1 border border-[#d0dbe7] dark:border-slate-700 rounded text-xs font-bold disabled:opacity-50 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors">Suivant</button>
+            </div>
+          </div>
+        </div>
       </div>
     </main>
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import api from '@/services/api'
 
@@ -164,7 +183,40 @@ const generateMatricule = (student, index) => {
 
 const students = ref([])
 const isLoading = ref(true)
+const route = useRoute()
 const classeId = route.params.id
+
+// Pagination variables
+const currentPage = ref(1)
+const itemsPerPage = ref(10)
+
+const totalItems = computed(() => students.value.length)
+const totalPages = computed(() => Math.ceil(totalItems.value / itemsPerPage.value))
+
+const startItem = computed(() => (currentPage.value - 1) * itemsPerPage.value + 1)
+const endItem = computed(() => currentPage.value * itemsPerPage.value)
+
+const paginatedStudents = computed(() => {
+  const start = (currentPage.value - 1) * itemsPerPage.value
+  const end = start + itemsPerPage.value
+  return students.value.slice(start, end)
+})
+
+const nextPage = () => {
+  if (currentPage.value < totalPages.value) {
+    currentPage.value++
+  }
+}
+
+const prevPage = () => {
+  if (currentPage.value > 1) {
+    currentPage.value--
+  }
+}
+
+watch(itemsPerPage, () => {
+  currentPage.value = 1
+})
 
 const fetchStudents = async () => {
   try {

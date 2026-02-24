@@ -178,9 +178,24 @@
                 </div>
             </div>
             
-            <!-- Simple Pagination Footer if needed -->
+            <!-- Pagination Footer -->
             <div class="p-4 border-t border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/20 flex items-center justify-between text-xs text-slate-500">
-                <span>Affichage de {{ displayedUsers.length }} résultats</span>
+                <span>Affichage de {{ Math.min(startItem, totalItems) }} à {{ Math.min(endItem, totalItems) }} sur {{ totalItems }} résultats</span>
+                <div class="flex items-center gap-4">
+                    <div class="flex items-center gap-2">
+                        <span>Afficher:</span>
+                        <select v-model="itemsPerPage" class="h-8 rounded border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 px-2 focus:ring-primary focus:border-primary">
+                            <option :value="10">10</option>
+                            <option :value="25">25</option>
+                            <option :value="50">50</option>
+                            <option :value="100">100</option>
+                        </select>
+                    </div>
+                    <div class="flex gap-2">
+                        <button @click="prevPage" :disabled="currentPage === 1" class="px-3 py-1 rounded border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors">Précédent</button>
+                        <button @click="nextPage" :disabled="currentPage === totalPages || totalPages === 0" class="px-3 py-1 rounded border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors">Suivant</button>
+                    </div>
+                </div>
             </div>
       </div>
     </main>
@@ -362,8 +377,37 @@ const filteredUsers = computed(() => {
 // Use filteredUsers directly for display (virtually scrollable list handles large data better than pages)
 const displayedUsers = computed(() => filteredUsers.value)
 
-// For compatibility with template loop (can be renamed in template)
-const paginatedUsers = computed(() => displayedUsers.value)
+// Pagination logic
+const currentPage = ref(1)
+const itemsPerPage = ref(10)
+
+const totalItems = computed(() => displayedUsers.value.length)
+const totalPages = computed(() => Math.ceil(totalItems.value / itemsPerPage.value))
+
+const startItem = computed(() => (currentPage.value - 1) * itemsPerPage.value + 1)
+const endItem = computed(() => currentPage.value * itemsPerPage.value)
+
+const paginatedUsers = computed(() => {
+  const start = (currentPage.value - 1) * itemsPerPage.value
+  const end = start + itemsPerPage.value
+  return displayedUsers.value.slice(start, end)
+})
+
+const nextPage = () => {
+  if (currentPage.value < totalPages.value) {
+    currentPage.value++
+  }
+}
+
+const prevPage = () => {
+  if (currentPage.value > 1) {
+    currentPage.value--
+  }
+}
+
+watch([searchQuery, selectedClassFilter, selectedRoleFilter, itemsPerPage, () => props.type], () => {
+  currentPage.value = 1
+})
 
 
 // --- Logic for Edit Modal ---

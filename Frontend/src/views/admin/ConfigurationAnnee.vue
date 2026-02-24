@@ -267,6 +267,10 @@
               <!-- General Info -->
               <div class="flex-1 grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div class="md:col-span-2">
+                  <label class="text-xs font-bold text-slate-500 uppercase tracking-widest mb-1 block">Ministère</label>
+                  <input v-model="schoolConfig.ministryName" class="w-full bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 rounded-lg text-sm" type="text" placeholder="ex: MINISTÈRE DE L'ENSEIGNEMENT..." />
+                </div>
+                <div class="md:col-span-2">
                   <label class="text-xs font-bold text-slate-500 uppercase tracking-widest mb-1 block">Nom de l'établissement</label>
                   <input v-model="schoolConfig.schoolName" class="w-full bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 rounded-lg text-sm" type="text" placeholder="ex: LYCÉE WEND PUIRÉ DE SAABA" />
                 </div>
@@ -283,17 +287,25 @@
                   <input v-model="schoolConfig.phone" class="w-full bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 rounded-lg text-sm" type="text" placeholder="ex: 51 54 88 11" />
                 </div>
                 <div>
-                  <label class="text-xs font-bold text-slate-500 uppercase tracking-widest mb-1 block">Région (En-tête haut)</label>
-                  <input v-model="schoolConfig.region" class="w-full bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 rounded-lg text-sm" type="text" placeholder="ex: RÉGION CENTRE" />
+                  <label class="text-xs font-bold text-slate-500 uppercase tracking-widest mb-1 block">Ville</label>
+                  <input v-model="schoolConfig.city" class="w-full bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 rounded-lg text-sm" type="text" placeholder="ex: OUAGADOUGOU" />
                 </div>
                 <div>
                   <label class="text-xs font-bold text-slate-500 uppercase tracking-widest mb-1 block">Nom du Proviseur</label>
                   <input v-model="schoolConfig.proviseurName" class="w-full bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 rounded-lg text-sm" type="text" placeholder="ex: M. Jean DUPONT" />
                 </div>
+                <div>
+                  <label class="text-xs font-bold text-slate-500 uppercase tracking-widest mb-1 block">Titre du Proviseur</label>
+                  <input v-model="schoolConfig.proviseurTitle" class="w-full bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 rounded-lg text-sm" type="text" placeholder="ex: Chevalier de l'Ordre..." />
+                </div>
               </div>
             </div>
             
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 border-t border-slate-100 dark:border-slate-800 pt-6">
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-4 border-t border-slate-100 dark:border-slate-800 pt-6">
+                <div>
+                  <label class="text-xs font-bold text-slate-500 uppercase tracking-widest mb-1 block">Région (En-tête g.)</label>
+                  <input v-model="schoolConfig.region" class="w-full bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 rounded-lg text-sm" type="text" placeholder="ex: RÉGION CENTRE" />
+                </div>
                <div>
                   <label class="text-xs font-bold text-slate-500 uppercase tracking-widest mb-1 block">Pays</label>
                   <input v-model="schoolConfig.country" class="w-full bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 rounded-lg text-sm" type="text" />
@@ -321,7 +333,7 @@
 
 <script setup>
 import { ref, computed, onMounted, watch } from 'vue';
-import api from '@/services/api';
+import api, { BASE_ASSET_URL } from '@/services/api';
 import { useAcademicYear } from '@/composables/useAcademicYear';
 
 const isSaving = ref(false);
@@ -329,16 +341,19 @@ const selectedFiliere = ref('generale');
 const { refreshYear } = useAcademicYear();
 
 const schoolConfig = ref({
+    ministryName: 'MINISTÈRE DE L\'ENSEIGNEMENT...',
     schoolName: '',
     shortName: '',
     motto: '',
     phone: '',
+    city: '',
     region: '',
     subRegion: 'RÉGION CENTRE',
     country: 'BURKINA FASO',
     patrie: 'La Patrie ou la Mort, nous Vaincrons',
     logo: '',
-    proviseurName: ''
+    proviseurName: '',
+    proviseurTitle: 'Chevalier de l\'Ordre des Palmes Académiques'
 });
 
 const config = ref({
@@ -484,16 +499,8 @@ const handleLogoUpload = async (event) => {
     });
 
     try {
-        const token = localStorage.getItem('token');
-        const response = await fetch('http://localhost:5000/api/v1/settings/upload-logo', {
-            method: 'POST',
-            headers: {
-                'Authorization': `Bearer ${token}`,
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({ image: base64 })
-        });
-        const data = await response.json();
+        const response = await api.uploadLogo({ image: base64 });
+        const data = response.data;
         if (data.success) {
             schoolConfig.value.logo = data.data;
             alert('Logo mis à jour !');

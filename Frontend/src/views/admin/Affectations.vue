@@ -80,7 +80,7 @@
                 <td colspan="6" class="px-6 py-10 text-slate-500 italic text-center">Aucune affectation trouvée</td>
               </tr>
               <tr 
-                v-for="a in filteredAssignments" 
+                v-for="a in paginatedAssignments" 
                 :key="a._id"
                 class="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors"
               >
@@ -132,12 +132,37 @@
               </tr>
             </tbody>
           </table>
-          <!-- Pagination (Simplified) -->
+          <!-- Pagination -->
           <div class="px-6 py-4 bg-slate-50 dark:bg-slate-900/50 border-t border-[#d0dbe7] dark:border-slate-700 flex justify-between items-center">
-            <p class="text-xs text-[#4e7397]">Affichage de 1 à 10 sur 124 professeurs</p>
-            <div class="flex gap-2">
-              <button class="px-3 py-1 rounded border border-[#d0dbe7] dark:border-slate-700 bg-white dark:bg-slate-800 text-xs font-medium opacity-50 cursor-not-allowed">Précédent</button>
-              <button class="px-3 py-1 rounded border border-[#d0dbe7] dark:border-slate-700 bg-white dark:bg-slate-800 text-xs font-medium hover:bg-slate-50 transition-colors">Suivant</button>
+            <p class="text-xs text-[#4e7397]">
+              Affichage de {{ Math.min(startItem, totalItems) }} à {{ Math.min(endItem, totalItems) }} sur {{ totalItems }} affectations
+            </p>
+            <div class="flex items-center gap-4">
+              <div class="flex items-center gap-2">
+                <span class="text-xs text-[#4e7397]">Afficher:</span>
+                <select v-model="itemsPerPage" class="h-8 rounded border border-[#d0dbe7] dark:border-slate-700 bg-white dark:bg-slate-800 text-xs text-[#0e141b] dark:text-white px-2 focus:ring-primary focus:border-primary">
+                  <option :value="10">10</option>
+                  <option :value="25">25</option>
+                  <option :value="50">50</option>
+                  <option :value="100">100</option>
+                </select>
+              </div>
+              <div class="flex gap-2">
+                <button 
+                  @click="prevPage" 
+                  :disabled="currentPage === 1"
+                  class="px-3 py-1 rounded border border-[#d0dbe7] dark:border-slate-700 bg-white dark:bg-slate-800 text-xs font-medium disabled:opacity-50 disabled:cursor-not-allowed hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors"
+                >
+                  Précédent
+                </button>
+                <button 
+                  @click="nextPage" 
+                  :disabled="currentPage === totalPages || totalPages === 0"
+                  class="px-3 py-1 rounded border border-[#d0dbe7] dark:border-slate-700 bg-white dark:bg-slate-800 text-xs font-medium disabled:opacity-50 disabled:cursor-not-allowed hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors"
+                >
+                  Suivant
+                </button>
+              </div>
             </div>
           </div>
         </div>
@@ -147,7 +172,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue';
+import { ref, computed, onMounted, watch } from 'vue';
 import api from '@/services/api';
 
 const assignments = ref([]);
@@ -156,6 +181,9 @@ const searchQuery = ref('');
 const selectedClassFilter = ref('');
 const selectedSubjectFilter = ref('');
 const isLoading = ref(false);
+
+const currentPage = ref(1);
+const itemsPerPage = ref(10);
 
 const fetchData = async () => {
   isLoading.value = true;
@@ -190,6 +218,34 @@ const filteredAssignments = computed(() => {
     
     return matchesSearch && matchesClass && matchesSubject;
   });
+});
+
+const totalItems = computed(() => filteredAssignments.value.length);
+const totalPages = computed(() => Math.ceil(totalItems.value / itemsPerPage.value));
+
+const startItem = computed(() => (currentPage.value - 1) * itemsPerPage.value + 1);
+const endItem = computed(() => currentPage.value * itemsPerPage.value);
+
+const paginatedAssignments = computed(() => {
+  const start = (currentPage.value - 1) * itemsPerPage.value;
+  const end = start + itemsPerPage.value;
+  return filteredAssignments.value.slice(start, end);
+});
+
+const nextPage = () => {
+  if (currentPage.value < totalPages.value) {
+    currentPage.value++;
+  }
+};
+
+const prevPage = () => {
+  if (currentPage.value > 1) {
+    currentPage.value--;
+  }
+};
+
+watch([searchQuery, selectedClassFilter, selectedSubjectFilter, itemsPerPage], () => {
+  currentPage.value = 1; // Reset to page 1 on filter or limit change
 });
 
 const classesCouvertes = computed(() => {

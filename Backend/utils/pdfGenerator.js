@@ -229,19 +229,22 @@ exports.getBulletinHTML = (bulletin, schoolConfig) => {
 <body>
     <div class="bulletin-card">
         <div class="header">
-            <div class="h-col h-col-side">
+            <div class="h-col h-col-side left-header">
+                <p>${schoolConfig.ministryName || 'MINISTÈRE DE L\'ENSEIGNEMENT'}</p>
                 <p>${schoolConfig.region || 'FORMATION PROFESSIONNELLE ET TECHNIQUE'}</p>
-                <p>${schoolConfig.subRegion || 'RÉGION CENTRE'}</p>
+                <p>${schoolConfig.city || 'OUAGADOUGOU'}</p>
                 <p>${schoolConfig.schoolName || 'LYCÉE WEND PUIRÉ DE SAABA'}</p>
                 <p>${schoolConfig.phone ? `TÉL : ${schoolConfig.phone}` : 'TÉL : 51 54 88 11'}</p>
             </div>
             <div class="h-col h-center">
                 <div class="logo-text">${schoolConfig.shortName || 'LWS'}</div>
-                <div class="motto">${schoolConfig.motto || 'DISCIPLINE-TRAVAIL-SUCCES'}</div>
+                ${schoolConfig.motto !== undefined ?
+            (schoolConfig.motto ? `<div class="motto">${schoolConfig.motto}</div>` : '')
+            : `<div class="motto">DISCIPLINE-TRAVAIL-SUCCES</div>`}
             </div>
-            <div class="h-col h-col-side h-right">
+            <div class="h-col h-col-side h-right right-header">
                 <p>${schoolConfig.country || 'BURKINA FASO'}</p>
-                <p class="italic" style="font-weight: normal; text-transform: none; font-size: 7.5px;">${schoolConfig.patrie || 'La Patrie ou la Mort, nous Vaincrons'}</p>
+                <p class="italic patrie" style="font-weight: normal; text-transform: none; font-size: 7.5px;">${schoolConfig.patrie || 'La Patrie ou la Mort, nous Vaincrons'}</p>
             </div>
         </div>
 
@@ -283,22 +286,22 @@ exports.getBulletinHTML = (bulletin, schoolConfig) => {
                         <td colspan="7" style="text-align: center;">${catName}</td>
                     </tr>
                     ${notes.map(note => {
-        const prof = note.professeur ? `${note.professeur.civilite === 'Mr' ? 'M ' : (note.professeur.civilite ? note.professeur.civilite + ' ' : '')}${note.professeur.nom || ''}`.toUpperCase().trim() : '';
-        const app = note.isDispensed ? '' : getGeneralAppreciation(note.moyenneMatiere || 0);
-        return `
+                const prof = note.professeur ? `${note.professeur.civilite === 'Mr' ? 'M ' : (note.professeur.civilite ? note.professeur.civilite + ' ' : '')}${note.professeur.nom || ''}`.toUpperCase().trim() : '';
+                const app = note.isDispensed ? '' : getGeneralAppreciation(note.moyenneMatiere || 0);
+                return `
                             <tr>
                                 <td class="text-left font-bold uppercase" style="font-size: 9px;">${note.matiere?.nom || ''}</td>
                                 <td>${(note.coeff || 1).toFixed(1)}</td>
                                 ${note.isDispensed ?
-                `<td class="italic font-bold">-</td><td class="italic font-bold">-</td>` :
-                `<td>${(note.moyenneMatiere || 0).toFixed(2)}</td><td class="font-bold">${(note.notePonderee || 0).toFixed(2)}</td>`
-            }
+                        `<td class="italic font-bold">D</td><td class="italic font-bold">D</td>` :
+                        `<td>${(note.moyenneMatiere || 0).toFixed(2)}</td><td class="font-bold">${(note.notePonderee || 0).toFixed(2)}</td>`
+                    }
                                 <td class="italic" style="width: 75px; font-size: 8.5px;">${app}</td>
                                 <td style="font-size: 8.5px; width: 110px; white-space: nowrap;">${prof}</td>
                                 <td style="width: 35px;"></td>
                             </tr>
                         `;
-    }).join('')}
+            }).join('')}
                     <tr class="font-bold bg-gray-100" style="font-size: 9px; background-color: #f8fafc;">
                         <td class="text-left uppercase">Total ${catName}</td>
                         <td>${notes.reduce((sum, n) => sum + (n.coeff || 0), 0).toFixed(1)}</td>
@@ -360,7 +363,12 @@ exports.getBulletinHTML = (bulletin, schoolConfig) => {
                 <div class="font-bold uppercase" style="font-size: 11px;">Le Proviseur</div>
                 <div style="height: 60px;"></div>
                 <div class="font-bold" style="font-size: 10px;">${schoolConfig.proviseurName || ''}</div>
+                <div class="italic" style="font-size: 8px; font-weight: normal; margin-top: 2px;">${schoolConfig.proviseurTitle || 'Chevalier de l\'Ordre des Palmes Académiques'}</div>
             </div>
+        </div>
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 15px; font-size: 8px; color: #6b7280; font-family: 'Inter', sans-serif;">
+            <div>Le : ${formatDate(new Date())}</div>
+            <div style="font-weight: bold; font-style: italic;">Généré par Unica</div>
         </div>
     </div>
 </body>
@@ -394,14 +402,17 @@ exports.getMasterSheetHTML = (sheetsData, schoolConfig) => {
         const headerHtml = `
             <div class="header" style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 20px; border-bottom: 2px solid #f1f5f9; padding-bottom: 10px;">
                 <div style="width: 30%; font-[8.5px] font-weight: bold; text-transform: uppercase; line-height: 1.2;">
+                    <p style="margin: 0;">${schoolConfig.ministryName || 'MINISTÈRE DE L\'ENSEIGNEMENT'}</p>
                     <p style="margin: 0;">${schoolConfig.region || 'FORMATION PROFESSIONNELLE ET TECHNIQUE'}</p>
-                    <p style="margin: 0;">${schoolConfig.subRegion || 'RÉGION CENTRE'}</p>
+                    <p style="margin: 0;">${schoolConfig.city || 'OUAGADOUGOU'}</p>
                     <p style="margin: 0;">${schoolConfig.schoolName || 'LYCÉE WEND PUIRÉ DE SAABA'}</p>
                     <p style="margin: 0;">TÉL : ${schoolConfig.phone || '51 54 88 11'}</p>
                 </div>
                 <div style="width: 40%; display: flex; flex-direction: column; align-items: center; text-align: center; justify-content: center;">
                     <div style="font-size: 28px; font-weight: 900; color: #1e3a8a; letter-spacing: -1px; line-height: 1;">${schoolConfig.shortName || 'LWS'}</div>
-                    <div style="font-size: 8px; color: #6b7280; text-transform: uppercase; letter-spacing: 0.5px; margin-top: 3px; font-weight: bold;">${schoolConfig.motto || 'DISCIPLINE-TRAVAIL-SUCCES'}</div>
+                    ${schoolConfig.motto !== undefined ?
+                (schoolConfig.motto ? `<div style="font-size: 8px; color: #6b7280; text-transform: uppercase; letter-spacing: 0.5px; margin-top: 3px; font-weight: bold;">${schoolConfig.motto}</div>` : '')
+                : `<div style="font-size: 8px; color: #6b7280; text-transform: uppercase; letter-spacing: 0.5px; margin-top: 3px; font-weight: bold;">DISCIPLINE-TRAVAIL-SUCCES</div>`}
                 </div>
                 <div style="width: 30%; text-align: right; font-size: 8.5px; font-weight: bold; text-transform: uppercase; line-height: 1.2;">
                     <p style="margin: 0;">${schoolConfig.country || 'BURKINA FASO'}</p>
@@ -536,8 +547,14 @@ exports.getMasterSheetHTML = (sheetsData, schoolConfig) => {
                             <p class="font-bold underline">LE PROVISEUR</p>
                             <div class="sig-space"></div>
                             <p class="font-bold">${schoolConfig.proviseurName || ''}</p>
+                            <p class="font-normal italic" style="font-size: 5px; margin-top: 1px;">${schoolConfig.proviseurTitle || 'Chevalier de l\'Ordre des Palmes Académiques'}</p>
                         </div>
                     </div>
+                </div>
+                
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 15px; font-size: 6px; color: #6b7280; border-top: 1px solid #e2e8f0; padding-top: 5px; font-family: 'Arial', sans-serif;">
+                    <div>Le : ${new Date().toLocaleDateString('fr-FR')}</div>
+                    <div style="font-weight: bold; font-style: italic;">Généré par Unica</div>
                 </div>
             </div>
         `;

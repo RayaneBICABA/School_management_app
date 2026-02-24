@@ -113,92 +113,38 @@
               </tr>
             </thead>
             <tbody class="divide-y divide-[#d0dbe7] dark:divide-slate-700 text-sm">
-              <tr class="hover:bg-slate-50 dark:hover:bg-slate-700/30 transition-colors">
-                <td class="px-6 py-4"><input class="rounded border-slate-300 text-primary" type="checkbox"/></td>
+              <tr 
+                v-for="(student, index) in paginatedStudents" 
+                :key="student.id"
+                class="hover:bg-slate-50 dark:hover:bg-slate-700/30 transition-colors"
+               >
+                <td class="px-6 py-4"><input v-model="student.checked" class="rounded border-slate-300 text-primary" type="checkbox"/></td>
                 <td class="px-6 py-4">
                   <div class="flex flex-col">
-                    <span class="font-bold text-[#0e141b] dark:text-white">Jean-Pierre Durand</span>
-                    <span class="text-xs text-[#4e7397]">ID: 2023-00452</span>
+                    <span class="font-bold text-[#0e141b] dark:text-white">{{ student.nom }}</span>
+                    <span class="text-xs text-[#4e7397]">ID: {{ student.id }}</span>
                   </div>
                 </td>
-                <td class="px-6 py-4">Terminale S1</td>
+                <td class="px-6 py-4">{{ student.classe }}</td>
                 <td class="px-6 py-4">
                   <div class="flex items-center gap-2">
-                    <span class="font-semibold text-primary">16.45/20</span>
-                    <span class="px-2 py-0.5 bg-green-100 text-green-700 text-[10px] font-bold rounded uppercase">Admis</span>
+                    <span class="font-semibold text-primary">{{ student.moyenne.toFixed(2) }}/20</span>
+                    <span class="px-2 py-0.5 bg-green-100 text-green-700 text-[10px] font-bold rounded uppercase">{{ student.decision }}</span>
                   </div>
                 </td>
-                <td class="px-6 py-4 text-[#4e7397]">Diplôme de Bac</td>
+                <td class="px-6 py-4 text-[#4e7397]">{{ student.document }}</td>
                 <td class="px-6 py-4">
-                  <span class="inline-flex items-center gap-1 text-amber-600 font-medium italic">
+                  <span v-if="student.statut === 'À générer'" class="inline-flex items-center gap-1 text-amber-600 font-medium italic">
                     <span class="material-symbols-outlined text-[14px]">hourglass_empty</span>
                     À générer
                   </span>
-                </td>
-                <td class="px-6 py-4 text-right">
-                  <div class="flex justify-end gap-2">
-                    <button class="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-600 rounded text-[#4e7397]">
-                      <span class="material-symbols-outlined text-[18px]">visibility</span>
-                    </button>
-                    <button class="p-1.5 hover:bg-primary/10 rounded text-primary">
-                      <span class="material-symbols-outlined text-[18px]">print</span>
-                    </button>
-                  </div>
-                </td>
-              </tr>
-              <tr class="hover:bg-slate-50 dark:hover:bg-slate-700/30 transition-colors">
-                <td class="px-6 py-4"><input class="rounded border-slate-300 text-primary" type="checkbox"/></td>
-                <td class="px-6 py-4">
-                  <div class="flex flex-col">
-                    <span class="font-bold text-[#0e141b] dark:text-white">Marie-Claire Lefebvre</span>
-                    <span class="text-xs text-[#4e7397]">ID: 2023-00128</span>
-                  </div>
-                </td>
-                <td class="px-6 py-4">Terminale S1</td>
-                <td class="px-6 py-4">
-                  <div class="flex items-center gap-2">
-                    <span class="font-semibold text-primary">14.20/20</span>
-                    <span class="px-2 py-0.5 bg-green-100 text-green-700 text-[10px] font-bold rounded uppercase">Admis</span>
-                  </div>
-                </td>
-                <td class="px-6 py-4 text-[#4e7397]">Attestation Scolarité</td>
-                <td class="px-6 py-4">
-                  <span class="inline-flex items-center gap-1 text-green-600 font-medium">
+                  <span v-else-if="student.statut === 'Généré'" class="inline-flex items-center gap-1 text-green-600 font-medium">
                     <span class="material-symbols-outlined text-[14px]">check_circle</span>
                     Généré
                   </span>
-                </td>
-                <td class="px-6 py-4 text-right">
-                  <div class="flex justify-end gap-2">
-                    <button class="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-600 rounded text-[#4e7397]">
-                      <span class="material-symbols-outlined text-[18px]">visibility</span>
-                    </button>
-                    <button class="p-1.5 hover:bg-primary/10 rounded text-primary">
-                      <span class="material-symbols-outlined text-[18px]">download</span>
-                    </button>
-                  </div>
-                </td>
-              </tr>
-              <tr class="hover:bg-slate-50 dark:hover:bg-slate-700/30 transition-colors">
-                <td class="px-6 py-4"><input class="rounded border-slate-300 text-primary" type="checkbox"/></td>
-                <td class="px-6 py-4">
-                  <div class="flex flex-col">
-                    <span class="font-bold text-[#0e141b] dark:text-white">Amadou Diallo</span>
-                    <span class="text-xs text-[#4e7397]">ID: 2023-00911</span>
-                  </div>
-                </td>
-                <td class="px-6 py-4">Terminale L1</td>
-                <td class="px-6 py-4">
-                  <div class="flex items-center gap-2">
-                    <span class="font-semibold text-primary">12.50/20</span>
-                    <span class="px-2 py-0.5 bg-green-100 text-green-700 text-[10px] font-bold rounded uppercase">Admis</span>
-                  </div>
-                </td>
-                <td class="px-6 py-4 text-[#4e7397]">Diplôme de Bac</td>
-                <td class="px-6 py-4">
-                  <span class="inline-flex items-center gap-1 text-primary font-medium">
+                  <span v-else class="inline-flex items-center gap-1 text-primary font-medium">
                     <span class="material-symbols-outlined text-[14px]">ink_pen</span>
-                    Signé
+                    {{ student.statut }}
                   </span>
                 </td>
                 <td class="px-6 py-4 text-right">
@@ -207,10 +153,13 @@
                       <span class="material-symbols-outlined text-[18px]">visibility</span>
                     </button>
                     <button class="p-1.5 hover:bg-primary/10 rounded text-primary">
-                      <span class="material-symbols-outlined text-[18px]">share</span>
+                      <span class="material-symbols-outlined text-[18px]">{{ student.statut === 'Signé' ? 'share' : (student.statut === 'Généré' ? 'download' : 'print') }}</span>
                     </button>
                   </div>
                 </td>
+              </tr>
+              <tr v-if="paginatedStudents.length === 0">
+                <td colspan="7" class="px-6 py-8 text-center text-slate-500 italic">Aucun élève trouvé</td>
               </tr>
             </tbody>
           </table>
@@ -218,13 +167,35 @@
 
         <!-- Pagination -->
         <div class="p-6 border-t border-[#d0dbe7] dark:border-slate-700 flex justify-between items-center bg-slate-50/30 dark:bg-slate-900/30">
-          <p class="text-xs text-[#4e7397]">Affichage de 1 à 10 sur 124 élèves</p>
-          <div class="flex gap-1">
-            <button class="px-3 py-1 border border-[#d0dbe7] dark:border-slate-700 rounded bg-white dark:bg-slate-800 text-xs font-bold hover:bg-slate-50">Précédent</button>
-            <button class="px-3 py-1 bg-primary text-white rounded text-xs font-bold">1</button>
-            <button class="px-3 py-1 border border-[#d0dbe7] dark:border-slate-700 rounded bg-white dark:bg-slate-800 text-xs font-bold hover:bg-slate-50">2</button>
-            <button class="px-3 py-1 border border-[#d0dbe7] dark:border-slate-700 rounded bg-white dark:bg-slate-800 text-xs font-bold hover:bg-slate-50">3</button>
-            <button class="px-3 py-1 border border-[#d0dbe7] dark:border-slate-700 rounded bg-white dark:bg-slate-800 text-xs font-bold hover:bg-slate-50">Suivant</button>
+          <p class="text-xs text-[#4e7397]">
+            Affichage de {{ Math.min(startItem, totalItems) }} à {{ Math.min(endItem, totalItems) }} sur {{ totalItems }} élèves
+          </p>
+          <div class="flex items-center gap-4">
+            <div class="flex items-center gap-2">
+              <span class="text-xs text-[#4e7397]">Afficher:</span>
+              <select v-model="itemsPerPage" class="h-8 rounded border border-[#d0dbe7] dark:border-slate-700 bg-white dark:bg-slate-800 text-xs text-[#0e141b] dark:text-white px-2 focus:ring-primary focus:border-primary">
+                <option :value="10">10</option>
+                <option :value="25">25</option>
+                <option :value="50">50</option>
+                <option :value="100">100</option>
+              </select>
+            </div>
+            <div class="flex gap-2">
+              <button 
+                @click="prevPage" 
+                :disabled="currentPage === 1"
+                class="px-3 py-1 rounded border border-[#d0dbe7] dark:border-slate-700 bg-white dark:bg-slate-800 text-xs font-medium disabled:opacity-50 disabled:cursor-not-allowed hover:bg-slate-50 transition-colors"
+              >
+                Précédent
+              </button>
+              <button 
+                @click="nextPage" 
+                :disabled="currentPage === totalPages || totalPages === 0"
+                class="px-3 py-1 rounded border border-[#d0dbe7] dark:border-slate-700 bg-white dark:bg-slate-800 text-xs font-medium disabled:opacity-50 disabled:cursor-not-allowed hover:bg-slate-50 transition-colors"
+              >
+                Suivant
+              </button>
+            </div>
           </div>
         </div>
       </div>
@@ -273,7 +244,44 @@
 </template>
 
 <script setup>
-import { onMounted } from 'vue';
+import { ref, computed, onMounted, watch } from 'vue';
+
+const students = ref([
+  { id: '2023-00452', nom: 'Jean-Pierre Durand', classe: 'Terminale S1', moyenne: 16.45, decision: 'Admis', document: 'Diplôme de Bac', statut: 'À générer', checked: false },
+  { id: '2023-00128', nom: 'Marie-Claire Lefebvre', classe: 'Terminale S1', moyenne: 14.20, decision: 'Admis', document: 'Attestation Scolarité', statut: 'Généré', checked: false },
+  { id: '2023-00911', nom: 'Amadou Diallo', classe: 'Terminale L1', moyenne: 12.50, decision: 'Admis', document: 'Diplôme de Bac', statut: 'Signé', checked: false },
+]);
+
+const currentPage = ref(1);
+const itemsPerPage = ref(10);
+
+const totalItems = computed(() => students.value.length);
+const totalPages = computed(() => Math.ceil(totalItems.value / itemsPerPage.value));
+
+const startItem = computed(() => (currentPage.value - 1) * itemsPerPage.value + 1);
+const endItem = computed(() => currentPage.value * itemsPerPage.value);
+
+const paginatedStudents = computed(() => {
+  const start = (currentPage.value - 1) * itemsPerPage.value;
+  const end = start + itemsPerPage.value;
+  return students.value.slice(start, end);
+});
+
+const nextPage = () => {
+  if (currentPage.value < totalPages.value) {
+    currentPage.value++;
+  }
+};
+
+const prevPage = () => {
+  if (currentPage.value > 1) {
+    currentPage.value--;
+  }
+};
+
+watch(itemsPerPage, () => {
+  currentPage.value = 1;
+});
 
 onMounted(() => {
   const link = document.createElement('link');

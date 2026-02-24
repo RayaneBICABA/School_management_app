@@ -94,7 +94,7 @@
                     <td colspan="5" class="py-8 text-slate-500">Aucune note validée pour cette période.</td>
                 </tr>
                 
-                <tr v-for="note in filteredNotes" :key="note._id" class="hover:bg-slate-50 dark:hover:bg-slate-700/30 transition-colors">
+                <tr v-for="note in paginatedNotes" :key="note._id" class="hover:bg-slate-50 dark:hover:bg-slate-700/30 transition-colors">
                   <td class="px-6 py-5">
                     <div class="flex items-center gap-3">
                       <div class="size-10 rounded-lg flex items-center justify-center" :class="getSubjectColorBg(note.matiere?.nom)">
@@ -130,16 +130,26 @@
           <!-- Pagination / Footer -->
           <div class="px-6 py-4 bg-slate-50 dark:bg-slate-900/50 flex justify-between items-center border-t border-slate-200 dark:border-slate-700">
             <p class="text-xs font-medium text-slate-500">
-              Affichage de {{ filteredNotes.length }} note(s) validée(s) {{ selectedPeriod !== 'all' ? 'pour ' + selectedPeriod : '' }}
+              Affichage de {{ Math.min(startItem, totalItems) }} à {{ Math.min(endItem, totalItems) }} sur {{ totalItems }} note(s) validée(s) {{ selectedPeriod !== 'all' ? 'pour ' + selectedPeriod : '' }}
             </p>
-            <div class="flex gap-2">
-              <button class="size-8 flex items-center justify-center rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-400 hover:text-primary transition-colors disabled:opacity-50" disabled="">
-                <span class="material-symbols-outlined text-[18px]">chevron_left</span>
-              </button>
-              <button class="size-8 flex items-center justify-center rounded-lg border border-primary bg-primary text-white text-xs font-bold">1</button>
-              <button class="size-8 flex items-center justify-center rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-400 hover:text-primary transition-colors disabled:opacity-50" disabled="">
-                <span class="material-symbols-outlined text-[18px]">chevron_right</span>
-              </button>
+            <div class="flex items-center gap-4">
+              <div class="flex items-center gap-2">
+                <span class="text-xs text-slate-500 dark:text-slate-400 font-medium tracking-tight">Afficher:</span>
+                <select v-model="itemsPerPage" class="h-8 rounded border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs font-bold px-2 focus:ring-primary focus:border-primary">
+                  <option :value="10">10</option>
+                  <option :value="25">25</option>
+                  <option :value="50">50</option>
+                  <option :value="100">100</option>
+                </select>
+              </div>
+              <div class="flex gap-2">
+                <button @click="prevPage" :disabled="currentPage === 1" class="size-8 flex items-center justify-center rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+                  <span class="material-symbols-outlined text-[18px]">chevron_left</span>
+                </button>
+                <button @click="nextPage" :disabled="currentPage === totalPages || totalPages === 0" class="size-8 flex items-center justify-center rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+                  <span class="material-symbols-outlined text-[18px]">chevron_right</span>
+                </button>
+              </div>
             </div>
           </div>
         </div>
@@ -219,6 +229,38 @@ const filteredNotes = computed(() => {
   }
   
   return filtered;
+});
+
+// Pagination variables
+const currentPage = ref(1);
+const itemsPerPage = ref(10);
+
+const totalItems = computed(() => filteredNotes.value.length);
+const totalPages = computed(() => Math.ceil(totalItems.value / itemsPerPage.value));
+
+const startItem = computed(() => (currentPage.value - 1) * itemsPerPage.value + 1);
+const endItem = computed(() => currentPage.value * itemsPerPage.value);
+
+const paginatedNotes = computed(() => {
+  const start = (currentPage.value - 1) * itemsPerPage.value;
+  const end = start + itemsPerPage.value;
+  return filteredNotes.value.slice(start, end);
+});
+
+const nextPage = () => {
+  if (currentPage.value < totalPages.value) {
+    currentPage.value++;
+  }
+};
+
+const prevPage = () => {
+  if (currentPage.value > 1) {
+    currentPage.value--;
+  }
+};
+
+watch([selectedPeriod, searchQuery, itemsPerPage], () => {
+  currentPage.value = 1;
 });
 
 const average = computed(() => {

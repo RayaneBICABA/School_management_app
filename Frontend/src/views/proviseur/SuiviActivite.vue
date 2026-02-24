@@ -67,10 +67,10 @@
                 </tr>
               </thead>
               <tbody class="divide-y divide-[#d0dbe7] dark:divide-slate-800">
-                <tr v-if="enseignants.length === 0">
+                <tr v-if="paginatedEnseignants.length === 0">
                     <td colspan="5" class="px-6 py-8 text-center text-slate-500 text-sm">Aucun enseignant trouvé pour cette période.</td>
                 </tr>
-                <tr v-for="enseignant in enseignants" :key="enseignant.id" class="hover:bg-background-light/30 dark:hover:bg-slate-800/20 transition-colors group">
+                <tr v-for="enseignant in paginatedEnseignants" :key="enseignant.id" class="hover:bg-background-light/30 dark:hover:bg-slate-800/20 transition-colors group">
                   <td class="px-6 py-4">
                     <div class="flex items-center gap-3">
                       <div class="size-9 rounded-full bg-primary/10 text-primary flex items-center justify-center font-bold text-xs">{{ enseignant.initials }}</div>
@@ -112,9 +112,38 @@
               </tbody>
             </table>
           </div>
-          <!-- Pagination / Footer Table -->
+          <!-- Pagination -->
           <div class="p-4 bg-background-light/30 dark:bg-slate-800/30 border-t border-[#d0dbe7] dark:border-slate-800 flex items-center justify-between">
-            <p class="text-xs text-[#4e7397]">Affichage de {{ enseignants.length }} enseignants</p>
+            <p class="text-xs text-[#4e7397]">
+              Affichage de {{ Math.min(startItem, totalItems) }} à {{ Math.min(endItem, totalItems) }} sur {{ totalItems }} enseignants
+            </p>
+            <div class="flex items-center gap-4">
+              <div class="flex items-center gap-2">
+                <span class="text-xs text-[#4e7397]">Afficher:</span>
+                <select v-model="itemsPerPage" class="h-8 rounded border border-[#d0dbe7] dark:border-slate-800 bg-white dark:bg-slate-900 text-xs text-[#0e141b] dark:text-white px-2 focus:ring-primary focus:border-primary">
+                  <option :value="10">10</option>
+                  <option :value="25">25</option>
+                  <option :value="50">50</option>
+                  <option :value="100">100</option>
+                </select>
+              </div>
+              <div class="flex gap-2">
+                <button 
+                  @click="prevPage" 
+                  :disabled="currentPage === 1"
+                  class="px-3 py-1 rounded border border-[#d0dbe7] dark:border-slate-800 bg-white dark:bg-slate-900 text-xs font-medium disabled:opacity-50 disabled:cursor-not-allowed hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors"
+                >
+                  Précédent
+                </button>
+                <button 
+                  @click="nextPage" 
+                  :disabled="currentPage === totalPages || totalPages === 0"
+                  class="px-3 py-1 rounded border border-[#d0dbe7] dark:border-slate-800 bg-white dark:bg-slate-900 text-xs font-medium disabled:opacity-50 disabled:cursor-not-allowed hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors"
+                >
+                  Suivant
+                </button>
+              </div>
+            </div>
           </div>
         </section>
 
@@ -140,7 +169,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, computed, watch, onMounted } from 'vue'
 import api from '@/services/api'
 import { useToast } from '@/composables/useToast'
 import ConfirmationModal from '@/components/modals/ConfirmationModal.vue'
@@ -166,6 +195,38 @@ const confirmModalActionText = ref('Confirmer')
 const confirmModalCancelText = ref('Annuler')
 const confirmModalType = ref('info')
 const pendingAction = ref(null)
+
+// Pagination variables
+const currentPage = ref(1)
+const itemsPerPage = ref(10)
+
+const totalItems = computed(() => enseignants.value.length)
+const totalPages = computed(() => Math.ceil(totalItems.value / itemsPerPage.value))
+
+const startItem = computed(() => (currentPage.value - 1) * itemsPerPage.value + 1)
+const endItem = computed(() => currentPage.value * itemsPerPage.value)
+
+const paginatedEnseignants = computed(() => {
+  const start = (currentPage.value - 1) * itemsPerPage.value
+  const end = start + itemsPerPage.value
+  return enseignants.value.slice(start, end)
+})
+
+const nextPage = () => {
+  if (currentPage.value < totalPages.value) {
+    currentPage.value++
+  }
+}
+
+const prevPage = () => {
+  if (currentPage.value > 1) {
+    currentPage.value--
+  }
+}
+
+watch([searchQuery, selectedPeriod, itemsPerPage], () => {
+  currentPage.value = 1
+})
 
 const fetchData = async () => {
   try {

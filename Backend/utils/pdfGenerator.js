@@ -626,3 +626,173 @@ exports.getMasterSheetHTML = (sheetsData, schoolConfig) => {
 </html>
     `;
 };
+
+/**
+ * Generate HTML for Student Profile (Fiche Élève)
+ */
+exports.getStudentProfileHTML = (student, schoolConfig) => {
+    const formatDate = (d) => d ? new Date(d).toLocaleDateString('fr-FR') : 'Non renseigné';
+    const val = (v) => v || 'Non renseigné';
+
+    const classe = student.classe
+        ? `${student.classe.niveau || ''} ${student.classe.section || ''}`.trim()
+        : 'Non affecté';
+
+    return `
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', Arial, sans-serif; color: #333; font-size: 11px; padding: 12mm; background: white; line-height: 1.4; }
+
+        /* Header */
+        .header { display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 2px solid #e2e8f0; padding-bottom: 10px; margin-bottom: 16px; }
+        .h-left, .h-right { width: 30%; font-size: 8.5px; font-weight: bold; text-transform: uppercase; line-height: 1.4; }
+        .h-right { text-align: right; }
+        .h-center { width: 40%; text-align: center; }
+        .logo-text { font-size: 30px; font-weight: 900; color: #1e3a8a; letter-spacing: -1px; }
+        .motto { font-size: 8px; color: #6b7280; font-weight: bold; letter-spacing: 0.5px; margin-top: 3px; }
+
+        /* Title */
+        .doc-title { text-align: center; margin: 10px 0 16px; }
+        .doc-title h1 { font-size: 18px; font-weight: bold; text-transform: uppercase; border: 1px solid #cbd5e1; padding: 6px 20px; display: inline-block; letter-spacing: 1px; }
+
+        /* Photo + Name block */
+        .id-block { display: flex; gap: 16px; align-items: flex-start; margin-bottom: 16px; padding-bottom: 12px; border-bottom: 1px solid #e2e8f0; }
+        .photo-box { width: 90px; height: 110px; border: 1px solid #cbd5e1; display: flex; align-items: center; justify-content: center; font-size: 8px; color: #94a3b8; text-align: center; flex-shrink: 0; border-radius: 4px; }
+        .name-block { flex: 1; }
+        .student-name { font-size: 18px; font-weight: bold; text-transform: uppercase; color: #1e3a8a; margin-bottom: 4px; }
+        .student-meta { font-size: 10px; color: #64748b; margin-bottom: 2px; }
+        .status-badge { display: inline-block; padding: 2px 10px; border-radius: 20px; font-size: 9px; font-weight: bold; background: #dcfce7; color: #166534; margin-top: 4px; }
+
+        /* Sections */
+        .section { margin-bottom: 14px; }
+        .section-title { font-size: 11px; font-weight: bold; text-transform: uppercase; color: #1e3a8a; border-left: 3px solid #1e3a8a; padding-left: 6px; margin-bottom: 8px; letter-spacing: 0.5px; }
+        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 6px 20px; }
+        .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6px 12px; }
+        .field { display: flex; flex-direction: column; }
+        .field-label { font-size: 8.5px; color: #64748b; text-transform: uppercase; margin-bottom: 1px; }
+        .field-value { font-size: 10.5px; font-weight: 600; color: #1e293b; border-bottom: 1px dashed #e2e8f0; padding-bottom: 2px; }
+
+        /* Footer */
+        .footer { margin-top: 24px; display: flex; justify-content: space-between; align-items: flex-end; border-top: 1px solid #e2e8f0; padding-top: 10px; font-size: 8px; color: #94a3b8; }
+        .sig-block { text-align: center; width: 180px; }
+        .sig-line { border-top: 1px solid #64748b; margin-top: 40px; font-size: 9px; font-weight: bold; color: #374151; }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <div class="header">
+        <div class="h-left">
+            <p>${val(schoolConfig.ministryName)}</p>
+            <p>${val(schoolConfig.region)}</p>
+            <p>${val(schoolConfig.city)}</p>
+            <p>${val(schoolConfig.schoolName)}</p>
+            <p>${schoolConfig.phone ? 'TÉL : ' + schoolConfig.phone : ''}</p>
+        </div>
+        <div class="h-center">
+            <div class="logo-text">${schoolConfig.shortName || 'LWS'}</div>
+            <div class="motto">${schoolConfig.motto || 'DISCIPLINE - TRAVAIL - SUCCÈS'}</div>
+        </div>
+        <div class="h-right">
+            <p>${schoolConfig.country || 'BURKINA FASO'}</p>
+            <p style="font-size: 7.5px; font-style: italic; text-transform: none; font-weight: normal;">${schoolConfig.patrie || 'La Patrie ou la Mort, nous Vaincrons'}</p>
+        </div>
+    </div>
+
+    <!-- Document Title -->
+    <div class="doc-title"><h1>Fiche Élève</h1></div>
+
+    <!-- ID Block -->
+    <div class="id-block">
+        <div class="photo-box">Photo<br>d'identité</div>
+        <div class="name-block">
+            <div class="student-name">${val(student.nom)} ${val(student.prenom)}</div>
+            <div class="student-meta">Matricule : <strong>${val(student.matricule)}</strong></div>
+            <div class="student-meta">Classe : <strong>${classe}</strong></div>
+            <div class="student-meta">Filière : <strong>${val(student.filiere)}</strong></div>
+            <span class="status-badge">${student.statutEleve || 'AFFECTÉ'}</span>
+        </div>
+    </div>
+
+    <!-- Section 1: Informations Personnelles -->
+    <div class="section">
+        <div class="section-title">Informations Personnelles</div>
+        <div class="grid-3">
+            <div class="field"><span class="field-label">Date de Naissance</span><span class="field-value">${formatDate(student.dateNaissance)}</span></div>
+            <div class="field"><span class="field-label">Lieu de Naissance</span><span class="field-value">${val(student.lieuNaissance)}</span></div>
+            <div class="field"><span class="field-label">Sexe</span><span class="field-value">${student.sexe === 'M' ? 'Masculin' : student.sexe === 'F' ? 'Féminin' : 'Non renseigné'}</span></div>
+            <div class="field"><span class="field-label">Adresse</span><span class="field-value">${val(student.adresse)}</span></div>
+            <div class="field"><span class="field-label">Téléphone</span><span class="field-value">${val(student.telephone)}</span></div>
+            <div class="field"><span class="field-label">Email</span><span class="field-value">${val(student.email)}</span></div>
+            <div class="field"><span class="field-label">Redoublant</span><span class="field-value">${student.isRedoublant ? 'Oui' : 'Non'}</span></div>
+        </div>
+    </div>
+
+    <!-- Section 2: Informations Parentales -->
+    <div class="section">
+        <div class="section-title">Informations Parentales</div>
+        <div class="grid-3">
+            <div class="field"><span class="field-label">Nom du Père</span><span class="field-value">${val(student.fatherName)}</span></div>
+            <div class="field"><span class="field-label">Tél. Père</span><span class="field-value">${val(student.fatherPhone)}</span></div>
+            <div class="field"><span class="field-label">Email Père</span><span class="field-value">${val(student.fatherEmail)}</span></div>
+            <div class="field"><span class="field-label">Nom de la Mère</span><span class="field-value">${val(student.motherName)}</span></div>
+            <div class="field"><span class="field-label">Tél. Mère</span><span class="field-value">${val(student.motherPhone)}</span></div>
+            <div class="field"><span class="field-label">Email Mère</span><span class="field-value">${val(student.motherEmail)}</span></div>
+            <div class="field"><span class="field-label">Tuteur Légal</span><span class="field-value">${val(student.legalGuardian)}</span></div>
+            <div class="field"><span class="field-label">Tél. Tuteur</span><span class="field-value">${val(student.guardianPhone)}</span></div>
+        </div>
+    </div>
+
+    <!-- Section 3: Informations Médicales -->
+    <div class="section">
+        <div class="section-title">Informations Médicales</div>
+        <div class="grid-3">
+            <div class="field"><span class="field-label">Groupe Sanguin</span><span class="field-value">${val(student.bloodGroup)}</span></div>
+            <div class="field"><span class="field-label">Langue Maternelle</span><span class="field-value">${val(student.nativeLanguage)}</span></div>
+            <div class="field"><span class="field-label">Allergènes</span><span class="field-value">${val(student.allergens)}</span></div>
+            <div class="field"><span class="field-label">Médicaments</span><span class="field-value">${val(student.medicaments)}</span></div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <div class="footer">
+        <div>Généré le : ${new Date().toLocaleDateString('fr-FR')}</div>
+        <div class="sig-block">
+            <div class="sig-line">Le Proviseur<br><span style="font-size: 8px; font-weight: normal; font-style: italic;">${schoolConfig.proviseurName || ''}</span></div>
+        </div>
+        <div style="font-style: italic; font-weight: bold;">Généré par Unica</div>
+    </div>
+</body>
+</html>
+    `;
+};
+
+/**
+ * Generate PDF for a student profile (Fiche Élève)
+ */
+exports.generateStudentProfilePDF = async (student, schoolConfig) => {
+    const browser = await puppeteer.launch({
+        headless: 'new',
+        args: ['--no-sandbox', '--disable-setuid-sandbox']
+    });
+
+    try {
+        const page = await browser.newPage();
+        const html = exports.getStudentProfileHTML(student, schoolConfig);
+        await page.setContent(html, { waitUntil: 'networkidle0' });
+
+        const pdf = await page.pdf({
+            format: 'A4',
+            printBackground: true,
+            margin: { top: '5mm', right: '5mm', bottom: '5mm', left: '5mm' }
+        });
+
+        return pdf;
+    } finally {
+        await browser.close();
+    }
+};
+

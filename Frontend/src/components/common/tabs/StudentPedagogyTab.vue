@@ -58,25 +58,26 @@
           
           <!-- Chart Visualization -->
           <div class="h-48 w-full relative">
-            <!-- Placeholder bars -->
-            <div class="absolute inset-0 flex items-end justify-between px-4 pb-2">
-              <div v-for="i in 8" :key="i" class="h-[60%] w-1 bg-slate-100 dark:bg-slate-800 rounded-t"></div>
+            <div v-if="!pedagogyStats.performanceEvolution?.length" class="absolute inset-0 flex items-center justify-center">
+              <p class="text-xs text-slate-400 italic">Données insuffisantes pour le graphique</p>
             </div>
-            <!-- Line paths -->
-            <svg class="absolute inset-0 h-full w-full" preserveAspectRatio="none">
-              <path d="M 50 120 L 150 90 L 250 110 L 350 100 L 450 130 L 550 80 L 650 110 L 750 95" fill="none" stroke="#197fe6" stroke-linecap="round" stroke-width="3"></path>
-              <path d="M 50 100 L 150 105 L 250 100 L 350 102 L 450 105 L 550 100 L 650 98 L 750 101" fill="none" stroke="#cbd5e1" stroke-dasharray="4" stroke-width="2"></path>
-            </svg>
+            <template v-else>
+              <!-- Placeholder bars -->
+              <div class="absolute inset-0 flex items-end justify-between px-4 pb-2">
+                <div v-for="i in 10" :key="i" class="h-full w-px bg-slate-100 dark:bg-slate-800/50"></div>
+              </div>
+              <!-- Line paths -->
+              <svg class="absolute inset-0 h-full w-full overflow-visible" viewBox="0 0 800 150" preserveAspectRatio="none">
+                <path :d="chartPoints" fill="none" stroke="#197fe6" stroke-linecap="round" stroke-linejoin="round" stroke-width="3" class="transition-all duration-500"></path>
+                <!-- Dots for each point -->
+                <circle v-for="(p, i) in pedagogyStats.performanceEvolution" :key="i" 
+                  :cx="getPointX(i)" :cy="getPointY(p.average)" r="4" fill="#197fe6" 
+                  class="hover:r-6 cursor-pointer" />
+              </svg>
+            </template>
           </div>
-          <div class="flex justify-between text-[10px] text-slate-500 font-bold uppercase mt-2 px-2">
-            <span>Sept</span>
-            <span>Oct</span>
-            <span>Nov</span>
-            <span>Déc</span>
-            <span>Jan</span>
-            <span>Fév</span>
-            <span>Mar</span>
-            <span>Avr</span>
+          <div v-if="pedagogyStats.performanceEvolution?.length" class="flex justify-between text-[10px] text-slate-500 font-bold uppercase mt-4 px-2">
+            <span v-for="p in pedagogyStats.performanceEvolution" :key="p.month">{{ p.month }}</span>
           </div>
         </div>
       </div>
@@ -129,15 +130,18 @@
         <div class="bg-slate-50 dark:bg-slate-800/50 p-4 rounded-xl border border-slate-100 dark:border-slate-800">
           <h4 class="text-sm font-bold text-slate-900 dark:text-white mb-3 flex items-center gap-2">
             <span class="material-symbols-outlined text-sm">comment</span>
-            Derniers Avis Professeurs
+            Dernières Appréciations
           </h4>
           <div class="space-y-3">
+            <div v-if="recentComments.length === 0" class="text-xs text-slate-500 italic p-3">
+              Aucune appréciation récente
+            </div>
             <div v-for="comment in recentComments" :key="comment.id" class="p-3 bg-white dark:bg-slate-900 rounded-lg border border-slate-200 dark:border-slate-700">
               <div class="flex justify-between items-start mb-2">
-                <span class="text-xs font-bold text-slate-600 dark:text-slate-400">{{ comment.matiere?.nom || 'Non spécifié' }}</span>
-                <span class="text-xs text-slate-500">{{ formatDate(comment.date) }}</span>
+                <span class="text-xs font-bold text-primary">{{ comment.matiere }}</span>
+                <span class="text-[10px] text-slate-500">{{ formatDate(comment.date) }}</span>
               </div>
-              <p class="text-sm text-slate-700 dark:text-slate-300 italic">{{ comment.text }}</p>
+              <p class="text-sm text-slate-700 dark:text-slate-300 italic">"{{ comment.text }}"</p>
             </div>
           </div>
         </div>
@@ -145,11 +149,12 @@
         <div class="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-xl border border-blue-200 dark:border-blue-800">
           <h4 class="text-sm font-bold text-blue-900 dark:text-blue-100 mb-3 flex items-center gap-2">
             <span class="material-symbols-outlined text-sm">lightbulb</span>
-            Points Forts & Axes d'Amélioration
+            Analyse Automatique
           </h4>
           <div class="space-y-4">
             <div>
-              <h5 class="text-xs font-bold text-blue-700 dark:text-blue-300 mb-2">Points Forts</h5>
+              <h5 class="text-xs font-bold text-blue-700 dark:text-blue-300 mb-2 uppercase tracking-wider">Points Forts</h5>
+              <div v-if="strengths.length === 0" class="text-xs text-slate-500 italic">Données insuffisantes</div>
               <ul class="text-sm space-y-1 text-blue-600 dark:text-blue-400">
                 <li v-for="strength in strengths" :key="strength" class="flex items-center gap-1">
                   <span class="material-symbols-outlined text-sm">check_circle</span>
@@ -158,7 +163,8 @@
               </ul>
             </div>
             <div>
-              <h5 class="text-xs font-bold text-orange-700 dark:text-orange-300 mb-2">Axes d'Amélioration</h5>
+              <h5 class="text-xs font-bold text-orange-700 dark:text-orange-300 mb-2 uppercase tracking-wider">Axes d'Amélioration</h5>
+              <div v-if="improvements.length === 0" class="text-xs text-slate-500 italic">Données insuffisantes</div>
               <ul class="text-sm space-y-1 text-orange-600 dark:text-orange-400">
                 <li v-for="improvement in improvements" :key="improvement" class="flex items-center gap-1">
                   <span class="material-symbols-outlined text-sm">trending_up</span>
@@ -174,7 +180,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, computed } from 'vue'
 import api from '@/services/api'
 
 const props = defineProps({
@@ -189,38 +195,62 @@ const selectedPeriod = ref('trimestre')
 const subjects = ref([])
 const pedagogyStats = ref({
   moyenneGenerale: '--',
+  performanceEvolution: [],
   matieresValidees: 0,
   totalMatieres: 0,
   credits: 0,
   evolution: 'Stable'
 })
 
-const recentComments = ref([
-  {
-    id: 1,
-    matiere: 'Mathématiques',
-    text: 'Bon travail cette année, continuez comme ça !',
-    date: '2024-01-10'
-  },
-  {
-    id: 2,
-    matiere: 'Français',
-    text: 'Progrès significatifs en rédaction',
-    date: '2024-01-08'
-  }
-])
+const recentComments = computed(() => {
+  return rawNotes.value
+    .filter(n => n.appreciation)
+    .map(n => ({
+      id: n._id,
+      matiere: n.matiere?.nom,
+      text: n.appreciation,
+      date: n.createdAt
+    }))
+    .slice(0, 3)
+})
 
-const strengths = ref([
-  'Participation active en classe',
-  'Bon esprit d\'analyse',
-  'Autonomie dans le travail'
-])
+const strengths = computed(() => {
+  return subjects.value
+    .filter(s => parseFloat(s.average) >= 14)
+    .map(s => `Excellent en ${s.name}`)
+    .slice(0, 3)
+})
 
-const improvements = ref([
-  'Approfondir la rigueur scientifique',
-  'Améliorer l\'organisation',
-  'Développer l\'aisance orale'
-])
+const improvements = computed(() => {
+  return subjects.value
+    .filter(s => parseFloat(s.average) < 10)
+    .map(s => `Doit redoubler d'efforts en ${s.name}`)
+    .slice(0, 3)
+})
+
+const rawNotes = ref([])
+
+// Chart Helpers
+const chartPoints = computed(() => {
+  const data = pedagogyStats.value.performanceEvolution
+  if (!data || data.length < 2) return ''
+  
+  return data.map((p, i) => {
+    return `${i === 0 ? 'M' : 'L'} ${getPointX(i)} ${getPointY(p.average)}`
+  }).join(' ')
+})
+
+const getPointX = (index) => {
+  const data = pedagogyStats.value.performanceEvolution
+  if (!data || data.length === 0) return 0
+  if (data.length === 1) return 400
+  return 50 + (index / (data.length - 1)) * 700
+}
+
+const getPointY = (val) => {
+  const grade = parseFloat(val) || 0
+  return 150 - (grade / 20) * 150
+}
 
 const fetchPedagogyData = async () => {
   try {
@@ -231,16 +261,20 @@ const fetchPedagogyData = async () => {
     const stats = statsRes.data.data
     
     pedagogyStats.value = {
-      moyenneGenerale: stats.moyenneGenerale ? stats.moyenneGenerale.toFixed(2) : '--',
+      moyenneGenerale: stats.moyenneGenerale || '--',
+      performanceEvolution: stats.performanceEvolution || [],
       matieresValidees: stats.creditsValides || 0,
       totalMatieres: stats.totalMatieres || 0,
       credits: stats.creditsValides || 0,
-      evolution: 'En progression'
+      evolution: stats.performanceEvolution?.length > 1 
+        ? (stats.performanceEvolution[stats.performanceEvolution.length-1].average >= stats.performanceEvolution[0].average ? 'En progression' : 'En baisse')
+        : 'Stable'
     }
     
     // Get student notes
     const notesRes = await api.getStudentNotes(props.studentId)
-    const notes = notesRes.data.data
+    rawNotes.value = notesRes.data.data
+    const notes = rawNotes.value
     
     // Process subjects
     const subjectsMap = new Map()
@@ -251,52 +285,25 @@ const fetchPedagogyData = async () => {
           name: note.matiere.nom,
           grades: [],
           average: 0,
-          classAverage: 12.5, // Mock data
-          appreciation: 'Bon',
+          classAverage: '--', // Not available in this endpoint
+          appreciation: note.appreciation || 'Aucune',
           status: note.statut
         })
       }
-      subjectsMap.get(note.matiere._id).grades.push(note.moyenne)
+      if (note.moyenne) subjectsMap.get(note.matiere._id).grades.push(note.moyenne)
     })
     
     // Calculate averages
     subjects.value = Array.from(subjectsMap.values()).map(subject => {
-      const validGrades = subject.grades.filter(g => g !== null && g !== undefined)
-      subject.average = validGrades.length > 0 
-        ? (validGrades.reduce((a, b) => a + b, 0) / validGrades.length).toFixed(2)
+      subject.average = subject.grades.length > 0 
+        ? (subject.grades.reduce((a, b) => a + b, 0) / subject.grades.length).toFixed(2)
         : '--'
       return subject
     })
     
   } catch (error) {
     console.error('Erreur lors du chargement des données pédagogiques:', error)
-    // Use mock data for demo
-    subjects.value = [
-      {
-        id: 1,
-        name: 'Mathématiques',
-        average: '14.5',
-        classAverage: '12.3',
-        appreciation: 'TB',
-        status: 'VALIDEE'
-      },
-      {
-        id: 2,
-        name: 'Français',
-        average: '13.2',
-        classAverage: '11.8',
-        appreciation: 'B',
-        status: 'VALIDEE'
-      },
-      {
-        id: 3,
-        name: 'Physique-Chimie',
-        average: '12.8',
-        classAverage: '12.1',
-        appreciation: 'AB',
-        status: 'VALIDEE'
-      }
-    ]
+    subjects.value = []
   } finally {
     isLoading.value = false
   }

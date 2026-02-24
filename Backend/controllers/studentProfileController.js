@@ -180,3 +180,79 @@ exports.exportStudentProfile = async (req, res, next) => {
     });
   }
 };
+
+// @desc    Upload student photo
+// @route   PUT /api/v1/student-profile/profile/:id/photo
+// @access  Private (with selfAccess middleware)
+exports.uploadStudentPhoto = async (req, res, next) => {
+  try {
+    const studentId = req.params.id;
+
+    if (!req.file) {
+      return res.status(400).json({ success: false, error: 'Veuillez télécharger un fichier' });
+    }
+
+    const photoUrl = `/uploads/profile/${req.file.filename}`;
+
+    const student = await User.findByIdAndUpdate(
+      studentId,
+      { photo: photoUrl },
+      { new: true }
+    );
+
+    if (!student) {
+      return res.status(404).json({ success: false, error: 'Élève non trouvé' });
+    }
+
+    res.status(200).json({
+      success: true,
+      data: photoUrl
+    });
+  } catch (error) {
+    console.error('Erreur uploadStudentPhoto:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+};
+
+// @desc    Add emergency contact for student
+// @route   POST /api/v1/student-profile/profile/:id/emergency-contacts
+// @access  Private (with selfAccess middleware)
+exports.addEmergencyContact = async (req, res, next) => {
+  try {
+    const studentId = req.params.id;
+    const { nom, prenom, relation, telephone, email, prioritaire } = req.body;
+
+    const student = await User.findById(studentId);
+    if (!student) {
+      return res.status(404).json({ success: false, error: 'Élève non trouvé' });
+    }
+
+    // Initialize array if it doesn't exist (safety)
+    if (!student.emergencyContacts) {
+      student.emergencyContacts = [];
+    }
+
+    // Add new contact
+    const newContact = {
+      nom,
+      prenom,
+      relation,
+      telephone,
+      email,
+      prioritaire: prioritaire || false
+    };
+
+    student.emergencyContacts.push(newContact);
+    await student.save({ validateBeforeSave: false });
+
+    res.status(201).json({
+      success: true,
+      data: student.emergencyContacts[student.emergencyContacts.length - 1],
+      message: 'Contact d\'urgence ajouté avec succès'
+    });
+  } catch (error) {
+    console.error('Erreur addEmergencyContact:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+};
+

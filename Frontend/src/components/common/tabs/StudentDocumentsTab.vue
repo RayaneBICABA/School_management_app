@@ -140,7 +140,7 @@
         <div class="bg-slate-50 dark:bg-slate-800/50 p-4 rounded-xl border border-slate-100 dark:border-slate-800">
           <h4 class="text-sm font-bold text-slate-900 dark:text-white mb-3 flex items-center gap-2">
             <span class="material-symbols-outlined text-sm">share</span>
-            Partage de Documents
+            Partage de Documents (Service à venir)
           </h4>
           <div class="space-y-3">
             <div class="flex justify-between items-center">
@@ -189,7 +189,7 @@
 import { ref, onMounted, computed } from 'vue'
 import api from '@/services/api'
 
-defineProps({
+const props = defineProps({
   studentId: {
     type: String,
     required: true
@@ -214,23 +214,23 @@ const requiredDocuments = ref([
   {
     id: 1,
     name: 'Certificat de scolarité',
-    description: 'Certificat de l\'année en cours',
-    uploaded: true,
+    description: 'Service à venir',
+    uploaded: false,
     expired: false
   },
   {
     id: 2,
     name: 'Fiche de santé',
-    description: 'Fiche médicale à jour',
+    description: 'Service à venir',
     uploaded: false,
     expired: false
   },
   {
     id: 3,
     name: 'Autorisation parentale',
-    description: 'Sorties et activités',
-    uploaded: true,
-    expired: true
+    description: 'Service à venir',
+    uploaded: false,
+    expired: false
   }
 ])
 
@@ -243,21 +243,9 @@ const sharingSettings = ref({
 const recentActivity = ref([
   {
     id: 1,
-    type: 'upload',
-    description: 'Bulletin du T1 déposé',
-    date: '2024-01-15'
-  },
-  {
-    id: 2,
-    type: 'view',
-    description: 'Certificat médical consulté',
-    date: '2024-01-12'
-  },
-  {
-    id: 3,
-    type: 'share',
-    description: 'Documents partagés avec les parents',
-    date: '2024-01-10'
+    type: 'info',
+    description: 'Historique bientôt disponible',
+    date: new Date().toISOString()
   }
 ])
 
@@ -287,56 +275,62 @@ const fetchDocuments = async () => {
   try {
     isLoading.value = true
     
-    // Mock data for demo - replace with actual API call
+    // Initialiser les documents
     documents.value = {
-      school: [
-        {
-          id: 1,
-          name: 'Bulletin Trimestre 1',
-          type: 'pdf',
-          category: 'school',
-          date: '2024-01-15',
-          size: 245760,
-          expiryDate: null
-        },
-        {
-          id: 2,
-          name: 'Certificat de scolarité 2023-2024',
-          type: 'pdf',
-          category: 'school',
-          date: '2023-09-10',
-          size: 153600,
-          expiryDate: '2024-09-10'
-        }
-      ],
-      medical: [
-        {
-          id: 3,
-          name: 'Certificat médical',
-          type: 'pdf',
-          category: 'medical',
-          date: '2023-09-05',
-          size: 98304,
-          expiryDate: '2024-09-05'
-        }
-      ],
-      administrative: [
-        {
-          id: 4,
-          name: 'Autorisation de sortie',
-          type: 'pdf',
-          category: 'administrative',
-          date: '2023-09-01',
-          size: 65536,
-          expiryDate: null
-        }
-      ]
+      school: [],
+      medical: [],
+      administrative: []
+    }
+
+    // Récupérer les bulletins réels de l'élève
+    const res = await api.getBulletinsByEleve(props.studentId)
+    if (res.data.success && res.data.data) {
+      documents.value.school = res.data.data.map(bulletin => ({
+        id: bulletin._id,
+        name: `Bulletin ${bulletin.periode.charAt(0).toUpperCase() + bulletin.periode.slice(1)} - ${bulletin.anneeScolaire}`,
+        type: 'pdf',
+        category: 'school',
+        date: bulletin.createdAt || bulletin.dateGeneration,
+        size: 0, // Taille non stockée en BD pour les bulletins générés
+        expiryDate: null,
+        bulletinId: bulletin._id
+      }))
     }
     
   } catch (error) {
     console.error('Erreur lors du chargement des documents:', error)
   } finally {
     isLoading.value = false
+  }
+}
+
+const downloadDocument = async (document) => {
+  if (document.category === 'school' && document.bulletinId) {
+    try {
+      const response = await api.downloadBulletinPDF(document.bulletinId)
+      const blob = new Blob([response.data], { type: 'application/pdf' })
+      const url = window.URL.createObjectURL(blob)
+      const link = document.createElement('a')
+      link.href = url
+      link.setAttribute('download', `${document.name}.pdf`)
+      document.body.appendChild(link)
+      link.click()
+      document.body.removeChild(link)
+      window.URL.revokeObjectURL(url)
+    } catch (error) {
+      console.error('Erreur téléchargement bulletin:', error)
+      alert('Erreur lors du téléchargement du bulletin')
+    }
+  } else {
+    alert('Ce document n\'est pas encore disponible en téléchargement.')
+  }
+}
+
+const viewDocument = (document) => {
+  if (document.category === 'school' && document.bulletinId) {
+    window.open(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api/v1'}/bulletins/${document.bulletinId}/pdf?token=${localStorage.getItem('token')}`, '_blank')
+  } else {
+    alert('Aperçu non disponible pour ce type de document.')
   }
 }
 
@@ -418,16 +412,6 @@ const getActivityIcon = (type) => {
     delete: 'delete'
   }
   return icons[type] || 'description'
-}
-
-const viewDocument = (document) => {
-  console.log('Voir le document:', document)
-  alert(`Ouverture du document: ${document.name}`)
-}
-
-const downloadDocument = (document) => {
-  console.log('Télécharger le document:', document)
-  alert(`Téléchargement de: ${document.name}`)
 }
 
 const deleteDocument = (document) => {

@@ -50,9 +50,9 @@
           <div class="h-48 w-full relative">
             <!-- Bar chart visualization -->
             <div class="absolute inset-0 flex items-end justify-between px-2 pb-8">
-              <div v-for="(month, index) in monthlyData" :key="index" class="flex flex-col items-center flex-1">
-                <div class="w-full max-w-[20px] bg-gradient-to-t from-red-500 to-orange-500 rounded-t" :style="`height: ${month.absenceHeight}%`" :title="`${month.absences} absences`"></div>
-                <div class="w-full max-w-[20px] bg-gradient-to-t from-orange-500 to-yellow-500 rounded-t mt-1" :style="`height: ${month.retardHeight}%`" :title="`${month.retards} retards`"></div>
+              <div v-for="(month, index) in monthlyData" :key="index" class="flex flex-col items-center flex-1 h-full justify-end">
+                <div class="w-full max-w-[12px] bg-red-500 rounded-t transition-all duration-500" :style="`height: ${Math.min(100, (month.absences / 5) * 100)}%`" :title="`${month.absences} absences`"></div>
+                <div class="w-full max-w-[12px] bg-orange-500 rounded-t mt-1 transition-all duration-500" :style="`height: ${Math.min(100, (month.retards / 5) * 100)}%`" :title="`${month.retards} retards`"></div>
               </div>
             </div>
             <!-- X-axis labels -->
@@ -197,7 +197,6 @@ const attendanceRecords = ref([])
 
 const attendanceStats = ref({
   presences: 0,
-  presences: 0,
   absences: 0,
   absenceHours: 0,
   retards: 0,
@@ -207,25 +206,41 @@ const attendanceStats = ref({
   justificationRate: 0
 })
 
-const monthlyData = ref([
-  { name: 'Sep', absences: 2, retards: 1, absenceHeight: 20, retardHeight: 10 },
-  { name: 'Oct', absences: 1, retards: 3, absenceHeight: 10, retardHeight: 30 },
-  { name: 'Nov', absences: 3, retards: 2, absenceHeight: 30, retardHeight: 20 },
-  { name: 'Déc', absences: 1, retards: 1, absenceHeight: 10, retardHeight: 10 },
-  { name: 'Jan', absences: 2, retards: 4, absenceHeight: 20, retardHeight: 40 },
-  { name: 'Fév', absences: 0, retards: 2, absenceHeight: 0, retardHeight: 20 }
-])
-
-const patterns = ref({
-  mostAbsentDay: 'Lundi',
-  concernedSubject: 'Mathématiques',
-  criticalPeriod: 'Fin de trimestre'
+const monthlyData = computed(() => {
+  return studentStats.value.attendanceEvolution || []
 })
 
-const alerts = ref([
-  { id: 1, message: 'Taux d\'absence élevé ce mois-ci' },
-  { id: 2, message: 'Plusieurs retards le matin' }
-])
+const patterns = computed(() => {
+  if (!attendanceRecords.value.length) return { mostAbsentDay: '--', concernedSubject: '--', criticalPeriod: '--' }
+  const days = ['Dimanche', 'Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi']
+  const counts = {}
+  attendanceRecords.value.forEach(r => {
+    const day = days[new Date(r.date).getDay()]
+    counts[day] = (counts[day] || 0) + 1
+  })
+  const mostAbsentDay = Object.keys(counts).reduce((a, b) => (counts[a] || 0) > (counts[b] || 0) ? a : b, '--')
+  return {
+    mostAbsentDay,
+    concernedSubject: attendanceRecords.value[0]?.matiere || '--',
+    criticalPeriod: 'En cours d\'analyse'
+  }
+})
+
+const alerts = computed(() => {
+  const list = []
+  if (attendanceStats.value.absences > 3) {
+    list.push({ id: 1, message: 'Seuil d\'alertes absences atteint' })
+  }
+  if (attendanceStats.value.retards > 5) {
+    list.push({ id: 2, message: 'Frequence de retards élevée' })
+  }
+  if (list.length === 0) {
+    list.push({ id: 0, message: 'Aucune alerte critique' })
+  }
+  return list
+})
+
+const studentStats = ref({})
 
 const filteredAttendance = computed(() => {
   let filtered = attendanceRecords.value
@@ -248,7 +263,7 @@ const fetchAttendanceData = async () => {
   try {
     isLoading.value = true
     
-    const res = await api.getStudentAttendance(props.studentId)
+    const res = await api.getAttendance(props.studentId)
     const records = res.data.data
     
     attendanceRecords.value = records.map(record => ({
@@ -260,6 +275,10 @@ const fetchAttendanceData = async () => {
       motif: record.motif || 'Non spécifié',
       justifie: record.justifie || false
     }))
+
+    // Fetch stats for chart
+    const statsRes = await api.getStudentStats(props.studentId)
+    studentStats.value = statsRes.data.data
     
     // Calculate statistics
     const totalDays = attendanceRecords.value.length
@@ -280,36 +299,7 @@ const fetchAttendanceData = async () => {
     
   } catch (error) {
     console.error('Erreur lors du chargement des données d\'assiduité:', error)
-    // Use mock data for demo
-    attendanceRecords.value = [
-      {
-        id: 1,
-        date: '2024-01-15',
-        type: 'absence',
-        heure: '08:00',
-        matiere: 'Mathématiques',
-        motif: 'Maladie',
-        justifie: true
-      },
-      {
-        id: 2,
-        date: '2024-01-12',
-        type: 'retard',
-        heure: '08:10',
-        matiere: 'Français',
-        motif: 'Transport',
-        justifie: false
-      },
-      {
-        id: 3,
-        date: '2024-01-10',
-        type: 'absence',
-        heure: '14:00',
-        matiere: 'Physique',
-        motif: 'Rendez-vous médical',
-        justifie: true
-      }
-    ]
+    attendanceRecords.value = []
   } finally {
     isLoading.value = false
   }

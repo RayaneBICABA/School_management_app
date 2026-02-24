@@ -51,6 +51,49 @@ exports.getStudentStats = async (req, res, next) => {
 
         const moyenneGenerale = totalCoefficients > 0 ? weightedSum / totalCoefficients : 0;
 
+        // Calculer l'évolution des performances (moyennes par mois)
+        const notesGroupedByMonth = {};
+        const monthsOrder = ['sept.', 'oct.', 'nov.', 'déc.', 'janv.', 'févr.', 'mars', 'avr.', 'mai', 'juin'];
+
+        notes.forEach(note => {
+            if (note.statut === 'VALIDEE' && note.moyenne && note.createdAt) {
+                const date = new Date(note.createdAt);
+                const month = date.toLocaleString('fr-FR', { month: 'short' }).toLowerCase();
+                if (!notesGroupedByMonth[month]) {
+                    notesGroupedByMonth[month] = { sum: 0, count: 0 };
+                }
+                notesGroupedByMonth[month].sum += note.moyenne;
+                notesGroupedByMonth[month].count += 1;
+            }
+        });
+
+        const performanceEvolution = monthsOrder
+            .filter(m => notesGroupedByMonth[m])
+            .map(month => ({
+                month: month.charAt(0).toUpperCase() + month.slice(1),
+                average: Number((notesGroupedByMonth[month].sum / notesGroupedByMonth[month].count).toFixed(2))
+            }));
+
+        // Récupérer les absences et retards par mois pour le graphique d'assiduité
+        const allAttendance = await Attendance.find({ eleve: studentId });
+        const attendanceGroupedByMonth = {};
+
+        allAttendance.forEach(record => {
+            const date = new Date(record.date);
+            const month = date.toLocaleString('fr-FR', { month: 'short' }).toLowerCase();
+            if (!attendanceGroupedByMonth[month]) {
+                attendanceGroupedByMonth[month] = { absences: 0, retards: 0 };
+            }
+            if (record.statut === 'absent') attendanceGroupedByMonth[month].absences += 1;
+            else if (record.statut === 'retard') attendanceGroupedByMonth[month].retards += 1;
+        });
+
+        const attendanceEvolution = monthsOrder.map(month => ({
+            name: month.charAt(0).toUpperCase() + month.slice(1),
+            absences: attendanceGroupedByMonth[month]?.absences || 0,
+            retards: attendanceGroupedByMonth[month]?.retards || 0
+        }));
+
         // Récupérer les absences du mois en cours
         const currentMonth = new Date().getMonth();
         const currentYear = new Date().getFullYear();
@@ -76,7 +119,9 @@ exports.getStudentStats = async (req, res, next) => {
         res.status(200).json({
             success: true,
             data: {
-                moyenneGenerale,
+                moyenneGenerale: Number(moyenneGenerale.toFixed(2)),
+                performanceEvolution,
+                attendanceEvolution,
                 creditsValides,
                 absencesCeMois,
                 totalAbsences,

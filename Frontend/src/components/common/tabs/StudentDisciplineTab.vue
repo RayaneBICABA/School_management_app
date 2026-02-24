@@ -109,7 +109,7 @@
         <div class="bg-primary/5 p-4 rounded-xl border border-primary/20">
           <h4 class="text-sm font-bold text-primary mb-3 flex items-center gap-2">
             <span class="material-symbols-outlined text-sm">tips_and_updates</span>
-            Recommandations
+            Actions Recommandées
           </h4>
           <ul class="text-sm space-y-2 text-slate-600 dark:text-slate-400">
             <li v-for="recommendation in recommendations" :key="recommendation.id" class="flex items-start gap-2">
@@ -124,7 +124,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, computed } from 'vue'
 import api from '@/services/api'
 
 const props = defineProps({
@@ -147,11 +147,23 @@ const disciplineStats = ref({
   pointsConduite: 20
 })
 
-const recommendations = ref([
-  { id: 1, text: 'Maintenir un dialogue régulier avec la famille' },
-  { id: 2, text: 'Surveiller les progrès académiques' },
-  { id: 3, text: 'Encourager la participation en classe' }
-])
+const recommendations = computed(() => {
+  const recs = []
+  if (disciplineStats.value.absences > 5) {
+    recs.push({ id: 1, text: 'Dialogue urgent avec la famille concernant l\'assiduité' })
+  }
+  if (disciplineStats.value.incidents > 2) {
+    recs.push({ id: 2, text: 'Suivi pédagogique renforcé pour comportement' })
+  }
+  if (disciplineStats.value.pointsConduite < 12) {
+    recs.push({ id: 3, text: 'Renforcement du suivi disciplinaire recommandé' })
+  }
+  if (recs.length === 0) {
+    recs.push({ id: 0, text: 'Félicitations pour la tenue exemplaire' })
+    recs.push({ id: 4, text: 'Maintenir ce niveau d\'engagement' })
+  }
+  return recs
+})
 
 const fetchDisciplineData = async () => {
   try {
@@ -171,25 +183,7 @@ const fetchDisciplineData = async () => {
     
   } catch (error) {
     console.error('Erreur lors du chargement des données de discipline:', error)
-    // Use mock data for demo
-    incidents.value = [
-      {
-        id: 1,
-        date: '2024-01-15',
-        titre: 'Bavardages répétés',
-        severity: 'medium',
-        professeur: 'M. Martin',
-        sanction: 'Observation écrite'
-      },
-      {
-        id: 2,
-        date: '2024-01-10',
-        titre: 'Retard',
-        severity: 'low',
-        professeur: 'Mme. Durand',
-        sanction: 'Avertissement'
-      }
-    ]
+    incidents.value = []
   } finally {
     isLoading.value = false
   }

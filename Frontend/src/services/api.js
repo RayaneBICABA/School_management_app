@@ -726,6 +726,16 @@ export default {
     updateStudentProfile(id, studentData) {
         return api.put(`/student-profile/profile/${id}`, studentData);
     },
+    uploadStudentPhoto(id, formData) {
+        return api.put(`/student-profile/profile/${id}/photo`, formData, {
+            headers: {
+                'Content-Type': 'multipart/form-data'
+            }
+        });
+    },
+    addStudentEmergencyContact(id, contactData) {
+        return api.post(`/student-profile/profile/${id}/emergency-contacts`, contactData);
+    },
     exportStudentProfile(id) {
         return api.get(`/student-profile/profile/${id}/export`, {
             responseType: 'blob'

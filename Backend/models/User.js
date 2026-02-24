@@ -134,6 +134,16 @@ const UserSchema = new mongoose.Schema({
             ref: 'User'
         }
     ],
+    emergencyContacts: [
+        {
+            nom: String,
+            prenom: String,
+            relation: String,
+            telephone: String,
+            email: String,
+            prioritaire: { type: Boolean, default: false }
+        }
+    ],
     createdAt: {
         type: Date,
         default: Date.now

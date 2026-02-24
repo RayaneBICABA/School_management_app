@@ -339,29 +339,17 @@ const adminActions = ref([
 const adminNotes = ref([
   {
     id: 1,
-    author: 'Admin Système',
-    text: 'Élève inscrit pour l\'année 2023-2024',
-    date: '2023-09-01'
-  },
-  {
-    id: 2,
-    author: 'Secrétaire',
-    text: 'Documents complets reçus',
-    date: '2023-09-05'
+    author: 'Système',
+    text: 'Module de notes administratives à venir',
+    date: new Date().toISOString()
   }
 ])
 
 const administrativeAlerts = ref([
   {
     id: 1,
-    title: 'Frais impayés',
-    description: 'Solde de 50,000 FCFA',
-    severity: 'Moyen'
-  },
-  {
-    id: 2,
-    title: 'Document expiré',
-    description: 'Certificat médical à renouveler',
+    title: 'Analyse en cours',
+    description: 'Les alertes automatiques seront bientôt activées',
     severity: 'Faible'
   }
 ])

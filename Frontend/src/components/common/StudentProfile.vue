@@ -108,7 +108,7 @@
           <div class="p-6">
             <!-- Info Section -->
             <StudentInfoTab 
-              v-if="activeSection === 'infos'" 
+              v-if="activeSection === 'infos' && activeTab === 'infos'" 
               :student="student" 
               :can-edit="canEdit"
               :can-edit-academic="canEditAcademic"
@@ -513,7 +513,7 @@ const addContact = async () => {
       prioritaire: newContact.value.priority
     }
     
-    await api.addEmergencyContact(contactData)
+    await api.addStudentEmergencyContact(props.studentId, contactData)
     alert('Contact d\'urgence ajouté avec succès')
     
     // Reset form and reload
@@ -670,7 +670,7 @@ const handlePhotoUpload = async (event) => {
     }
     console.log('FormData length:', formData.entries().length)
     
-    const res = await api.uploadPhoto(formData)
+    const res = await api.uploadStudentPhoto(props.studentId, formData)
     
     console.log('Upload response:', res)
     

@@ -1,15 +1,23 @@
 import axios from 'axios';
 
+// Helper to determine the API root
+const getApiUrl = () => {
+    const envUrl = import.meta.env.VITE_API_URL;
+    if (envUrl) return envUrl.endsWith('/') ? envUrl.slice(0, -1) : envUrl;
+    // Fallback for development if no env var is set
+    return 'http://localhost:5000/api/v1';
+};
+
 // API instance
 const api = axios.create({
-    baseURL: import.meta.env.VITE_API_URL || 'http://localhost:5000/api/v1',
+    baseURL: getApiUrl(),
     headers: {
         'Content-Type': 'application/json'
     }
 });
 
-// Base Asset URL (for images, uploads, etc.)
-export const BASE_ASSET_URL = (import.meta.env.VITE_API_URL || 'http://localhost:5000/api/v1').replace('/api/v1', '');
+// Base Asset URL (for images, uploads, etc.) - points to the root of the backend
+export const BASE_ASSET_URL = getApiUrl().split('/api/')[0];
 
 import { useToast } from '@/composables/useToast';
 

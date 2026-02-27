@@ -19,15 +19,9 @@ exports.getSettingByKey = async (req, res) => {
     try {
         const setting = await Setting.findOne({ key: req.params.key });
         if (!setting) {
-            if (req.params.key === 'school_config') {
-                return res.status(200).json({
-                    success: true,
-                    data: null
-                });
-            }
-            return res.status(404).json({
-                success: false,
-                error: 'Réglage non trouvé'
+            return res.status(200).json({
+                success: true,
+                data: null
             });
         }
         res.status(200).json({

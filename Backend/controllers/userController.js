@@ -89,14 +89,29 @@ exports.createUser = async (req, res, next) => {
 // @access  Private/Admin
 exports.updateUser = async (req, res, next) => {
     try {
-        const user = await User.findByIdAndUpdate(req.params.id, req.body, {
-            new: true,
-            runValidators: true
-        });
+        let user = await User.findById(req.params.id).select('+password');
 
         if (!user) {
             return res.status(404).json({ success: false, error: 'Utilisateur non trouvé' });
         }
+
+        // Handle password update if provided
+        if (req.body.password && req.body.password.trim() !== '') {
+            user.password = req.body.password;
+        }
+
+        // Update other fields
+        const fieldsToUpdate = ['nom', 'prenom', 'email', 'telephone', 'sexe', 'civilite', 'role', 'status', 'classe'];
+        fieldsToUpdate.forEach(field => {
+            if (req.body[field] !== undefined) {
+                user[field] = req.body[field];
+            }
+        });
+
+        await user.save();
+
+        // Remove password from response
+        user.password = undefined;
 
         res.status(200).json({
             success: true,
@@ -145,7 +160,7 @@ exports.importStudents = async (req, res, next) => {
             const workbook = new ExcelJS.Workbook();
             await workbook.xlsx.load(req.files.file.data);
             const worksheet = workbook.getWorksheet(1); // Get first sheet
-            
+
             // Get headers from first row
             const headers = [];
             worksheet.getRow(1).eachCell((cell, colNumber) => {

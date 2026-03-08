@@ -279,6 +279,16 @@
                 <option value="BLOQUE">Bloqué</option>
               </select>
             </div>
+            <div class="flex flex-col gap-2 md:col-span-2">
+              <label class="text-sm font-medium text-[#0e141b] dark:text-slate-200">Mot de passe</label>
+              <div class="relative">
+                <input v-model="editForm.password" class="form-input w-full rounded-lg border-[#d0dbe7] dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-[#0e141b] dark:text-white focus:border-primary focus:ring-primary h-12 px-4 text-base" :type="showPassword ? 'text' : 'password'" placeholder="Laisser vide pour ne pas modifier"/>
+                <button type="button" @click="showPassword = !showPassword" class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors">
+                  <span class="material-symbols-outlined">{{ showPassword ? 'visibility_off' : 'visibility' }}</span>
+                </button>
+              </div>
+              <p class="text-[10px] text-slate-500 italic mt-1">Au moins 6 caractères.</p>
+            </div>
           </div>
         </form>
       </div>
@@ -421,8 +431,10 @@ const editForm = ref({
   civilite: '',
   role: '',
   status: '',
-  classe: ''
+  classe: '',
+  password: ''
 })
+const showPassword = ref(false)
 const availableClasses = ref([])
 const isUpdating = ref(false)
 const editErrorMessage = ref('')
@@ -505,8 +517,10 @@ const openEditModal = (user) => {
     civilite: user.civilite || '',
     role: user.role,
     status: user.status,
-    classe: user.classe?._id || user.classe || ''
+    classe: user.classe?._id || user.classe || '',
+    password: ''
   }
+  showPassword.value = false
   editErrorMessage.value = ''
   showEditModal.value = true
 }
@@ -522,8 +536,10 @@ const closeEditModal = () => {
     civilite: '',
     role: '',
     status: '',
-    classe: ''
+    classe: '',
+    password: ''
   }
+  showPassword.value = false
   
   editErrorMessage.value = ''
 }
@@ -541,7 +557,8 @@ const handleUpdate = async () => {
       civilite: editForm.value.role === 'PROFESSEUR' ? editForm.value.civilite : undefined,
       role: editForm.value.role,
       status: editForm.value.status,
-      classe: editForm.value.role === 'ELEVE' ? editForm.value.classe : undefined
+      classe: editForm.value.role === 'ELEVE' ? editForm.value.classe : undefined,
+      password: editForm.value.password || undefined
     }
     
     await api.updateUser(editForm.value._id, updateData)

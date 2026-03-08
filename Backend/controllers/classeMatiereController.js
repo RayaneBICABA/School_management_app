@@ -12,7 +12,7 @@ exports.getAllClasseMatieres = async (req, res) => {
 
         const classeMatieres = await ClasseMatiere.find(filter)
             .populate('classe', 'niveau section serie filiere')
-            .populate('matiere', 'nom code')
+            .populate('matiere', 'nom code couleur')
             .populate('professeur', 'nom prenom');
 
         // Filter out orphans (where class or matiere were deleted)

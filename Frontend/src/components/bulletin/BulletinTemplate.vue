@@ -94,7 +94,7 @@
               <td class="border border-black p-1 w-20 italic" :class="note.isDispensed ? '' : getAppreciationColor(getSubjectAppreciation(note.moyenneMatiere || 0))">
                 {{ note.isDispensed ? '' : getSubjectAppreciation(note.moyenneMatiere || 0) }}
               </td>
-              <td class="border border-black p-1 text-[9px]" style="width: 60px; white-space: nowrap;">{{ note.professeur ? (note.professeur.civilite === 'Mr' ? 'M ' : (note.professeur.civilite ? note.professeur.civilite + ' ' : '')) + (note.professeur.nom || '').toUpperCase() : '' }}</td>
+              <td class="border border-black p-1 text-[9px]" style="width: 60px; white-space: nowrap;">{{ note.professeur ? (note.professeur.civilite ? note.professeur.civilite + ' ' : '') + (note.professeur.nom || '').toUpperCase() : '' }}</td>
               <td class="border border-black p-1 w-20"></td>
             </tr>
             <!-- Category Totals -->

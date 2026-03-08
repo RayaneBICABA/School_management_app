@@ -19,7 +19,7 @@ exports.getSchedules = async (req, res) => {
 
         const schedules = await Schedule.find(query)
             .populate('classe', 'section niveau')
-            .populate('matiere', 'nom')
+            .populate('matiere', 'nom couleur')
             .populate('professeur', 'nom prenom');
 
         res.status(200).json({
@@ -100,7 +100,7 @@ exports.createSchedule = async (req, res) => {
         // 4. Populate for response
         const populatedSchedule = await Schedule.findById(schedule._id)
             .populate('classe', 'niveau section')
-            .populate('matiere', 'nom')
+            .populate('matiere', 'nom couleur')
             .populate('professeur', 'nom prenom');
 
         res.status(201).json({

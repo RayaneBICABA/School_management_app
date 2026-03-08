@@ -475,7 +475,7 @@ const onClassChange = async () => {
       professeur: sm.professeur ? `${sm.professeur.prenom} ${sm.professeur.nom}` : 'Non assigné',
       professeurId: sm.professeur?._id || sm.professeur,
       salle: 'TBD',
-      couleur: getCouleurByMatiere(sm.matiere?.nom)
+      couleur: sm.matiere?.couleur || getCouleurByMatiere(sm.matiere?.nom)
     }))
 
     // 2. Fetch existing schedule slots for this class
@@ -492,7 +492,7 @@ const onClassChange = async () => {
             matiere: slot.matiere?.nom || 'Matière',
             professeur: slot.professeur ? `${slot.professeur.prenom} ${slot.professeur.nom}` : 'N/A',
             salle: slot.salle,
-            couleur: getCouleurByMatiere(slot.matiere?.nom),
+            couleur: slot.matiere?.couleur || getCouleurByMatiere(slot.matiere?.nom),
             hasConflict: false
         }
       }
@@ -652,7 +652,7 @@ const onProfChange = async () => {
                     matiere: slot.matiere?.nom || 'Matière',
                     professeur: `${slot.classe?.niveau} ${slot.classe?.section}`, // Display Class Name instead of Prof Name in Prof View
                     salle: slot.salle,
-                    couleur: getCouleurByMatiere(slot.matiere?.nom),
+                    couleur: slot.matiere?.couleur || getCouleurByMatiere(slot.matiere?.nom),
                     hasConflict: false
                 }
             }
@@ -693,7 +693,7 @@ const fetchGlobalData = async () => {
                 professeur: profName,
                 salle: slot.salle,
                 classeRef: className,
-                couleur: getCouleurByMatiere(slot.matiere?.nom),
+                couleur: slot.matiere?.couleur || getCouleurByMatiere(slot.matiere?.nom),
                 hasConflict: false
             }
         }
@@ -859,6 +859,7 @@ const addMatiere = async () => {
         code: newMatiere.nom.substring(0, 3).toUpperCase(),
         coefficient: newMatiere.coefficient,
         categorie: newMatiere.categorie,
+        couleur: newMatiere.couleur,
         description: 'Matière créée depuis Emploi du Temps'
       })
       

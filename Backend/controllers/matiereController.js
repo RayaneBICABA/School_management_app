@@ -42,7 +42,19 @@ exports.getMatiere = async (req, res, next) => {
 // @access  Private/Admin
 exports.createMatiere = async (req, res, next) => {
     try {
-        const matiere = await Matiere.create(req.body);
+        const { nom } = req.body;
+
+        // Handle idempontency: find if exists by name
+        let matiere = await Matiere.findOne({ nom: new RegExp(`^${nom}$`, 'i') });
+
+        if (matiere) {
+            return res.status(200).json({
+                success: true,
+                data: matiere
+            });
+        }
+
+        matiere = await Matiere.create(req.body);
 
         res.status(201).json({
             success: true,

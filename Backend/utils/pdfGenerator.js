@@ -149,7 +149,7 @@ exports.getBulletinHTML = (bulletin, schoolConfig) => {
         tableRows += `<tr class="cat-header"><td colspan="7">${catName}</td></tr>`;
 
         notes.forEach(note => {
-            const prof = note.professeur ? `${note.professeur.civilite || ''} ${note.professeur.nom || ''}`.trim() : '';
+            const prof = note.professeur ? `${note.professeur.civilite ? note.professeur.civilite + ' ' : ''}${note.professeur.nom || ''}`.trim() : '';
             const app = note.isDispensed ? '' : getGeneralAppreciation(note.moyenneMatiere || 0);
 
             tableRows += `

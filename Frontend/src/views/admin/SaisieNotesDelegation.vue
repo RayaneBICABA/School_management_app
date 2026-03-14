@@ -184,13 +184,22 @@
                 >
                   <div class="flex items-center justify-center gap-2">
                     <span>{{ evaluation.nom }}</span>
-                    <button
-                      @click="deleteEvaluation(evaluation._id)"
-                      class="p-1 text-red-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded transition-colors"
-                      title="Supprimer cette évaluation"
-                    >
-                      <span class="material-symbols-outlined text-sm">close</span>
-                    </button>
+                    <div class="flex items-center gap-1">
+                      <button 
+                        @click="editEvaluationName(evaluation)" 
+                        class="p-1 text-primary hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded transition-colors"
+                        title="Modifier le nom"
+                      >
+                        <span class="material-symbols-outlined text-sm">edit</span>
+                      </button>
+                      <button
+                        @click="deleteEvaluation(evaluation._id)"
+                        class="p-1 text-red-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded transition-colors"
+                        title="Supprimer cette évaluation"
+                      >
+                        <span class="material-symbols-outlined text-sm">close</span>
+                      </button>
+                    </div>
                   </div>
                 </th>
                 <th class="px-4 py-3 text-center text-sm font-bold text-primary min-w-[100px]">Moyenne</th>
@@ -498,6 +507,25 @@ const deleteEvaluation = async (evalId) => {
       await loadData();
     } catch (err) {
       error('Erreur lors de la suppression');
+    }
+  };
+  showConfirmModal.value = true;
+};
+
+const editEvaluationName = (evaluation) => {
+  const newName = prompt('Entrez le nouveau nom de l\'évaluation:', evaluation.nom);
+  if (!newName || newName === evaluation.nom) return;
+
+  confirmModalTitle.value = 'Mise à jour du nom';
+  confirmModalMessage.value = `Renommer l'évaluation "${evaluation.nom}" en "${newName}" ? Les notes déjà saisies seront conservées.`;
+  pendingAction.value = async () => {
+    try {
+      await api.updateNoteColumn(evaluation._id, { nom: newName });
+      success('Évaluation renommée avec succès !');
+      await loadData();
+    } catch (err) {
+      console.error('Erreur renommage évaluation:', err);
+      error('Erreur lors du renommage de l\'évaluation');
     }
   };
   showConfirmModal.value = true;

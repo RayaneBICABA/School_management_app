@@ -24,10 +24,6 @@ const MatiereSchema = new mongoose.Schema({
     description: {
         type: String
     },
-    couleur: {
-        type: String,
-        default: 'blue'
-    },
     createdAt: {
         type: Date,
         default: Date.now

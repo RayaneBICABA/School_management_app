@@ -438,7 +438,6 @@
           </select>
         </div>
 
-        <!-- Categorie - only for new matière -->
         <div v-if="courseForm.isNew" class="flex flex-col gap-2">
           <label class="text-sm font-semibold text-[#0e141b] dark:text-slate-200">Catégorie</label>
           <select 
@@ -450,6 +449,17 @@
             <option value="ENSEIGNEMENT GÉNÉRAL">Enseignement Général</option>
             <option value="ENSEIGNEMENT TECHNIQUE">Enseignement Technique</option>
           </select>
+        </div>
+
+        <div v-if="courseForm.isNew" class="flex flex-col gap-2">
+            <label class="text-sm font-semibold text-[#0e141b] dark:text-slate-200">Couleur</label>
+            <select v-model="courseForm.couleur" class="w-full bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 rounded-lg text-sm focus:ring-primary focus:border-primary h-10 px-3">
+              <option value="blue">Bleu (Sciences)</option>
+              <option value="purple">Violet (Lettres)</option>
+              <option value="emerald">Vert (Sciences)</option>
+              <option value="orange">Orange (Sciences Humaines)</option>
+              <option value="slate">Gris (Langues)</option>
+            </select>
         </div>
 
         <div class="flex flex-col gap-2">
@@ -532,6 +542,17 @@
             class="w-full bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 rounded-lg text-sm focus:ring-primary focus:border-primary h-10 px-3"
             placeholder="Ex: 2"
           />
+        </div>
+
+        <div class="flex flex-col gap-2">
+            <label class="text-sm font-semibold text-[#0e141b] dark:text-slate-200">Couleur</label>
+            <select v-model="editSubjectForm.couleur" class="w-full bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 rounded-lg text-sm focus:ring-primary focus:border-primary h-10 px-3">
+              <option value="blue">Bleu (Sciences)</option>
+              <option value="purple">Violet (Lettres)</option>
+              <option value="emerald">Vert (Sciences)</option>
+              <option value="orange">Orange (Sciences Humaines)</option>
+              <option value="slate">Gris (Langues)</option>
+            </select>
         </div>
 
         <div class="flex gap-3 mt-6">
@@ -761,7 +782,8 @@ const courseForm = reactive({
   coefficient: 1,
   isNew: false,
   newNom: '',
-  categorie: ''
+  categorie: '',
+  couleur: 'blue'
 })
 
 const isCustomNiveau = ref(false)
@@ -789,7 +811,8 @@ const editSubjectForm = reactive({
   matiereId: '',
   nom: '',
   categorie: '',
-  coefficient: 1
+  coefficient: 1,
+  couleur: 'blue'
 })
 
 // Manage Modal variables
@@ -1082,6 +1105,7 @@ const closeAddCourseModal = () => {
   courseForm.isNew = false
   courseForm.newNom = ''
   courseForm.categorie = ''
+  courseForm.couleur = 'blue'
 }
 
 const addCourseToClass = async () => {
@@ -1104,7 +1128,8 @@ const addCourseToClass = async () => {
         nom: courseForm.newNom,
         code: courseForm.newNom.substring(0, 3).toUpperCase(),
         coefficient: courseForm.coefficient,
-        categorie: courseForm.categorie || 'AUTRES'
+        categorie: courseForm.categorie || 'AUTRES',
+        couleur: courseForm.couleur
       })
       matiereId = res.data.data._id
       // Refresh global list
@@ -1146,6 +1171,7 @@ const openEditSubjectModal = (course) => {
   editSubjectForm.nom = course.matiere?.nom || ''
   editSubjectForm.categorie = course.matiere?.categorie || 'ENSEIGNEMENT GÉNÉRAL'
   editSubjectForm.coefficient = course.coefficient || 1
+  editSubjectForm.couleur = course.matiere?.couleur || 'blue'
   showEditSubjectModal.value = true
 }
 
@@ -1161,7 +1187,8 @@ const updateSubject = async () => {
     // 1. Mettre à jour la matière elle-même (nom et catégorie)
     await api.updateMatiere(editSubjectForm.matiereId, {
       nom: editSubjectForm.nom,
-      categorie: editSubjectForm.categorie
+      categorie: editSubjectForm.categorie,
+      couleur: editSubjectForm.couleur
     })
 
     // 2. Mettre à jour l'affectation (coefficient)

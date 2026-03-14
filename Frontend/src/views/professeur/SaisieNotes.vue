@@ -137,14 +137,24 @@
                 >
                   <div class="flex items-center justify-center gap-2">
                     <span>{{ evaluation.nom }}</span>
-                    <button 
-                      @click="deleteEvaluation(evaluation._id)" 
-                      :disabled="notesStatus === 'VALIDEE' || notesStatus === 'EN_ATTENTE'"
-                      class="p-1 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
-                      title="Supprimer cette évaluation"
-                    >
-                      <span class="material-symbols-outlined text-sm">close</span>
-                    </button>
+                    <div class="flex items-center gap-1">
+                      <button 
+                        @click="editEvaluationName(evaluation)" 
+                        :disabled="notesStatus === 'VALIDEE' || notesStatus === 'EN_ATTENTE'"
+                        class="p-1 text-primary hover:bg-primary/10 rounded transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+                        title="Modifier le nom"
+                      >
+                        <span class="material-symbols-outlined text-sm">edit</span>
+                      </button>
+                      <button 
+                        @click="deleteEvaluation(evaluation._id)" 
+                        :disabled="notesStatus === 'VALIDEE' || notesStatus === 'EN_ATTENTE'"
+                        class="p-1 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+                        title="Supprimer cette évaluation"
+                      >
+                        <span class="material-symbols-outlined text-sm">close</span>
+                      </button>
+                    </div>
                   </div>
                 </th>
                 <th class="px-4 py-3 text-center text-sm font-bold text-primary min-w-[100px]">
@@ -698,6 +708,27 @@ const deleteEvaluation = (evalId) => {
       } catch (err) {
         console.error('Erreur suppression évaluation:', err);
         error('Erreur lors de la suppression de l\'évaluation');
+      }
+    }
+  );
+};
+
+const editEvaluationName = (evaluation) => {
+  const newName = prompt('Entrez le nouveau nom de l\'évaluation:', evaluation.nom);
+  if (!newName || newName === evaluation.nom) return;
+
+  openConfirmModal(
+    'Mise à jour du nom',
+    `Renommer l'évaluation "${evaluation.nom}" en "${newName}" ? Les notes déjà saisies seront conservées.`,
+    'Renommer',
+    async () => {
+      try {
+        await api.updateNoteColumn(evaluation._id, { nom: newName });
+        success('Évaluation renommée avec succès !');
+        loadData();
+      } catch (err) {
+        console.error('Erreur renommage évaluation:', err);
+        error('Erreur lors du renommage de l\'évaluation');
       }
     }
   );

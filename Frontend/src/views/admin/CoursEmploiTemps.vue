@@ -80,13 +80,22 @@
             >
               <div class="flex justify-between items-start">
                   <p :class="['text-xs font-bold', getMatiereTextColor(matiere.couleur)]">{{ matiere.nom }}</p>
-                  <button 
-                    @click.stop="confirmDeleteMatiere(matiere)" 
-                    class="opacity-0 group-hover:opacity-100 transition-opacity p-1 rounded hover:bg-red-500/10 text-red-500 cursor-pointer -mt-1 -mr-1"
-                    title="Retirer la matière"
-                  >
-                     <span class="material-symbols-outlined text-[14px]">delete</span>
-                  </button>
+                  <div class="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <button 
+                      @click.stop="openEditMatiereModal(matiere)" 
+                      class="p-1 rounded hover:bg-primary/10 text-primary cursor-pointer -mt-1"
+                      title="Modifier la matière"
+                    >
+                       <span class="material-symbols-outlined text-[14px]">edit</span>
+                    </button>
+                    <button 
+                      @click.stop="confirmDeleteMatiere(matiere)" 
+                      class="p-1 rounded hover:bg-red-500/10 text-red-500 cursor-pointer -mt-1 -mr-1"
+                      title="Retirer la matière"
+                    >
+                       <span class="material-symbols-outlined text-[14px]">delete</span>
+                    </button>
+                  </div>
               </div>
               <p :class="['text-[10px] mt-1', getMatiereSubTextColor(matiere.couleur)]">{{ matiere.professeur }} • {{ matiere.salle }}</p>
             </div>
@@ -289,6 +298,46 @@
       </div>
     </div>
 
+    <!-- Modal pour modifier une matière -->
+    <div v-if="showEditMatiereModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4" @click.self="showEditMatiereModal = false">
+      <div class="bg-white dark:bg-slate-900 rounded-xl shadow-2xl w-full max-w-md p-6">
+        <div class="flex justify-between items-center mb-4">
+          <h3 class="text-lg font-bold text-[#0e141b] dark:text-white">Modifier la matière</h3>
+          <button @click="showEditMatiereModal = false" class="text-slate-400 hover:text-slate-600">
+            <span class="material-symbols-outlined">close</span>
+          </button>
+        </div>
+        <div class="space-y-4">
+          <div class="flex flex-col gap-2">
+            <label class="text-sm font-medium text-[#0e141b] dark:text-slate-200">Nom de la matière</label>
+            <input v-model="editingMatiere.nom" class="form-input rounded-lg border-[#d0dbe7] dark:border-slate-700 bg-slate-50 dark:bg-slate-800 h-12 px-4 focus:ring-primary focus:border-primary" type="text" placeholder="Ex: Mathématiques" required/>
+          </div>
+          <div class="flex flex-col gap-2">
+            <label class="text-sm font-medium text-[#0e141b] dark:text-slate-200">Coefficient</label>
+            <input v-model.number="editingMatiere.coefficient" class="form-input rounded-lg border-[#d0dbe7] dark:border-slate-700 bg-slate-50 dark:bg-slate-800 h-10 px-4 focus:ring-primary focus:border-primary" type="number" min="1" required/>
+          </div>
+          <div class="flex flex-col gap-2">
+            <label class="text-sm font-medium text-[#0e141b] dark:text-slate-200">Couleur</label>
+            <select v-model="editingMatiere.couleur" class="form-select rounded-lg border-[#d0dbe7] dark:border-slate-700 bg-slate-50 dark:bg-slate-800 h-10 px-3">
+              <option value="blue">Bleu (Sciences)</option>
+              <option value="purple">Violet (Lettres)</option>
+              <option value="emerald">Vert (Sciences)</option>
+              <option value="orange">Orange (Sciences Humaines)</option>
+              <option value="slate">Gris (Langues)</option>
+            </select>
+          </div>
+          <div class="flex justify-end gap-3 pt-4">
+            <button @click="showEditMatiereModal = false" class="px-4 py-2 rounded-lg text-sm font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700">
+              Annuler
+            </button>
+            <button @click="handleUpdateMatiere" class="px-4 py-2 rounded-lg bg-primary text-white text-sm font-medium hover:bg-primary/90">
+              Mettre à jour
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <!-- Confirmation Modal -->
     <ConfirmationModal
       :isOpen="showConfirmModal"
@@ -403,6 +452,7 @@ const classes = ref([])
 const professors = ref([])
 const showAddMatiereModal = ref(false)
 const draggedMatiere = ref(null)
+const showEditMatiereModal = ref(false)
 
 // Confirmation Modal State
 const showConfirmModal = ref(false)
@@ -415,6 +465,14 @@ const newMatiere = reactive({
   nom: '',
   coefficient: 1,
   categorie: 'ENSEIGNEMENT GÉNÉRAL',
+  couleur: 'blue'
+})
+
+const editingMatiere = reactive({
+  matiereId: '',
+  associationId: '',
+  nom: '',
+  coefficient: 1,
   couleur: 'blue'
 })
 
@@ -475,7 +533,7 @@ const onClassChange = async () => {
       professeur: sm.professeur ? `${sm.professeur.prenom} ${sm.professeur.nom}` : 'Non assigné',
       professeurId: sm.professeur?._id || sm.professeur,
       salle: 'TBD',
-      couleur: getCouleurByMatiere(sm.matiere?.nom)
+      couleur: sm.matiere?.couleur || getCouleurByMatiere(sm.matiere?.nom)
     }))
 
     // 2. Fetch existing schedule slots for this class
@@ -492,7 +550,7 @@ const onClassChange = async () => {
             matiere: slot.matiere?.nom || 'Matière',
             professeur: slot.professeur ? `${slot.professeur.prenom} ${slot.professeur.nom}` : 'N/A',
             salle: slot.salle,
-            couleur: getCouleurByMatiere(slot.matiere?.nom),
+            couleur: slot.matiere?.couleur || getCouleurByMatiere(slot.matiere?.nom),
             hasConflict: false
         }
       }
@@ -505,6 +563,48 @@ const onClassChange = async () => {
   } catch (err) {
     console.error('Erreur chargement détails classe:', err)
   }
+}
+
+const openEditMatiereModal = async (matiereAPlacer) => {
+    try {
+        // Fetch full matiere details for coefficient from ClasseMatiere association
+        const response = await api.getClasseMatieres(selectedClass.value)
+        const association = response.data.data.find(sm => (sm.matiere?._id || sm.matiere) === matiereAPlacer.id)
+
+        if (association) {
+            editingMatiere.matiereId = matiereAPlacer.id
+            editingMatiere.associationId = association._id
+            editingMatiere.nom = matiereAPlacer.nom
+            editingMatiere.coefficient = association.coefficient
+            editingMatiere.couleur = matiereAPlacer.couleur
+            showEditMatiereModal.value = true
+        }
+    } catch (err) {
+        console.error('Erreur ouverture modal édition:', err)
+    }
+}
+
+const handleUpdateMatiere = async () => {
+    if (!editingMatiere.matiereId || !selectedClass.value) return
+
+    try {
+        // 1. Update global matiere (nom, couleur)
+        await api.updateMatiere(editingMatiere.matiereId, {
+            nom: editingMatiere.nom,
+            couleur: editingMatiere.couleur
+        })
+
+        // 2. Update association (coefficient)
+        await api.updateClasseMatiere(selectedClass.value, editingMatiere.associationId, {
+            coefficient: editingMatiere.coefficient
+        })
+
+        showEditMatiereModal.value = false
+        await onClassChange()
+        // Toast notification could be added here
+    } catch (err) {
+        console.error('Erreur mise à jour matière:', err)
+    }
 }
 
 const fetchConflicts = async () => {
@@ -635,7 +735,7 @@ const onProfChange = async () => {
             classeId: sm.classe?._id || sm.classe,
             classeName: `${sm.classe?.niveau} ${sm.classe?.section}`,
             salle: 'TBD',
-            couleur: getCouleurByMatiere(sm.matiere?.nom)
+            couleur: sm.matiere?.couleur || getCouleurByMatiere(sm.matiere?.nom)
         }))
 
         // 2. Fetch existing schedule for this prof
@@ -652,7 +752,7 @@ const onProfChange = async () => {
                     matiere: slot.matiere?.nom || 'Matière',
                     professeur: `${slot.classe?.niveau} ${slot.classe?.section}`, // Display Class Name instead of Prof Name in Prof View
                     salle: slot.salle,
-                    couleur: getCouleurByMatiere(slot.matiere?.nom),
+                    couleur: slot.matiere?.couleur || getCouleurByMatiere(slot.matiere?.nom),
                     hasConflict: false
                 }
             }
@@ -693,7 +793,7 @@ const fetchGlobalData = async () => {
                 professeur: profName,
                 salle: slot.salle,
                 classeRef: className,
-                couleur: getCouleurByMatiere(slot.matiere?.nom),
+                couleur: slot.matiere?.couleur || getCouleurByMatiere(slot.matiere?.nom),
                 hasConflict: false
             }
         }
@@ -859,6 +959,7 @@ const addMatiere = async () => {
         code: newMatiere.nom.substring(0, 3).toUpperCase(),
         coefficient: newMatiere.coefficient,
         categorie: newMatiere.categorie,
+        couleur: newMatiere.couleur,
         description: 'Matière créée depuis Emploi du Temps'
       })
       

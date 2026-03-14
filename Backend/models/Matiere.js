@@ -21,6 +21,10 @@ const MatiereSchema = new mongoose.Schema({
         type: Number,
         default: 1
     },
+    couleur: {
+        type: String,
+        default: 'blue'
+    },
     description: {
         type: String
     },

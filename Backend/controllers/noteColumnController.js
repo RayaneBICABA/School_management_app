@@ -94,10 +94,31 @@ exports.updateNoteColumn = asyncHandler(async (req, res, next) => {
         return next(new ErrorResponse('Non autorisé', 403));
     }
 
+    const oldNom = column.nom;
+    const newNom = req.body.nom;
+
     column = await NoteColumn.findByIdAndUpdate(req.params.id, req.body, {
         new: true,
         runValidators: true
     }).populate(['matiere', 'classe', 'professeur']);
+
+    // Si le nom a changé, mettre à jour toutes les notes associées
+    if (newNom && oldNom !== newNom) {
+        await Note.updateMany(
+            {
+                matiere: column.matiere._id,
+                classe: column.classe._id,
+                periode: column.periode,
+                'notes.type': oldNom
+            },
+            {
+                $set: { 'notes.$[elem].type': newNom }
+            },
+            {
+                arrayFilters: [{ 'elem.type': oldNom }]
+            }
+        );
+    }
 
     res.status(200).json({
         success: true,

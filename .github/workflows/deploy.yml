@@ -18,18 +18,22 @@ jobs:
           username: ${{ secrets.SSH_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
-            cd /root
-            # 1. Vérifier si le dossier existe, sinon cloner
-            if [ ! -d "School_management_app" ]; then
-              git clone https://github.com/${{ github.repository }}.git
-            fi
+            cd /root/School_management_app
             
-            # 2. Entrer dans le dossier et récupérer les derniers changements
-            cd School_management_app
+            # 1. On force la mise de côté des modifs locales (comme la sécu Mongo)
+            git stash
+            
+            # 2. On récupère le code proprement
             git pull origin main
             
-            # 3. Relancer les conteneurs (Build + Recreate)
-            docker compose up -d --build
+            # 3. On tente de remettre tes modifs. Si ça bloque, on continue quand même
+            git stash pop || true
             
-            # 4. Nettoyage des vieilles images pour ne pas saturer le disque du VPS
+            # 4. On build le frontend SANS CACHE (pour être sûr d'avoir les nouvelles vues)
+            docker compose build --no-cache frontend
+            
+            # 5. On relance tout
+            docker compose up -d
+            
+            # 6. Nettoyage pour économiser les Go du VPS
             docker image prune -f

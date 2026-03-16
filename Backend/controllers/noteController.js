@@ -499,6 +499,9 @@ exports.getMasterSheetPDF = asyncHandler(async (req, res, next) => {
 
     if (allSheetsData.length === 0) return next(new ErrorResponse('Aucune donnée trouvée', 404));
 
+    // Base URL for resolving assets in PDF (needed for Puppeteer)
+    schoolConfig.baseUrl = `${req.protocol}://${req.get('host')}`;
+
     const pdfBuffer = await generateMasterGradeSheetPDF(allSheetsData, schoolConfig);
     res.set({ 'Content-Type': 'application/pdf', 'Content-Disposition': 'attachment; filename=MasterSheet.pdf', 'Content-Length': pdfBuffer.length });
     res.end(pdfBuffer);

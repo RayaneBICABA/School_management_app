@@ -689,7 +689,10 @@ exports.downloadBulletinPDF = asyncHandler(async (req, res, next) => {
 
         // Fetch school config
         const schoolSetting = await Setting.findOne({ key: 'school_config' });
-        const schoolConfig = schoolSetting ? schoolSetting.value : {};
+        const schoolConfig = schoolSetting ? { ...schoolSetting.value } : {};
+
+        // Base URL for resolving assets in PDF (needed for Puppeteer)
+        schoolConfig.baseUrl = `${req.protocol}://${req.get('host')}`;
 
         // Générer le PDF
         const pdfBuffer = await generateBulletinPDF(bulletin, schoolConfig);
@@ -744,7 +747,10 @@ exports.downloadClassBulletinsPDF = asyncHandler(async (req, res, next) => {
 
         // Fetch school config
         const schoolSetting = await Setting.findOne({ key: 'school_config' });
-        const schoolConfig = schoolSetting ? schoolSetting.value : {};
+        const schoolConfig = schoolSetting ? { ...schoolSetting.value } : {};
+
+        // Base URL for resolving assets in PDF (needed for Puppeteer)
+        schoolConfig.baseUrl = `${req.protocol}://${req.get('host')}`;
 
         // Générer le PDF combiné avec SEULEMENT les bulletins valides
         const pdfBuffer = await generateClassBulletinsPDF(validBulletins, schoolConfig);

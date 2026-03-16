@@ -116,6 +116,24 @@ exports.getNotes = asyncHandler(async (req, res, next) => {
         .populate('validePar', 'nom prenom')
         .sort('-createdAt');
 
+    // Surcharger les coefficients si on filtre par classe
+    if (classe) {
+        const ClasseMatiere = require('../models/ClasseMatiere');
+        const assignments = await ClasseMatiere.find({ classe });
+        const assignmentMap = {};
+        assignments.forEach(a => {
+            assignmentMap[a.matiere.toString()] = a.coefficient;
+        });
+
+        notes.forEach(note => {
+            if (note.matiere && assignmentMap[note.matiere._id.toString()]) {
+                const matiereObj = note.matiere.toObject();
+                matiereObj.coefficient = assignmentMap[note.matiere._id.toString()];
+                note.matiere = matiereObj;
+            }
+        });
+    }
+
     res.status(200).json({ success: true, count: notes.length, data: notes });
 });
 
@@ -322,7 +340,16 @@ exports.getMasterSheetData = asyncHandler(async (req, res, next) => {
     const eleves = await User.find({ classe: classeId, role: 'ELEVE' }).sort('nom prenom').select('nom prenom matricule');
     const ClasseMatiere = mongoose.model('ClasseMatiere');
     const matieresDocs = await ClasseMatiere.find({ classe: classeId }).populate('matiere');
-    let matieres = matieresDocs.map(cm => cm.matiere).sort((a, b) => a.nom.localeCompare(b.nom));
+    
+    // Convertir en tableau d'objets incluant le coefficient spécifique à la classe
+    let matieres = matieresDocs
+        .filter(cm => cm.matiere)
+        .map(cm => {
+            const m = cm.matiere.toObject();
+            m.coefficient = cm.coefficient; // Surcharge avec le coefficient de la classe
+            return m;
+        })
+        .sort((a, b) => a.nom.localeCompare(b.nom));
 
     if (classe.filiere === 'Technique') {
         const matieresWithNotes = await Note.distinct('matiere', { classe: classeId, periode, anneeScolaire: year, statut: 'VALIDEE' });
@@ -407,7 +434,16 @@ exports.getMasterSheetPDF = asyncHandler(async (req, res, next) => {
         if (eleves.length === 0) continue;
 
         const matieresDocs = await ClasseMatiere.find({ classe: classe._id }).populate('matiere');
-        let matieres = matieresDocs.map(cm => cm.matiere).sort((a, b) => a.nom.localeCompare(b.nom));
+        
+        // Convertir en tableau d'objets incluant le coefficient spécifique à la classe
+        let matieres = matieresDocs
+            .filter(cm => cm.matiere)
+            .map(cm => {
+                const m = cm.matiere.toObject();
+                m.coefficient = cm.coefficient; // Surcharge avec le coefficient de la classe
+                return m;
+            })
+            .sort((a, b) => a.nom.localeCompare(b.nom));
 
         if (classe.filiere === 'Technique') {
             const matieresWithNotes = await Note.distinct('matiere', { classe: classe._id, periode, anneeScolaire: year, statut: 'VALIDEE' });

@@ -107,11 +107,11 @@ const createOrUpdateBulletin = async (eleveId, classeId, periode, anneeScolaire,
         anneeScolaire: anneeScolaire
     }).populate('matiere');
 
-    // Récupérer les assignations officielles
+    // Récupérer les assignations officielles (pour le professeur et le coefficient spécifique à la classe)
     const assignments = await ClasseMatiere.find({ classe: classeId });
     const assignmentMap = {};
     assignments.forEach(a => {
-        if (a.professeur) assignmentMap[a.matiere.toString()] = a.professeur;
+        assignmentMap[a.matiere.toString()] = a;
     });
 
     // Récupérer les dispensations
@@ -137,18 +137,19 @@ const createOrUpdateBulletin = async (eleveId, classeId, periode, anneeScolaire,
         const devoirGrades = devNotes.map(n => n.valeur);
         const compoGrades = compoNotes.map(n => n.valeur);
 
-        const coeff = noteDoc.matiere?.coefficient || 1;
+        const assignment = assignmentMap[noteDoc.matiere._id.toString()];
+        const coeff = assignment ? assignment.coefficient : (noteDoc.matiere?.coefficient || 1);
+        const officialProf = assignment ? assignment.professeur : noteDoc.professeur;
 
         // Recalculer la moyenne de la note si elle est à 0 ou manquante
         let average = noteDoc.moyenne || 0;
         if (average === 0 && noteDoc.notes.length > 0) {
             average = noteDoc.calculerMoyenne();
         }
-        const officialProf = assignmentMap[noteDoc.matiere._id.toString()];
 
         return {
             matiere: noteDoc.matiere._id,
-            professeur: officialProf || noteDoc.professeur,
+            professeur: officialProf,
             int: avgInt,
             dev: avgDev,
             compo: avgCompo,

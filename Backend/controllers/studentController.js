@@ -31,6 +31,13 @@ exports.getStudentStats = async (req, res, next) => {
             .populate('matiere', 'nom coefficient')
             .sort({ createdAt: -1 });
 
+        // Récupérer les assignations pour avoir les coefficients corrects de la classe
+        const assignments = await ClasseMatiere.find({ classe: student.classe });
+        const assignmentMap = {};
+        assignments.forEach(a => {
+            assignmentMap[a.matiere.toString()] = a.coefficient;
+        });
+
         // Calculer les statistiques
         let totalCoefficients = 0;
         let weightedSum = 0;
@@ -38,7 +45,9 @@ exports.getStudentStats = async (req, res, next) => {
 
         notes.forEach(note => {
             if (note.statut === 'VALIDEE' && note.moyenne) {
-                const coefficient = note.matiere?.coefficient || 1;
+                const matiereId = note.matiere?._id || note.matiere;
+                const coefficient = assignmentMap[matiereId.toString()] || (note.matiere?.coefficient || 1);
+                
                 totalCoefficients += coefficient;
                 weightedSum += note.moyenne * coefficient;
 
@@ -262,6 +271,11 @@ exports.getNotes = async (req, res, next) => {
         const studentId = req.params.id;
         const { periode, matiere } = req.query;
 
+        const student = await User.findById(studentId).select('classe');
+        if (!student) {
+            return res.status(404).json({ success: false, error: 'Élève non trouvé' });
+        }
+
         let query = { eleve: studentId };
         if (periode) query.periode = periode;
         if (matiere) query.matiere = matiere;
@@ -270,6 +284,27 @@ exports.getNotes = async (req, res, next) => {
             .populate('matiere', 'nom coefficient')
             .populate('professeur', 'nom prenom')
             .sort({ createdAt: -1 });
+
+        // Surcharger les coefficients avec ceux de la classe
+        if (student.classe) {
+            const assignments = await ClasseMatiere.find({ classe: student.classe });
+            const assignmentMap = {};
+            assignments.forEach(a => {
+                assignmentMap[a.matiere.toString()] = a.coefficient;
+            });
+
+            notes.forEach(note => {
+                if (note.matiere) {
+                    const matiereId = note.matiere._id || note.matiere;
+                    if (assignmentMap[matiereId.toString()]) {
+                        // Surcharge locale pour la réponse
+                        const matiereObj = note.matiere.toObject ? note.matiere.toObject() : note.matiere;
+                        matiereObj.coefficient = assignmentMap[matiereId.toString()];
+                        note.matiere = matiereObj;
+                    }
+                }
+            });
+        }
 
         res.status(200).json({
             success: true,

@@ -21,7 +21,7 @@ router.get('/profile/:id', selfAccess, getStudentProfile);
 router.put('/profile/:id', selfAccess, updateStudentProfile);
 
 // Upload student photo
-router.put('/profile/:id/photo', selfAccess, upload.single('photo'), uploadStudentPhoto);
+router.put('/profile/:id/photo', protect, selfAccess, uploadStudentPhoto);
 
 // Add emergency contact
 router.post('/profile/:id/emergency-contacts', selfAccess, addEmergencyContact);

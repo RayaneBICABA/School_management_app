@@ -24,15 +24,15 @@
         <div class="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-6 shadow-sm mb-6 animate-slide-up">
           <div class="flex flex-col md:flex-row md:items-center justify-between gap-6">
             <div class="flex gap-6 items-center">
-              <div class="relative group">
-                <div class="bg-center bg-no-repeat aspect-square bg-cover rounded-xl size-32 border-4 border-slate-50 dark:border-slate-800 shadow-md overflow-hidden flex items-center justify-center bg-slate-200 dark:bg-slate-700" :style="studentAvatarUrl ? `background-image: url('${studentAvatarUrl}')` : ''">
-                  <span v-if="!studentAvatarUrl" class="material-symbols-outlined text-5xl text-slate-400">person</span>
-                  <img v-else :src="studentAvatarUrl" class="w-full h-full object-cover" @error="handleImageError"/>
+              <div class="relative group cursor-pointer" @click="showLightbox = true">
+                <div class="w-24 h-24 md:w-32 md:h-32 rounded-2xl bg-white border-4 border-white dark:border-slate-800 shadow-xl overflow-hidden flex items-center justify-center">
+                  <img v-if="photoPreview || (student.photo && student.photo !== 'no-photo.jpg')" :src="photoPreview || getFullPhotoUrl(student.photo)" class="w-full h-full object-cover transition-transform group-hover:scale-110" @error="handleImageError" />
+                  <span v-else class="material-symbols-outlined text-5xl text-slate-300">account_circle</span>
+                </div>
+                <div class="absolute inset-0 rounded-2xl bg-black/0 group-hover:bg-black/20 transition-colors flex items-center justify-center">
+                  <span class="material-symbols-outlined text-white opacity-0 group-hover:opacity-100 transition-opacity">zoom_in</span>
                 </div>
                 <input type="file" ref="fileInput" class="hidden" @change="handlePhotoUpload" accept="image/*" />
-                <button @click="$refs.fileInput.click()" class="absolute bottom-0 right-0 p-2 bg-primary text-white rounded-full shadow-lg border-2 border-white dark:border-slate-900 hover:scale-110 transition-transform cursor-pointer">
-                  <span class="material-symbols-outlined text-sm">photo_camera</span>
-                </button>
               </div>
               <div class="flex flex-col">
                 <div class="flex items-center gap-3">
@@ -235,6 +235,41 @@
           </div>
         </form>
       </div>
+      <!-- Photo Lightbox -->
+      <div v-if="showLightbox" class="fixed inset-0 z-[100] flex flex-col items-center justify-center bg-slate-950/90 backdrop-blur-md p-4 md:p-12 animate-in fade-in duration-300" @click="showLightbox = false">
+        <!-- Close Button -->
+        <button class="absolute top-6 right-6 p-2 bg-white/10 hover:bg-white/20 text-white rounded-full transition-colors z-[110]" @click.stop="showLightbox = false">
+          <span class="material-symbols-outlined text-3xl">close</span>
+        </button>
+
+        <!-- Enlarged Image Container -->
+        <div class="relative max-w-2xl w-full aspect-square md:aspect-[4/3] flex items-center justify-center animate-in zoom-in duration-300" @click.stop>
+          <img 
+            :src="photoPreview || getFullPhotoUrl(student.photo) || 'no-photo.jpg'" 
+            class="max-w-full max-h-full object-contain rounded-2xl shadow-2xl border-4 border-white/10"
+            @error="e => e.target.src = 'no-photo.jpg'"
+          />
+          
+          <!-- Bottom Action Bar -->
+          <div v-if="canEdit" class="absolute -bottom-16 left-1/2 -translate-x-1/2 flex items-center gap-4 bg-white/10 backdrop-blur-xl p-3 rounded-2xl border border-white/10 shadow-2xl">
+            <button 
+              @click="$refs.fileInput.click(); showLightbox = false" 
+              class="flex items-center gap-2 px-6 py-2.5 bg-primary text-white rounded-xl font-bold transition-all hover:scale-105 active:scale-95 shadow-lg shadow-primary/20"
+            >
+              <span class="material-symbols-outlined text-xl">photo_camera</span>
+              CHANGER
+            </button>
+            <button 
+              v-if="student.photo && student.photo !== 'no-photo.jpg'" 
+              @click="handleDeletePhoto(); showLightbox = false" 
+              class="flex items-center gap-2 px-6 py-2.5 bg-red-500/80 hover:bg-red-500 text-white rounded-xl font-bold transition-all hover:scale-105 active:scale-95 shadow-lg shadow-red-500/20"
+            >
+              <span class="material-symbols-outlined text-xl">delete</span>
+              SUPPRIMER
+            </button>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 </template>
@@ -282,6 +317,15 @@ const activeTab = ref('infos')
 const activeSection = ref('infos')
 const showAddContactModal = ref(false)
 const isSaving = ref(false)
+const isUpdatingAccount = ref(false)
+const photoPreview = ref(null);
+const showLightbox = ref(false);
+
+const getFullPhotoUrl = (path) => {
+  if (!path || path === 'no-photo.jpg') return null;
+  if (path.startsWith('http') || path.startsWith('data:')) return path;
+  return `${BASE_ASSET_URL}${path.startsWith('/') ? '' : '/'}${path}`;
+};
 const fileInput = ref(null)
 
 // Emergency contacts
@@ -374,7 +418,7 @@ const fetchStudentProfile = async () => {
       matricule: studentData.matricule || 'Non défini',
       avatar: studentData.photo === 'no-photo.jpg' 
         ? `https://ui-avatars.com/api/?name=${studentData.nom}+${studentData.prenom}&background=random` 
-        : `/uploads/${studentData.photo}`,
+        : (studentData.photo?.startsWith('/uploads') ? studentData.photo : `/uploads/${studentData.photo}`),
       birthDate: studentData.dateNaissance || 'Non renseignée',
       birthPlace: studentData.lieuNaissance || 'Non renseigné',
       address: studentData.adresse || 'Non renseignée',
@@ -644,8 +688,12 @@ const contactParents = () => {
 }
 
 const handlePhotoUpload = async (event) => {
+  console.log('🖼️ StudentProfile: handlePhotoUpload triggered');
   const file = event.target.files[0]
-  if (!file) return
+  if (!file) {
+    console.log('⚠️ No file chosen');
+    return
+  }
   
   // Validate file type
   if (!file.type.startsWith('image/')) {
@@ -658,6 +706,13 @@ const handlePhotoUpload = async (event) => {
     alert('L\'image ne doit pas dépasser 5MB')
     return
   }
+
+  // Show preview immediately
+  const reader = new FileReader();
+  reader.onload = (e) => {
+      photoPreview.value = e.target.result;
+  };
+  reader.readAsDataURL(file);
   
   try {
     const formData = new FormData()
@@ -670,7 +725,7 @@ const handlePhotoUpload = async (event) => {
     }
     console.log('FormData length:', formData.entries().length)
     
-    const res = await api.uploadStudentPhoto(props.studentId, formData)
+    const res = await api.uploadUserPhoto(props.studentId, formData)
     
     console.log('Upload response:', res)
     
@@ -698,24 +753,26 @@ const handlePhotoUpload = async (event) => {
   event.target.value = ''
 }
 
+const handleDeletePhoto = async () => {
+    if (!confirm('Supprimer la photo de cet élève ?')) return;
+    try {
+        console.log('🗑️ handleDeletePhoto triggered (StudentProfile)');
+        const res = await api.deleteUserPhoto(props.studentId);
+        if (res.data.success) {
+            student.value.photo = 'no-photo.jpg';
+            student.value.avatar = 'no-photo.jpg';
+            photoPreview.value = null;
+            alert('Photo supprimée avec succès');
+        }
+    } catch (error) {
+        console.error('Erreur suppression photo:', error);
+        alert('Erreur lors de la suppression de la photo');
+    }
+};
+
 // Helper functions
 const getPhotoUrl = (photoPath) => {
-  if (!photoPath || photoPath === 'no-photo.jpg' || photoPath.includes('undefined')) {
-    return null
-  }
-  
-  // If it's already a full URL or data URI, return as is
-  if (photoPath.startsWith('http') || photoPath.startsWith('data:')) {
-    return photoPath
-  }
-  
-  // If it starts with /uploads, add the backend base URL
-  if (photoPath.startsWith('/uploads')) {
-    return `${BASE_ASSET_URL}${photoPath}`
-  }
-  
-  // Otherwise, assume it's a relative path in uploads
-  return `${BASE_ASSET_URL}/uploads/${photoPath}`
+  return getFullPhotoUrl(photoPath);
 }
 
 const handleImageError = (event) => {

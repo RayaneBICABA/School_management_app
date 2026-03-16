@@ -32,4 +32,10 @@ router
     .put(authorize('ADMIN', 'PROVISEUR', 'CENSEUR', 'SECRETAIRE'), updateUser)
     .delete(authorize('ADMIN', 'PROVISEUR', 'CENSEUR', 'SECRETAIRE'), deleteUser);
 
+const { uploadUserPhoto, deleteUserPhoto } = require('../controllers/userController');
+
+// Special routes for photo management
+router.put('/:id/photo', authorize('ADMIN', 'PROVISEUR', 'CENSEUR', 'SECRETAIRE'), uploadUserPhoto);
+router.delete('/:id/photo', authorize('ADMIN', 'PROVISEUR', 'CENSEUR', 'SECRETAIRE'), deleteUserPhoto);
+
 module.exports = router;

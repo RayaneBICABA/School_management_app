@@ -7,6 +7,41 @@
         <span class="text-[#4e7397] material-symbols-outlined text-sm">chevron_right</span>
         <span class="font-medium text-slate-400">Mon Profil</span>
       </nav>
+      <!-- Photo Lightbox -->
+      <div v-if="showLightbox" class="fixed inset-0 z-[100] flex flex-col items-center justify-center bg-slate-950/90 backdrop-blur-md p-4 md:p-12 animate-in fade-in duration-300" @click="showLightbox = false">
+        <!-- Close Button -->
+        <button class="absolute top-6 right-6 p-2 bg-white/10 hover:bg-white/20 text-white rounded-full transition-colors z-[110]" @click.stop="showLightbox = false">
+          <span class="material-symbols-outlined text-3xl">close</span>
+        </button>
+
+        <!-- Enlarged Image Container -->
+        <div class="relative max-w-2xl w-full aspect-square md:aspect-[4/3] flex items-center justify-center animate-in zoom-in duration-300" @click.stop>
+          <img 
+            :src="photoPreview || getFullPhotoUrl(user.photo) || 'no-photo.jpg'" 
+            class="max-w-full max-h-full object-contain rounded-2xl shadow-2xl border-4 border-white/10"
+            @error="e => e.target.src = 'no-photo.jpg'"
+          />
+          
+          <!-- Bottom Action Bar -->
+          <div class="absolute -bottom-16 left-1/2 -translate-x-1/2 flex items-center gap-4 bg-white/10 backdrop-blur-xl p-3 rounded-2xl border border-white/10 shadow-2xl">
+            <button 
+              @click="$refs.fileInput.click(); showLightbox = false" 
+              class="flex items-center gap-2 px-6 py-2.5 bg-primary text-white rounded-xl font-bold transition-all hover:scale-105 active:scale-95 shadow-lg shadow-primary/20"
+            >
+              <span class="material-symbols-outlined text-xl">photo_camera</span>
+              CHANGER
+            </button>
+            <button 
+              v-if="user.photo && user.photo !== 'no-photo.jpg'" 
+              @click="handleDeletePhoto(); showLightbox = false" 
+              class="flex items-center gap-2 px-6 py-2.5 bg-red-500/80 hover:bg-red-500 text-white rounded-xl font-bold transition-all hover:scale-105 active:scale-95 shadow-lg shadow-red-500/20"
+            >
+              <span class="material-symbols-outlined text-xl">delete</span>
+              SUPPRIMER
+            </button>
+          </div>
+        </div>
+      </div>
 
     <!-- Page Heading -->
     <div class="flex flex-wrap justify-between items-end gap-4">
@@ -24,16 +59,16 @@
     <!-- Profile Header Card -->
     <div class="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-6 mb-6">
       <div class="flex flex-col md:flex-row md:items-center gap-6">
-        <div class="relative group">
-          <div class="bg-center bg-no-repeat aspect-square bg-cover rounded-full h-32 w-32 border-4 border-slate-50 dark:border-slate-800 shadow-sm flex items-center justify-center bg-slate-200 dark:bg-slate-700">
-            <span v-if="!photoUrl" class="material-symbols-outlined text-4xl text-slate-400">person</span>
-            <img v-else :src="photoUrl" class="w-full h-full object-cover rounded-full"/>
+          <div class="relative group cursor-pointer" @click="showLightbox = true">
+            <div class="w-24 h-24 rounded-2xl bg-white border-4 border-white dark:border-slate-800 shadow-xl overflow-hidden flex items-center justify-center">
+              <img v-if="photoPreview || (user.photo && user.photo !== 'no-photo.jpg')" :src="photoPreview || getFullPhotoUrl(user.photo)" class="w-full h-full object-cover transition-transform group-hover:scale-110"/>
+              <span v-else class="material-symbols-outlined text-4xl text-slate-400">person</span>
+            </div>
+            <div class="absolute inset-0 rounded-2xl bg-black/0 group-hover:bg-black/20 transition-colors flex items-center justify-center">
+              <span class="material-symbols-outlined text-white opacity-0 group-hover:opacity-100 transition-opacity">zoom_in</span>
+            </div>
+            <input type="file" ref="fileInput" class="hidden" @change="handlePhotoUpload" accept="image/*" />
           </div>
-          <input type="file" ref="fileInput" class="hidden" @change="handlePhotoUpload" accept="image/*" />
-          <button @click="$refs.fileInput.click()" class="absolute bottom-0 right-0 bg-white dark:bg-slate-800 p-2 rounded-full border border-slate-200 dark:border-slate-700 shadow-md hover:text-primary cursor-pointer">
-            <span class="material-symbols-outlined text-sm">photo_camera</span>
-          </button>
-        </div>
         <div class="flex flex-col justify-center grow">
           <p class="text-slate-900 dark:text-white text-2xl font-bold tracking-tight">{{ user.nom }} {{ user.prenom }}</p>
           <p class="text-slate-600 dark:text-slate-400 text-base font-normal mb-1">{{ user.role }}</p>
@@ -151,8 +186,17 @@ const isUpdating = ref(false)
 const isUpdatingPassword = ref(false)
 const passwordError = ref('')
 const fileInput = ref(null)
+const photoPreview = ref(null);
+const showLightbox = ref(false);
+
+const getFullPhotoUrl = (path) => {
+  if (!path || path === 'no-photo.jpg') return null;
+  if (path.startsWith('http') || path.startsWith('data:')) return path;
+  return `${BASE_ASSET_URL}${path.startsWith('/') ? '' : '/'}${path}`;
+};
 
 const handlePhotoUpload = async (event) => {
+    console.log('🖼️ handlePhotoUpload triggered (Censeur)')
     const file = event.target.files[0];
     if (!file) return;
 
@@ -161,19 +205,41 @@ const handlePhotoUpload = async (event) => {
         return;
     }
 
+    // Show preview immediately
+    const reader = new FileReader();
+    reader.onload = (e) => {
+        photoPreview.value = e.target.result;
+    };
+    reader.readAsDataURL(file);
+
     const formData = new FormData();
     formData.append('photo', file);
 
     try {
         const res = await api.uploadPhoto(formData);
         if (res.data.success) {
-            // Reload user data to get updated photo
-            await fetchData();
+            user.value.photo = res.data.data;
             alert('Photo de profil mise à jour !');
         }
     } catch (error) {
         console.error('Erreur upload photo:', error);
         alert('Erreur lors de l\'envoi de la photo');
+    }
+};
+
+const handleDeletePhoto = async () => {
+    if (!confirm('Supprimer votre photo de profil ?')) return;
+    try {
+        console.log('🗑️ handleDeletePhoto triggered (Censeur)');
+        const res = await api.deletePhoto();
+        if (res.data.success) {
+            user.value.photo = 'no-photo.jpg';
+            photoPreview.value = null;
+            alert('Photo supprimée avec succès');
+        }
+    } catch (error) {
+        console.error('Erreur suppression photo:', error);
+        alert('Erreur lors de la suppression de la photo');
     }
 };
 

@@ -27,6 +27,25 @@
               <span class="material-symbols-outlined text-primary">person</span>
               Informations personnelles
             </h3>
+            
+            <!-- Photo Section -->
+            <div class="flex flex-col items-center gap-4 py-4 mb-6">
+              <div class="relative group">
+                <div class="size-28 rounded-full overflow-hidden border-2 border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-slate-800 flex items-center justify-center shadow-inner">
+                  <img v-if="photoPreview" :src="photoPreview" class="w-full h-full object-cover" />
+                  <span v-else class="material-symbols-outlined text-5xl text-slate-400">person</span>
+                </div>
+                <button type="button" @click="$refs.photoInput.click()" class="absolute inset-0 flex items-center justify-center bg-black/40 text-white opacity-0 group-hover:opacity-100 transition-opacity rounded-full">
+                  <span class="material-symbols-outlined text-2xl">photo_camera</span>
+                </button>
+                <input type="file" ref="photoInput" @change="handlePhotoChange" accept="image/*" class="hidden" />
+              </div>
+              <div class="text-center">
+                <p class="text-sm font-medium text-slate-700 dark:text-slate-300">Photo de profil</p>
+                <p class="text-xs text-slate-500">Cliquez sur l'icône pour choisir une image</p>
+              </div>
+            </div>
+
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div class="flex flex-col gap-2">
                 <label class="text-sm font-medium text-[#0e141b] dark:text-slate-200">Prénom</label>
@@ -182,6 +201,24 @@ const form = ref({
   classe: ''
 })
 
+const photoPreview = ref(null)
+const selectedFile = ref(null)
+
+const handlePhotoChange = (event) => {
+  console.log('🖼️ handlePhotoChange triggered (Ajouter)');
+  const file = event.target.files[0]
+  if (file) {
+    console.log('📂 File selected:', file.name, file.size);
+    selectedFile.value = file
+    const reader = new FileReader()
+    reader.onload = (e) => {
+      console.log('👁️ Photo preview generated');
+      photoPreview.value = e.target.result
+    }
+    reader.readAsDataURL(file)
+  }
+}
+
 const availableClasses = ref([])
 
 const classes = ref([])
@@ -254,6 +291,18 @@ const handleSubmit = async () => {
 
     const response = await api.createUser(userData)
     const newUser = response.data.data
+
+    // 📸 Upload photo if selected
+    if (selectedFile.value && newUser?._id) {
+      try {
+        const formData = new FormData()
+        formData.append('photo', selectedFile.value)
+        await api.uploadUserPhoto(newUser._id, formData)
+      } catch (uploadError) {
+        console.error('Erreur upload photo pendant création:', uploadError)
+        // On ne bloque pas la réussite de la création si seule la photo échoue
+      }
+    }
 
     // If role is teacher, update assignments
     if (form.value.role === 'PROFESSEUR' && assignedCourses.value.length > 0) {

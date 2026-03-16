@@ -7,7 +7,8 @@ const storage = multer.diskStorage({
         cb(null, 'uploads/profile/');
     },
     filename: function (req, file, cb) {
-        cb(null, `user-${req.user._id}-${Date.now()}${path.extname(file.originalname)}`);
+        const userId = req.params.id || req.user?._id || 'unknown';
+        cb(null, `user-${userId}-${Date.now()}${path.extname(file.originalname)}`);
     }
 });
 

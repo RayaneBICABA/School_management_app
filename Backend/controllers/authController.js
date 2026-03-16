@@ -1,4 +1,6 @@
 const User = require('../models/User');
+const path = require('path');
+const fs = require('fs');
 
 // @desc    Register user
 // @route   POST /api/v1/auth/register
@@ -139,23 +141,95 @@ exports.updatePassword = async (req, res, next) => {
 // @access  Private
 exports.uploadPhoto = async (req, res, next) => {
     try {
-        if (!req.file) {
+        console.log('🖼️ [authController] Photo upload request received');
+        if (!req.files || !req.files.photo) {
+            console.log('❌ [authController] No file provided');
             return res.status(400).json({ success: false, error: 'Veuillez télécharger un fichier' });
         }
 
-        const photoUrl = `/uploads/profile/${req.file.filename}`;
+        const file = req.files.photo;
+        console.log(`📄 [authController] File: ${file.name}, Size: ${file.size}, Mimetype: ${file.mimetype}`);
 
-        await User.findByIdAndUpdate(
+        // Check file type
+        if (!file.mimetype.startsWith('image')) {
+            return res.status(400).json({ success: false, error: 'Veuillez télécharger une image' });
+        }
+
+        const uploadPath = path.join(__dirname, '..', 'uploads', 'profile');
+        
+        // Ensure directory exists
+        if (!fs.existsSync(uploadPath)) {
+            fs.mkdirSync(uploadPath, { recursive: true });
+        }
+
+        const filename = `user-${req.user._id}-${Date.now()}${path.extname(file.name)}`;
+        const filePath = path.join(uploadPath, filename);
+
+        await file.mv(filePath);
+
+        const photoUrl = `/uploads/profile/${filename}`;
+
+        console.log(`✅ [authController] File saved to ${photoUrl}, updating user database record...`);
+
+        const updatedUser = await User.findByIdAndUpdate(
             req.user._id,
             { photo: photoUrl },
             { new: true }
         );
+
+        if (!updatedUser) {
+             console.log('❌ [authController] User not found during update');
+             return res.status(404).json({ success: false, error: 'Utilisateur non trouvé' });
+        }
+
+        console.log('✅ [authController] Database updated successfully');
 
         res.status(200).json({
             success: true,
             data: photoUrl
         });
     } catch (err) {
+        console.error('❌ [authController] Photo upload error:', err);
+        res.status(500).json({ success: false, error: err.message });
+    }
+};
+
+// @desc    Delete photo for user
+// @route   DELETE /api/v1/auth/photo
+// @access  Private
+exports.deletePhoto = async (req, res, next) => {
+    try {
+        console.log('🗑️ [authController] Photo deletion request received');
+        const user = await User.findById(req.user._id);
+
+        if (!user) {
+            return res.status(404).json({ success: false, error: 'Utilisateur non trouvé' });
+        }
+        
+        // Delete old file from disk if it's not the default
+        if (user.photo && user.photo !== 'no-photo.jpg') {
+            const oldPath = path.join(__dirname, '..', user.photo);
+            if (fs.existsSync(oldPath)) {
+                try {
+                    fs.unlinkSync(oldPath);
+                    console.log(`🗑️ [authController] Old photo deleted from disk: ${user.photo}`);
+                } catch (unlinkErr) {
+                    console.error(`⚠️ [authController] Failed to delete old photo from disk: ${unlinkErr.message}`);
+                }
+            }
+        }
+
+        user.photo = 'no-photo.jpg';
+        await user.save({ validateBeforeSave: false });
+
+        console.log('✅ [authController] Photo record reset to default');
+
+        res.status(200).json({
+            success: true,
+            data: 'no-photo.jpg'
+        });
+    } catch (err) {
+        console.error('❌ [authController] Photo deletion error:', err);
         res.status(500).json({ success: false, error: err.message });
     }
 };

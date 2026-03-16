@@ -13,15 +13,15 @@
       <div class="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-slate-200 dark:border-slate-800 p-6 mb-8">
         <div class="flex flex-col md:flex-row md:justify-between items-start md:items-center gap-6">
           <div class="flex items-center gap-6">
-            <div class="relative group">
-              <div class="bg-center bg-no-repeat aspect-square bg-cover rounded-full h-28 w-28 border-4 border-slate-50 dark:border-slate-800 shadow-sm flex items-center justify-center bg-slate-200 dark:bg-slate-700 overflow-hidden">
-                <span v-if="!user.photo || user.photo === 'no-photo.jpg'" class="material-symbols-outlined text-4xl text-slate-400">person</span>
-                <img v-else :src="user.photo" class="w-full h-full object-cover rounded-full"/>
+            <div class="relative group cursor-pointer" @click="showLightbox = true">
+              <div class="w-24 h-24 rounded-2xl bg-white border-4 border-white dark:border-slate-800 shadow-xl overflow-hidden flex items-center justify-center">
+                <img v-if="photoPreview || (user.photo && user.photo !== 'no-photo.jpg')" :src="photoPreview || getFullPhotoUrl(user.photo)" class="w-full h-full object-cover transition-transform group-hover:scale-110"/>
+                <span v-else class="material-symbols-outlined text-4xl text-slate-400">person</span>
+              </div>
+              <div class="absolute inset-0 rounded-2xl bg-black/0 group-hover:bg-black/20 transition-colors flex items-center justify-center">
+                <span class="material-symbols-outlined text-white opacity-0 group-hover:opacity-100 transition-opacity">zoom_in</span>
               </div>
               <input type="file" ref="fileInput" class="hidden" @change="handlePhotoUpload" accept="image/*" />
-              <button @click="$refs.fileInput.click()" class="absolute bottom-0 right-0 p-2 bg-primary text-white rounded-full shadow-lg hover:scale-105 transition-transform cursor-pointer">
-                <span class="material-symbols-outlined text-lg">edit</span>
-              </button>
             </div>
             <div class="flex flex-col justify-center">
               <p class="text-slate-900 dark:text-white text-2xl font-bold leading-tight tracking-tight">{{ user.nom }} {{ user.prenom }}</p>
@@ -168,16 +168,24 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
-import api from '@/services/api'
+import api, { BASE_ASSET_URL } from '@/services/api';
 
 const user = ref(null);
 const isUpdating = ref(false);
 const isUpdatingPassword = ref(false);
 const passwordError = ref('');
 const fileInput = ref(null);
+const photoPreview = ref(null);
+const showLightbox = ref(false);
+
+const getFullPhotoUrl = (path) => {
+  if (!path || path === 'no-photo.jpg') return null;
+  if (path.startsWith('http') || path.startsWith('data:')) return path;
+  return `${BASE_ASSET_URL}${path.startsWith('/') ? '' : '/'}${path}`;
+};
 
 const handlePhotoUpload = async (event) => {
+    console.log('🖼️ handlePhotoUpload triggered (CPE)')
     const file = event.target.files[0];
     if (!file) return;
 
@@ -185,6 +193,13 @@ const handlePhotoUpload = async (event) => {
         alert('L\'image est trop volumineuse (max 2Mo)');
         return;
     }
+
+    // Show preview immediately
+    const reader = new FileReader();
+    reader.onload = (e) => {
+        photoPreview.value = e.target.result;
+    };
+    reader.readAsDataURL(file);
 
     const formData = new FormData();
     formData.append('photo', file);
@@ -198,6 +213,22 @@ const handlePhotoUpload = async (event) => {
     } catch (error) {
         console.error('Erreur upload photo:', error);
         alert('Erreur lors de l\'envoi de la photo');
+    }
+};
+
+const handleDeletePhoto = async () => {
+    if (!confirm('Supprimer votre photo de profil ?')) return;
+    try {
+        console.log('🗑️ handleDeletePhoto triggered (CPE)');
+        const res = await api.deletePhoto();
+        if (res.data.success) {
+            user.value.photo = 'no-photo.jpg';
+            photoPreview.value = null;
+            alert('Photo supprimée avec succès');
+        }
+    } catch (error) {
+        console.error('Erreur suppression photo:', error);
+        alert('Erreur lors de la suppression de la photo');
     }
 };
 

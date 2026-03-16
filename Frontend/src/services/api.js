@@ -82,48 +82,14 @@ export default {
         return api.delete('/auth/history');
     },
     uploadPhoto(formData) {
-        // Convert FormData to base64 to avoid multer issues
-        return new Promise((resolve, reject) => {
-            const file = formData.get('photo');
-            if (!file) {
-                reject(new Error('No file found'));
-                return;
+        return api.put('/auth/photo', formData, {
+            headers: {
+                'Content-Type': undefined
             }
-
-            const reader = new FileReader();
-            reader.onload = async () => {
-                try {
-                    const base64Data = reader.result;
-                    const token = localStorage.getItem('token');
-
-                    const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api/v1'}/auth/photo-manual`, {
-                        method: 'POST',
-                        headers: {
-                            'Authorization': token ? `Bearer ${token}` : '',
-                            'Content-Type': 'application/json'
-                        },
-                        body: JSON.stringify({
-                            image: base64Data,
-                            filename: file.name,
-                            size: file.size,
-                            type: file.type
-                        })
-                    });
-
-                    const data = await response.json();
-                    if (data.success) {
-                        resolve({
-                            data: data.data
-                        });
-                    } else {
-                        reject(new Error(data.error || 'Upload failed'));
-                    }
-                } catch (error) {
-                    reject(error);
-                }
-            };
-            reader.readAsDataURL(file);
         });
+    },
+    deletePhoto() {
+        return api.delete('/auth/photo');
     },
 
     getUsers(params) {
@@ -143,6 +109,16 @@ export default {
     },
     deleteUser(id) {
         return api.delete(`/users/${id}`);
+    },
+    uploadUserPhoto(id, formData) {
+        return api.put(`/users/${id}/photo`, formData, {
+            headers: {
+                'Content-Type': undefined
+            }
+        });
+    },
+    deleteUserPhoto(id) {
+        return api.delete(`/users/${id}/photo`);
     },
     importStudents(formData) {
         return api.post('/users/import', formData, {
@@ -737,7 +713,7 @@ export default {
     uploadStudentPhoto(id, formData) {
         return api.put(`/student-profile/profile/${id}/photo`, formData, {
             headers: {
-                'Content-Type': 'multipart/form-data'
+                'Content-Type': undefined
             }
         });
     },

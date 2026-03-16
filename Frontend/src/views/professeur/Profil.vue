@@ -16,15 +16,15 @@
     <!-- Profile Header Section -->
     <section class="bg-white dark:bg-[#1a2632] rounded-xl border border-slate-200 dark:border-slate-800 p-6">
       <div class="flex flex-col md:flex-row gap-6 items-center">
-        <div class="relative group">
-          <div class="bg-center bg-no-repeat aspect-square bg-cover rounded-full size-32 ring-4 ring-slate-100 dark:ring-slate-800 flex items-center justify-center bg-slate-200 dark:bg-slate-700">
-            <span v-if="!userPhotoUrl" class="material-symbols-outlined text-4xl text-slate-400">person</span>
-            <img v-else :src="userPhotoUrl" class="w-full h-full object-cover rounded-full"/>
+        <div class="relative group cursor-pointer" @click="showLightbox = true">
+          <div class="h-32 w-32 rounded-full border-4 border-slate-50 dark:border-slate-800 bg-white shadow-sm flex items-center justify-center overflow-hidden">
+            <img v-if="photoPreview || (user.photo && user.photo !== 'no-photo.jpg')" :src="photoPreview || getFullPhotoUrl(user.photo)" class="w-full h-full object-cover transition-transform group-hover:scale-110"/>
+            <span v-else class="material-symbols-outlined text-4xl text-slate-400">person</span>
+          </div>
+          <div class="absolute inset-0 rounded-full bg-black/0 group-hover:bg-black/20 transition-colors flex items-center justify-center">
+            <span class="material-symbols-outlined text-white opacity-0 group-hover:opacity-100 transition-opacity">zoom_in</span>
           </div>
           <input type="file" ref="fileInput" class="hidden" @change="handlePhotoUpload" accept="image/*" />
-          <button @click="$refs.fileInput.click()" class="absolute bottom-0 right-0 bg-white dark:bg-slate-700 shadow-lg border border-slate-200 dark:border-slate-600 p-1.5 rounded-full hover:bg-slate-50 transition-colors cursor-pointer">
-            <span class="material-symbols-outlined text-sm text-slate-600 dark:text-slate-200">edit</span>
-          </button>
         </div>
         <div class="flex flex-col text-center md:text-left flex-grow">
           <h2 class="text-[#0e141b] dark:text-white text-3xl font-bold tracking-tight">{{ user.civilite ? user.civilite + ' ' : '' }}{{ user.nom }} {{ user.prenom }}</h2>
@@ -158,25 +158,25 @@ const isUpdating = ref(false);
 const isUpdatingPassword = ref(false);
 const passwordError = ref('');
 const fileInput = ref(null);
+const photoPreview = ref(null);
+const showLightbox = ref(false);
 
 const userPhotoUrl = computed(() => {
-    return getPhotoUrl(user.value?.photo);
+    return getFullPhotoUrl(user.value?.photo);
 });
 
+const getFullPhotoUrl = (path) => {
+  if (!path || path === 'no-photo.jpg') return null;
+  if (path.startsWith('http') || path.startsWith('data:')) return path;
+  return `${BASE_ASSET_URL}${path.startsWith('/') ? '' : '/'}${path}`;
+};
+
 const getPhotoUrl = (photoPath) => {
-    if (!photoPath || photoPath === 'no-photo.jpg' || photoPath.includes('undefined')) {
-        return null;
-    }
-    if (photoPath.startsWith('http') || photoPath.startsWith('data:')) {
-        return photoPath;
-    }
-    if (photoPath.startsWith('/uploads')) {
-        return `${BASE_ASSET_URL}${photoPath}`;
-    }
-    return `${BASE_ASSET_URL}/uploads/${photoPath}`;
+    return getFullPhotoUrl(photoPath);
 };
 
 const handlePhotoUpload = async (event) => {
+    console.log('🖼️ handlePhotoUpload triggered (Professeur)')
     const file = event.target.files[0];
     if (!file) return;
 
@@ -184,6 +184,13 @@ const handlePhotoUpload = async (event) => {
         alert('L\'image est trop volumineuse (max 2Mo)');
         return;
     }
+
+    // Show preview immediately
+    const reader = new FileReader();
+    reader.onload = (e) => {
+        photoPreview.value = e.target.result;
+    };
+    reader.readAsDataURL(file);
 
     const formData = new FormData();
     formData.append('photo', file);
@@ -197,6 +204,22 @@ const handlePhotoUpload = async (event) => {
     } catch (error) {
         console.error('Erreur upload photo:', error);
         alert('Erreur lors de l\'envoi de la photo');
+    }
+};
+
+const handleDeletePhoto = async () => {
+    if (!confirm('Supprimer votre photo de profil ?')) return;
+    try {
+        console.log('🗑️ handleDeletePhoto triggered (Professeur)');
+        const res = await api.deletePhoto();
+        if (res.data.success) {
+            user.value.photo = 'no-photo.jpg';
+            photoPreview.value = null;
+            alert('Photo supprimée avec succès');
+        }
+    } catch (error) {
+        console.error('Erreur suppression photo:', error);
+        alert('Erreur lors de la suppression de la photo');
     }
 };
 

@@ -50,7 +50,11 @@ app.use(helmet({
     }
 }));
 app.use(morgan('dev'));
-app.use(fileUpload());
+app.use(fileUpload({
+    createParentPath: true,
+    limits: { fileSize: 10 * 1024 * 1024 }, // 10MB limit
+    debug: true // Enable debug logs in development
+}));
 
 // Set static folder
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));

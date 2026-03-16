@@ -1,6 +1,8 @@
 const User = require('../models/User');
 const Setting = require('../models/Setting');
 const mongoose = require('mongoose');
+const path = require('path');
+const fs = require('fs');
 const { generateStudentProfilePDF } = require('../utils/pdfGenerator');
 
 // @desc    Get student profile (allows self-access)
@@ -183,19 +185,45 @@ exports.exportStudentProfile = async (req, res, next) => {
 
 // @desc    Upload student photo
 // @route   PUT /api/v1/student-profile/profile/:id/photo
-// @access  Private (with selfAccess middleware)
+// @access  Private
 exports.uploadStudentPhoto = async (req, res, next) => {
   try {
-    const studentId = req.params.id;
+    console.log('📸 Student photo upload request received for user:', req.params.id);
 
-    if (!req.file) {
-      return res.status(400).json({ success: false, error: 'Veuillez télécharger un fichier' });
+    if (!req.files) {
+      console.log('❌ No files found in request');
+      return res.status(400).json({ success: false, error: 'Veuillez télécharger un fichier (no files)' });
     }
 
-    const photoUrl = `/uploads/profile/${req.file.filename}`;
+    if (!req.files.photo) {
+      console.log('❌ No "photo" field found in req.files among:', Object.keys(req.files));
+      return res.status(400).json({ success: false, error: 'Veuillez télécharger un fichier (no photo field)' });
+    }
+
+    const file = req.files.photo;
+    console.log('📄 File received:', file.name, 'Size:', file.size, 'Mime:', file.mimetype);
+
+    // Check file type
+    if (!file.mimetype.startsWith('image')) {
+      return res.status(400).json({ success: false, error: 'Veuillez télécharger une image' });
+    }
+
+    const uploadPath = path.join(__dirname, '..', 'uploads', 'profile');
+    
+    // Ensure directory exists
+    if (!fs.existsSync(uploadPath)) {
+      fs.mkdirSync(uploadPath, { recursive: true });
+    }
+
+    const filename = `user-${req.params.id}-${Date.now()}${path.extname(file.name)}`;
+    const filePath = path.join(uploadPath, filename);
+
+    await file.mv(filePath);
+
+    const photoUrl = `/uploads/profile/${filename}`;
 
     const student = await User.findByIdAndUpdate(
-      studentId,
+      req.params.id,
       { photo: photoUrl },
       { new: true }
     );

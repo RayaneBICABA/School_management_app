@@ -1,5 +1,7 @@
 const User = require('../models/User');
 const ExcelJS = require('exceljs');
+const path = require('path');
+const fs = require('fs');
 
 // @desc    Get all users
 // @route   GET /api/v1/users
@@ -538,5 +540,113 @@ const createBulletinsForStudent = async (student) => {
         await Bulletin.insertMany(bulletins);
     } catch (error) {
         console.error(`Erreur création bulletins auto pour ${student._id}:`, error);
+    }
+};
+
+// @desc    Upload user photo
+// @route   PUT /api/v1/users/:id/photo
+// @access  Private/Admin
+exports.uploadUserPhoto = async (req, res, next) => {
+    try {
+        console.log('📸 Photo upload request received for user:', req.params.id);
+        
+        if (!req.files) {
+            console.log('❌ No files found in request');
+            return res.status(400).json({ success: false, error: 'Veuillez télécharger un fichier (no files)' });
+        }
+
+        if (!req.files.photo) {
+            console.log('❌ No "photo" field found in req.files among:', Object.keys(req.files));
+            return res.status(400).json({ success: false, error: 'Veuillez télécharger un fichier (no photo field)' });
+        }
+
+        const file = req.files.photo;
+        console.log(`📄 [userController] File: ${file.name}, Size: ${file.size}`);
+
+        // Check file type
+        if (!file.mimetype.startsWith('image')) {
+            return res.status(400).json({ success: false, error: 'Veuillez télécharger une image' });
+        }
+
+        // Check file size (5MB limit)
+        if (file.size > 5 * 1024 * 1024) {
+            return res.status(400).json({ success: false, error: 'L\'image ne doit pas dépasser 5Mo' });
+        }
+
+        const uploadPath = path.join(__dirname, '..', 'uploads', 'profile');
+        
+        // Ensure directory exists
+        if (!fs.existsSync(uploadPath)) {
+            fs.mkdirSync(uploadPath, { recursive: true });
+        }
+
+        const filename = `user-${req.params.id}-${Date.now()}${path.extname(file.name)}`;
+        const filePath = path.join(uploadPath, filename);
+
+        await file.mv(filePath);
+
+        const photoUrl = `/uploads/profile/${filename}`;
+        console.log(`✅ [userController] File saved to ${photoUrl}, updating database...`);
+
+        const user = await User.findByIdAndUpdate(
+            req.params.id,
+            { photo: photoUrl },
+            { new: true }
+        );
+
+        if (!user) {
+            console.log('❌ [userController] User not found');
+            return res.status(404).json({ success: false, error: 'Utilisateur non trouvé' });
+        }
+
+        console.log('✅ [userController] Database updated successfully');
+
+        res.status(200).json({
+            success: true,
+            data: photoUrl
+        });
+    } catch (err) {
+        console.error('❌ [userController] Photo upload error:', err);
+        next(err);
+    }
+};
+
+// @desc    Delete photo for specific user (Admin/Secretary)
+// @route   DELETE /api/v1/users/:id/photo
+// @access  Private/Admin/Secretary
+exports.deleteUserPhoto = async (req, res, next) => {
+    try {
+        console.log(`🗑️ [userController] Photo deletion request for user: ${req.params.id}`);
+        const user = await User.findById(req.params.id);
+
+        if (!user) {
+            return res.status(404).json({ success: false, error: 'Utilisateur non trouvé' });
+        }
+        
+        // Delete old file from disk if it's not the default
+        if (user.photo && user.photo !== 'no-photo.jpg') {
+            const oldPath = path.join(__dirname, '..', user.photo);
+            if (fs.existsSync(oldPath)) {
+                try {
+                    fs.unlinkSync(oldPath);
+                    console.log(`🗑️ [userController] Old photo deleted from disk: ${user.photo}`);
+                } catch (unlinkErr) {
+                    console.error(`⚠️ [userController] Failed to delete old photo: ${unlinkErr.message}`);
+                }
+            }
+        }
+
+        user.photo = 'no-photo.jpg';
+        await user.save({ validateBeforeSave: false });
+
+        console.log('✅ [userController] Photo record reset to default');
+
+        res.status(200).json({
+            success: true,
+            data: 'no-photo.jpg'
+        });
+    } catch (err) {
+        console.error('❌ [userController] Photo deletion error:', err);
+        res.status(500).json({ success: false, error: err.message });
     }
 };

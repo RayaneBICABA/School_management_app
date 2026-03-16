@@ -80,8 +80,9 @@
                           <template v-if="currentType === 'eleves'">
                              <div class="col-span-1 text-xs font-medium text-slate-900 dark:text-white truncate" :title="user.matricule">{{ user.matricule }}</div>
                              <div class="col-span-3 flex items-center gap-3">
-                                 <div :class="['size-8 rounded-full flex items-center justify-center font-bold text-xs shrink-0', getAvatarColor(user.role)]">
-                                     {{ getInitials(user.nom, user.prenom) }}
+                                 <div :class="['size-8 rounded-full overflow-hidden flex items-center justify-center font-bold text-xs shrink-0', getAvatarColor(user.role)]">
+                                     <img v-if="user.photo" :src="getFullPhotoUrl(user.photo)" class="w-full h-full object-cover" />
+                                     <span v-else>{{ getInitials(user.nom, user.prenom) }}</span>
                                  </div>
                                  <div class="min-w-0">
                                      <p class="text-sm font-bold text-slate-900 dark:text-white truncate" :title="user.prenom + ' ' + user.nom">{{ user.prenom }} {{ user.nom }}</p>
@@ -117,9 +118,10 @@
                          <!-- Standard Rows -->
                         <template v-else>
                             <div class="col-span-4 flex items-center gap-3">
-                                <div :class="['size-10 rounded-full flex items-center justify-center font-bold text-sm shrink-0', getAvatarColor(user.role)]">
-                                    {{ getInitials(user.nom, user.prenom) }}
-                                </div>
+                                 <div :class="['size-10 rounded-full overflow-hidden flex items-center justify-center font-bold text-sm shrink-0', getAvatarColor(user.role)]">
+                                     <img v-if="user.photo" :src="getFullPhotoUrl(user.photo)" class="w-full h-full object-cover" />
+                                     <span v-else>{{ getInitials(user.nom, user.prenom) }}</span>
+                                 </div>
                                 <div class="min-w-0">
                                     <p class="text-sm font-bold text-slate-900 dark:text-white truncate">{{ user.prenom }} {{ user.nom }}</p>
                                     <p class="text-xs text-slate-500 truncate">{{ user.email }}</p>
@@ -199,9 +201,27 @@
       
       <!-- Modal Content -->
       <div class="flex-1 overflow-y-auto p-6">
-        <form @submit.prevent="handleUpdate" class="space-y-6">
           <div v-if="editErrorMessage" class="p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
             <p class="text-sm text-red-600 dark:text-red-400">{{ editErrorMessage }}</p>
+          </div>
+
+          <form @submit.prevent="handleUpdate">
+            <!-- Photo Section -->
+          <div class="flex flex-col items-center gap-4 py-2">
+            <div class="relative group cursor-pointer" @click="showLightbox = true">
+              <div class="size-24 rounded-full overflow-hidden border-2 border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-slate-800 flex items-center justify-center">
+                <img v-if="editForm.photoPreview || (editForm.photo && editForm.photo !== 'no-photo.jpg')" :src="editForm.photoPreview || getFullPhotoUrl(editForm.photo)" class="w-full h-full object-cover transition-transform group-hover:scale-110" />
+                <span v-else class="material-symbols-outlined text-4xl text-slate-400">person</span>
+              </div>
+              <div class="absolute inset-0 rounded-full bg-black/0 group-hover:bg-black/20 transition-colors flex items-center justify-center">
+                <span class="material-symbols-outlined text-white opacity-0 group-hover:opacity-100 transition-opacity">zoom_in</span>
+              </div>
+              <input type="file" ref="photoInput" @change="handlePhotoChange" accept="image/*" class="hidden" />
+            </div>
+            <p class="text-[10px] text-slate-500 font-medium tracking-wide flex items-center gap-1">
+              <span class="material-symbols-outlined text-[12px]">info</span>
+              CLIQUEZ POUR AGRANDIR
+            </p>
           </div>
 
           <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -266,14 +286,48 @@
         </button>
       </div>
     </div>
-  </div>
+      <!-- Photo Lightbox Overlay within Modal -->
+      <div v-if="showLightbox" class="fixed inset-0 z-[100] flex flex-col items-center justify-center bg-slate-950/90 backdrop-blur-md p-4 animate-in fade-in duration-300" @click="showLightbox = false">
+        <button class="absolute top-6 right-6 p-2 bg-white/10 hover:bg-white/20 text-white rounded-full transition-colors z-[110]" @click.stop="showLightbox = false">
+          <span class="material-symbols-outlined text-3xl">close</span>
+        </button>
+
+        <div class="relative max-w-sm w-full aspect-square flex items-center justify-center animate-in zoom-in duration-300" @click.stop>
+          <img 
+            :src="editForm.photoPreview || getFullPhotoUrl(editForm.photo) || 'no-photo.jpg'" 
+            class="max-w-full max-h-full object-contain rounded-2xl shadow-2xl border-4 border-white/10"
+            @error="e => e.target.src = 'no-photo.jpg'"
+          />
+          
+          <div class="absolute -bottom-16 left-1/2 -translate-x-1/2 flex items-center gap-3 bg-white/10 backdrop-blur-xl p-2.5 rounded-2xl border border-white/10 shadow-2xl">
+            <button 
+              type="button"
+              @click="$refs.photoInput.click(); showLightbox = false" 
+              class="flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-xl text-xs font-bold transition-all hover:scale-105"
+            >
+              <span class="material-symbols-outlined text-base">photo_camera</span>
+              CHANGER
+            </button>
+            <button 
+              v-if="editForm.photo && editForm.photo !== 'no-photo.jpg'" 
+              type="button"
+              @click="handleDeletePhoto(); showLightbox = false" 
+              class="flex items-center gap-2 px-4 py-2 bg-red-500/80 text-white rounded-xl text-xs font-bold transition-all hover:scale-105"
+            >
+              <span class="material-symbols-outlined text-base">delete</span>
+              SUPPRIMER
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
 <script setup>
 import { ref, onMounted, computed, watch } from 'vue'
 import { useRouter } from 'vue-router'
-import api from '@/services/api'
+import api, { BASE_ASSET_URL } from '@/services/api'
 
 // Define Props
 const props = defineProps(['type'])
@@ -385,8 +439,12 @@ const editForm = ref({
   telephone: '',
   role: '',
   status: '',
-  classe: ''
+  classe: '',
+  photo: '',
+  photoPreview: null
 })
+const showLightbox = ref(false)
+const selectedFile = ref(null)
 const availableClasses = ref([])
 const isUpdating = ref(false)
 const editErrorMessage = ref('')
@@ -446,6 +504,12 @@ const formatDate = (dateString) => {
   })
 }
 
+const getFullPhotoUrl = (path) => {
+  if (!path || path === 'no-photo.jpg') return null
+  if (path.startsWith('http')) return path
+  return `${BASE_ASSET_URL}${path}`
+}
+
 const getStatusBadgeClass = (status) => {
   const map = {
     'ACTIF': 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400',
@@ -467,8 +531,11 @@ const openEditModal = (user) => {
     telephone: user.telephone || '',
     role: user.role,
     status: user.status,
-    classe: user.classe?._id || user.classe || ''
+    classe: user.classe?._id || user.classe || '',
+    photo: user.photo || '',
+    photoPreview: null
   }
+  selectedFile.value = null
   editErrorMessage.value = ''
   showEditModal.value = true
 }
@@ -483,13 +550,59 @@ const closeEditModal = () => {
     telephone: '',
     role: '',
     status: '',
-    classe: ''
+    classe: '',
+    photo: '',
+    photoPreview: null
   }
+  selectedFile.value = null
   
   editErrorMessage.value = ''
+  showPhotoMenu.value = false
 }
 
+const handlePhotoChange = (event) => {
+  console.log('🖼️ handlePhotoChange triggered');
+  const file = event.target.files[0]
+  if (file) {
+    console.log('📂 File selected:', file.name, file.size, file.type);
+    selectedFile.value = file
+    const reader = new FileReader()
+    reader.onload = (e) => {
+      console.log('👁️ Photo preview generated');
+      editForm.value.photoPreview = e.target.result
+    }
+    reader.onerror = (err) => {
+      console.error('❌ FileReader error:', err);
+    }
+    reader.readAsDataURL(file)
+  } else {
+    console.log('⚠️ No file selected');
+  }
+}
+
+const handleDeletePhoto = async () => {
+    if (!confirm('Supprimer la photo de cet utilisateur ?')) return;
+    try {
+        console.log('🗑️ handleDeletePhoto triggered (GestionUtilisateurs)');
+        const res = await api.deleteUserPhoto(editForm.value._id);
+        if (res.data.success) {
+            editForm.value.photo = 'no-photo.jpg';
+            editForm.value.photoPreview = null;
+            // Also update the UI list immediately if possible
+            const userIdx = users.value.findIndex(u => u._id === editForm.value._id);
+            if (userIdx !== -1) {
+                users.value[userIdx].photo = 'no-photo.jpg';
+            }
+            alert('Photo supprimée avec succès');
+        }
+    } catch (error) {
+        console.error('Erreur suppression photo:', error);
+        alert('Erreur lors de la suppression de la photo');
+    }
+};
+
 const handleUpdate = async () => {
+  console.log('💾 handleUpdate triggered');
   editErrorMessage.value = ''
   isUpdating.value = true
   
@@ -505,6 +618,14 @@ const handleUpdate = async () => {
     }
     
     await api.updateUser(editForm.value._id, updateData)
+    
+    // Upload photo if selected
+    if (selectedFile.value) {
+      const formData = new FormData()
+      formData.append('photo', selectedFile.value)
+      await api.uploadUserPhoto(editForm.value._id, formData)
+    }
+
     await fetchUsers()
     closeEditModal()
   } catch (error) {

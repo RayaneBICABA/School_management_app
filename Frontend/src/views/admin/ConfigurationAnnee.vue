@@ -492,11 +492,43 @@ const handleLogoUpload = async (event) => {
     const file = event.target.files[0];
     if (!file) return;
 
-    const base64 = await new Promise((resolve) => {
-        const r = new FileReader();
-        r.onload = (e) => resolve(e.target.result);
-        r.readAsDataURL(file);
-    });
+    // Resize image assistant
+    const resizeImage = (file) => {
+        return new Promise((resolve) => {
+            const reader = new FileReader();
+            reader.readAsDataURL(file);
+            reader.onload = (e) => {
+                const img = new Image();
+                img.src = e.target.result;
+                img.onload = () => {
+                    const canvas = document.createElement('canvas');
+                    let width = img.width;
+                    let height = img.height;
+                    const maxDim = 800;
+
+                    if (width > height) {
+                        if (width > maxDim) {
+                            height *= maxDim / width;
+                            width = maxDim;
+                        }
+                    } else {
+                        if (height > maxDim) {
+                            width *= maxDim / height;
+                            height = maxDim;
+                        }
+                    }
+
+                    canvas.width = width;
+                    canvas.height = height;
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0, width, height);
+                    resolve(canvas.toDataURL('image/png', 0.8));
+                };
+            };
+        });
+    };
+
+    const base64 = await resizeImage(file);
 
     try {
         const response = await api.uploadLogo({ image: base64 });

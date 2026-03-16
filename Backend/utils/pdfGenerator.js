@@ -237,10 +237,14 @@ exports.getBulletinHTML = (bulletin, schoolConfig) => {
                 <p>${schoolConfig.phone ? `TÉL : ${schoolConfig.phone}` : 'TÉL : 51 54 88 11'}</p>
             </div>
             <div class="h-col h-center">
-                <div class="logo-text">${schoolConfig.shortName || 'LWS'}</div>
+                ${schoolConfig.logo ? 
+                    `<img src="${schoolConfig.baseUrl || ''}${schoolConfig.logo}" style="height: 60px; max-width: 150px; object-fit: contain;" />` : 
+                    `<div class="logo-text">${schoolConfig.shortName || 'LWS'}</div>`
+                }
                 ${schoolConfig.motto !== undefined ?
-            (schoolConfig.motto ? `<div class="motto">${schoolConfig.motto}</div>` : '')
-            : `<div class="motto">DISCIPLINE-TRAVAIL-SUCCES</div>`}
+                    (schoolConfig.motto ? `<div class="motto">${schoolConfig.motto}</div>` : '')
+                    : `<div class="motto">DISCIPLINE-TRAVAIL-SUCCES</div>`
+                }
             </div>
             <div class="h-col h-col-side h-right right-header">
                 <p>${schoolConfig.country || 'BURKINA FASO'}</p>
@@ -409,10 +413,14 @@ exports.getMasterSheetHTML = (sheetsData, schoolConfig) => {
                     <p style="margin: 0;">TÉL : ${schoolConfig.phone || '51 54 88 11'}</p>
                 </div>
                 <div style="width: 40%; display: flex; flex-direction: column; align-items: center; text-align: center; justify-content: center;">
-                    <div style="font-size: 28px; font-weight: 900; color: #1e3a8a; letter-spacing: -1px; line-height: 1;">${schoolConfig.shortName || 'LWS'}</div>
+                    ${schoolConfig.logo ? 
+                        `<img src="${schoolConfig.baseUrl || ''}${schoolConfig.logo}" style="height: 60px; max-width: 150px; object-fit: contain; margin-bottom: 5px;" />` : 
+                        `<div style="font-size: 28px; font-weight: 900; color: #1e3a8a; letter-spacing: -1px; line-height: 1;">${schoolConfig.shortName || 'LWS'}</div>`
+                    }
                     ${schoolConfig.motto !== undefined ?
-                (schoolConfig.motto ? `<div style="font-size: 8px; color: #6b7280; text-transform: uppercase; letter-spacing: 0.5px; margin-top: 3px; font-weight: bold;">${schoolConfig.motto}</div>` : '')
-                : `<div style="font-size: 8px; color: #6b7280; text-transform: uppercase; letter-spacing: 0.5px; margin-top: 3px; font-weight: bold;">DISCIPLINE-TRAVAIL-SUCCES</div>`}
+                        (schoolConfig.motto ? `<div style="font-size: 8px; color: #6b7280; text-transform: uppercase; letter-spacing: 0.5px; margin-top: 3px; font-weight: bold;">${schoolConfig.motto}</div>` : '')
+                        : `<div style="font-size: 8px; color: #6b7280; text-transform: uppercase; letter-spacing: 0.5px; margin-top: 3px; font-weight: bold;">DISCIPLINE-TRAVAIL-SUCCES</div>`
+                    }
                 </div>
                 <div style="width: 30%; text-align: right; font-size: 8.5px; font-weight: bold; text-transform: uppercase; line-height: 1.2;">
                     <p style="margin: 0;">${schoolConfig.country || 'BURKINA FASO'}</p>
@@ -693,7 +701,10 @@ exports.getStudentProfileHTML = (student, schoolConfig) => {
             <p>${schoolConfig.phone ? 'TÉL : ' + schoolConfig.phone : ''}</p>
         </div>
         <div class="h-center">
-            <div class="logo-text">${schoolConfig.shortName || 'LWS'}</div>
+            ${schoolConfig.logo ? 
+                `<img src="${schoolConfig.baseUrl || ''}${schoolConfig.logo}" style="height: 60px; max-width: 150px; object-fit: contain;" />` : 
+                `<div class="logo-text">${schoolConfig.shortName || 'LWS'}</div>`
+            }
             <div class="motto">${schoolConfig.motto || 'DISCIPLINE - TRAVAIL - SUCCÈS'}</div>
         </div>
         <div class="h-right">
@@ -707,7 +718,12 @@ exports.getStudentProfileHTML = (student, schoolConfig) => {
 
     <!-- ID Block -->
     <div class="id-block">
-        <div class="photo-box">Photo<br>d'identité</div>
+        <div class="photo-box">
+            ${student.photo ? 
+                `<img src="${schoolConfig.baseUrl || ''}${student.photo}" style="width: 100%; height: 100%; object-fit: cover; border-radius: 4px;" />` : 
+                `Photo<br>d'identité`
+            }
+        </div>
         <div class="name-block">
             <div class="student-name">${val(student.nom)} ${val(student.prenom)}</div>
             <div class="student-meta">Matricule : <strong>${val(student.matricule)}</strong></div>

@@ -160,7 +160,10 @@ exports.exportStudentProfile = async (req, res, next) => {
 
     // Fetch school config
     const schoolSetting = await Setting.findOne({ key: 'school_config' });
-    const schoolConfig = schoolSetting ? schoolSetting.value : {};
+    const schoolConfig = schoolSetting ? { ...schoolSetting.value } : {};
+
+    // Base URL for resolving assets in PDF (needed for Puppeteer)
+    schoolConfig.baseUrl = `${req.protocol}://${req.get('host')}`;
 
     // Generate PDF
     const pdfBuffer = await generateStudentProfilePDF(student, schoolConfig);

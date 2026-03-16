@@ -238,7 +238,7 @@ exports.getBulletinHTML = (bulletin, schoolConfig) => {
             </div>
             <div class="h-col h-center">
                 ${schoolConfig.logo ? 
-                    `<img src="${schoolConfig.baseUrl || ''}${schoolConfig.logo}" style="height: 60px; max-width: 150px; object-fit: contain;" />` : 
+                    `<img src="${schoolConfig.logo.startsWith('data:image/') ? schoolConfig.logo : (schoolConfig.baseUrl || '') + schoolConfig.logo}" style="height: 60px; max-width: 150px; object-fit: contain;" />` : 
                     `<div class="logo-text">${schoolConfig.shortName || 'LWS'}</div>`
                 }
                 ${schoolConfig.motto !== undefined ?
@@ -414,7 +414,7 @@ exports.getMasterSheetHTML = (sheetsData, schoolConfig) => {
                 </div>
                 <div style="width: 40%; display: flex; flex-direction: column; align-items: center; text-align: center; justify-content: center;">
                     ${schoolConfig.logo ? 
-                        `<img src="${schoolConfig.baseUrl || ''}${schoolConfig.logo}" style="height: 60px; max-width: 150px; object-fit: contain; margin-bottom: 5px;" />` : 
+                        `<img src="${schoolConfig.logo.startsWith('data:image/') ? schoolConfig.logo : (schoolConfig.baseUrl || '') + schoolConfig.logo}" style="height: 60px; max-width: 150px; object-fit: contain; margin-bottom: 5px;" />` : 
                         `<div style="font-size: 28px; font-weight: 900; color: #1e3a8a; letter-spacing: -1px; line-height: 1;">${schoolConfig.shortName || 'LWS'}</div>`
                     }
                     ${schoolConfig.motto !== undefined ?
@@ -702,7 +702,7 @@ exports.getStudentProfileHTML = (student, schoolConfig) => {
         </div>
         <div class="h-center">
             ${schoolConfig.logo ? 
-                `<img src="${schoolConfig.baseUrl || ''}${schoolConfig.logo}" style="height: 60px; max-width: 150px; object-fit: contain;" />` : 
+                `<img src="${schoolConfig.logo.startsWith('data:image/') ? schoolConfig.logo : (schoolConfig.baseUrl || '') + schoolConfig.logo}" style="height: 60px; max-width: 150px; object-fit: contain;" />` : 
                 `<div class="logo-text">${schoolConfig.shortName || 'LWS'}</div>`
             }
             <div class="motto">${schoolConfig.motto || 'DISCIPLINE - TRAVAIL - SUCCÈS'}</div>

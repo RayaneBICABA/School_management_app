@@ -13,7 +13,7 @@
 
         <div class="header-center w-[40%] flex flex-col items-center text-center">
           <div v-if="schoolConfig.logo" class="h-16 mb-1">
-            <img :src="`${BASE_ASSET_URL}${schoolConfig.logo}`" class="h-full w-auto object-contain mx-auto" />
+            <img :src="schoolConfig.logo.startsWith('data:image/') ? schoolConfig.logo : `${BASE_ASSET_URL}${schoolConfig.logo}`" class="h-full w-auto object-contain mx-auto" />
           </div>
           <div v-else class="text-3xl font-black tracking-tighter text-blue-900 leading-none">{{ schoolConfig.shortName }}</div>
           <div v-if="schoolConfig.motto" class="text-[9px] font-bold text-gray-500 mt-1 uppercase tracking-widest leading-none">{{ schoolConfig.motto }}</div>

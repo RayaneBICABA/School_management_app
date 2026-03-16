@@ -70,32 +70,11 @@ exports.uploadLogo = async (req, res) => {
             return res.status(400).json({ success: false, error: 'Aucune image fournie' });
         }
 
-        const base64Match = image.match(/data:image\/[^;]+;base64,([^\s]+)/);
-        if (!base64Match) {
-            return res.status(400).json({ success: false, error: 'Format d\'image non supporté' });
-        }
-
-        const buffer = Buffer.from(base64Match[1], 'base64');
-        const fs = require('fs').promises;
-        const path = require('path');
-
-        const uploadDir = path.join(__dirname, '..', 'uploads', 'school');
-        // Ensure directory exists
-        const fsNormal = require('fs');
-        if (!fsNormal.existsSync(uploadDir)) {
-            fsNormal.mkdirSync(uploadDir, { recursive: true });
-        }
-
-        const filename = `logo-${Date.now()}.png`;
-        const uploadPath = path.join(uploadDir, filename);
-        await fs.writeFile(uploadPath, buffer);
-
-        const logoUrl = `/uploads/school/${filename}`;
-
-        // Update school_config setting
+        // Directly save the Base64 string to the database instead of the file system
+        // This is necessary for serverless environments (like Vercel) where the local filesystem is ephemeral
         let setting = await Setting.findOne({ key: 'school_config' });
         const configValue = setting ? setting.value : {};
-        configValue.logo = logoUrl;
+        configValue.logo = image; // 'image' is already the Base64 string from the frontend
 
         if (setting) {
             setting.value = configValue;
@@ -110,7 +89,7 @@ exports.uploadLogo = async (req, res) => {
 
         res.status(200).json({
             success: true,
-            data: logoUrl
+            data: image // Return the Base64 string
         });
     } catch (err) {
         res.status(500).json({

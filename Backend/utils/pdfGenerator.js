@@ -174,8 +174,8 @@ exports.getBulletinHTML = (bulletin, schoolConfig) => {
         .compact-2 .logo-text { font-size: 20px; }
         
         /* Fixed/Shrinkable Header Sections */
-        .header { display: flex; justify-content: space-between; border-bottom: 0; padding-bottom: 0; margin-bottom: 0; flex-shrink: 0; }
-        .h-col { width: 33.33%; font-weight: bold; font-size: 8.5px; line-height: 1.0; text-transform: uppercase; color: #000; }
+        .header { display: flex; justify-content: space-between; border-bottom: 2px solid #333; padding-bottom: 2px; margin-bottom: 4px; flex-shrink: 0; }
+        .h-col { width: 33.33%; font-weight: bold; font-size: 8.5px; line-height: 1.4; text-transform: uppercase; color: #000; }
         .h-center { text-align: center; display: flex; flex-direction: column; align-items: center; justify-content: center; width: 40% !important; }
         .h-col-side { width: 30% !important; }
         .h-right { text-align: right; }
@@ -201,8 +201,8 @@ exports.getBulletinHTML = (bulletin, schoolConfig) => {
         .cat-header { background: #eee; font-weight: bold; text-transform: uppercase; font-size: 9px; height: 26px; text-align: center !important; color: #000; }
         .data-row td { padding: 5px 4px; }
         .cat-header-row td { padding: 4px 4px; }
-        .cat-total-row td { padding: 8px 4px; }
-        .total-general-row td { padding: 10px 4px; }
+        .cat-total-row td { padding: 12px 4px; }
+        .total-general-row td { padding: 14px 4px; }
         .text-left { text-align: left; }
         .font-bold { font-weight: bold; }
         .uppercase { text-transform: uppercase; }

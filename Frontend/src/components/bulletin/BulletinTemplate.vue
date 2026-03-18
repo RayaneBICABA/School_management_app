@@ -429,6 +429,7 @@ const downloadPDF = async () => {
   min-height: 287mm;
   padding: 8mm !important;
   background: white !important;
+  font-family: Arial, Helvetica, sans-serif !important;
 }
 
 /* Fix ghost lines through text (Puppeteer/Browser scaling issue) */
@@ -449,7 +450,7 @@ td, th {
   border-right: 1px solid black !important;
   border-bottom: 1px solid black !important;
   vertical-align: middle !important;
-  padding: 4px 3px !important;
+  padding: 0 4px !important;
   text-align: center;
 }
 
@@ -460,7 +461,11 @@ th {
   font-size: 9px;
 }
 
-.cat-header-row {
+.data-row td {
+  height: 28px;
+}
+
+.cat-header-row td {
   height: 28px;
   background-color: #e5e7eb;
 }
@@ -470,30 +475,30 @@ th {
   padding: 5mm !important;
   font-size: 9.5px;
 }
-.compact-1 .data-row, 
-.compact-1 .cat-header-row {
+.compact-1 .data-row td, 
+.compact-1 .cat-header-row td {
   height: 26px;
 }
 .compact-1 th {
   height: 30px;
 }
 .compact-1 .bilan-table td {
-  height: 30px;
+  height: 28px;
 }
 
 .compact-2 .bulletin {
   padding: 4mm !important;
   font-size: 9px;
 }
-.compact-2 .data-row, 
-.compact-2 .cat-header-row {
+.compact-2 .data-row td, 
+.compact-2 .cat-header-row td {
   height: 22px;
 }
 .compact-2 th {
   height: 26px;
 }
 .compact-2 .bilan-table td {
-  height: 26px;
+  height: 24px;
 }
 .compact-2 .council-box {
   min-height: 80px;

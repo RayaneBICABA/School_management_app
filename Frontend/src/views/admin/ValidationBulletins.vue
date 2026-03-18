@@ -141,7 +141,9 @@ const classesSelectionnees = computed(() => {
 
 const filteredClasses = computed(() => {
     // Hide classes that are fully validated (all bulletins signed by proviseur)
+    // EXCEPT if the class is marked as 'Prêt' (meaning there are new things to validate)
     return classes.value.filter(c => {
+        if (c.statut === 'Prêt') return true;
         if (c.bulletinsCount > 0 && c.signedCount === c.bulletinsCount) {
             return false;
         }

@@ -146,14 +146,14 @@ exports.getBulletinHTML = (bulletin, schoolConfig) => {
 
     let tableRows = '';
     Object.entries(groupedNotes).forEach(([catName, notes]) => {
-        tableRows += `<tr class="cat-header"><td colspan="7">${catName}</td></tr>`;
+        tableRows += `<tr class="cat-header-row"><td colspan="7" class="cat-header">${catName}</td></tr>`;
 
         notes.forEach(note => {
             const prof = note.professeur ? `${note.professeur.civilite || ''} ${note.professeur.nom || ''}`.trim() : '';
             const app = note.isDispensed ? '' : getGeneralAppreciation(note.moyenneMatiere || 0);
 
             tableRows += `
-                <tr>
+                <tr class="data-row">
                     <td class="text-left font-bold uppercase">${note.matiere?.nom || ''}</td>
                     <td>${(note.coeff || 1).toFixed(1)}</td>
                     ${note.isDispensed ?
@@ -172,64 +172,76 @@ exports.getBulletinHTML = (bulletin, schoolConfig) => {
 
     const formatDate = (date) => date ? new Date(date).toLocaleDateString('fr-FR') : 'Non renseigné';
 
+    const totalNotes = bulletin.notes?.length || 0;
+    const compactLevel = totalNotes > 16 ? 2 : (totalNotes > 12 ? 1 : 0);
+    const compactClass = compactLevel === 2 ? 'compact-2' : (compactLevel === 1 ? 'compact-1' : '');
+
     return `
 <!DOCTYPE html>
-<html>
+<html class="${compactClass}">
 <head>
     <style>
         /* Core Layout - Full Page Flexbox */
         html, body { height: 297mm; width: 210mm; margin: 0; padding: 0; }
-        body { font-family: 'Inter', 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; color: #333; font-size: 10.5px; padding: 10mm; background: white; line-height: 1.2; display: flex; flex-direction: column; }
+        body { font-family: 'Inter', 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; color: #333; font-size: 10.5px; padding: 8mm; background: white; line-height: 1.15; display: flex; flex-direction: column; box-sizing: border-box; }
         .bulletin-card { width: 100%; height: 100%; display: flex; flex-direction: column; }
         
+        /* Compact Modes */
+        .compact-1 body { font-size: 10px; padding: 6mm; }
+        .compact-1 tr.data-row { height: 28px; }
+        .compact-1 th { height: 32px; }
+        .compact-2 body { font-size: 9.5px; padding: 5mm; }
+        .compact-2 tr.data-row { height: 24px; font-size: 9px; }
+        .compact-2 th { height: 28px; font-size: 9px; }
+        .compact-2 .council-box { min-height: 80px; }
+        .compact-2 .h-col { font-size: 8px; }
+        
         /* Fixed/Shrinkable Header Sections */
-        .header { display: flex; justify-content: space-between; border-bottom: 2px solid #f1f5f9; padding-bottom: 8px; margin-bottom: 12px; flex-shrink: 0; }
+        .header { display: flex; justify-content: space-between; border-bottom: 2px solid #f1f5f9; padding-bottom: 6px; margin-bottom: 8px; flex-shrink: 0; }
         .h-col { width: 33.33%; font-weight: bold; font-size: 9px; line-height: 1.25; text-transform: uppercase; }
         .h-center { text-align: center; display: flex; flex-direction: column; align-items: center; justify-content: center; width: 40% !important; }
         .h-col-side { width: 30% !important; }
         .h-right { text-align: right; }
         
-        .logo-text { font-size: 26px; font-weight: 900; color: #1e3a8a; letter-spacing: -1px; line-height: 1; }
-        .motto { font-size: 8.5px; color: #6b7280; letter-spacing: 0.5px; margin-top: 3px; font-weight: bold; }
+        .logo-text { font-size: 24px; font-weight: 900; color: #1e3a8a; line-height: 1; }
+        .motto { font-size: 8px; color: #6b7280; margin-top: 2px; font-weight: bold; }
         
-        .title { text-align: center; margin: 8px 0; flex-shrink: 0; }
-        .title h1 { font-size: 21px; font-style: italic; font-weight: bold; border-top: 1px solid #000; border-bottom: 1px solid #000; padding: 5px 0; }
+        .title { text-align: center; margin: 6px 0; flex-shrink: 0; }
+        .title h1 { font-size: 19px; font-style: italic; font-weight: bold; border-top: 1px solid #000; border-bottom: 1px solid #000; padding: 4px 0; }
         
-        .info-bar { display: flex; justify-content: space-between; margin-bottom: 5px; font-size: 11.5px; flex-shrink: 0; }
-        .student-name { margin-bottom: 5px; font-size: 13px; font-weight: bold; padding-top: 4px; flex-shrink: 0; }
+        .info-bar { display: flex; justify-content: space-between; margin-bottom: 4px; font-size: 11px; flex-shrink: 0; }
+        .student-name { margin-bottom: 4px; font-size: 12.5px; font-weight: bold; padding-top: 2px; flex-shrink: 0; }
         
-        .grid-info { display: flex; justify-content: space-between; padding-bottom: 6px; margin-bottom: 12px; border-bottom: 1px solid #e2e8f0; flex-shrink: 0; }
-        .grid-item { font-size: 11px; display: flex; align-items: baseline; gap: 4px; }
-        .grid-item span { color: #64748b; font-size: 10px; }
+        .grid-info { display: flex; justify-content: space-between; padding-bottom: 4px; margin-bottom: 8px; border-bottom: 1px solid #e2e8f0; flex-shrink: 0; }
+        .grid-item { font-size: 10.5px; display: flex; align-items: baseline; gap: 4px; }
+        .grid-item span { color: #64748b; font-size: 9px; }
         
-        /* Table Styles - Fixed heights + centered content */
-        /* border-collapse: separate + border-spacing: 0 is the fix for ghost lines through text */
+        /* Table Styles */
         .table-container { flex: 1; display: flex; flex-direction: column; min-height: 0; }
         table.main-table { width: 100%; border-spacing: 0; border-collapse: separate; border-top: 1px solid #000; border-left: 1px solid #000; table-layout: fixed; }
-        table.main-table th, table.main-table td { border-right: 1px solid #000; border-bottom: 1px solid #000; padding: 8px 5px; text-align: center; vertical-align: middle; line-height: 1.2; }
-        table.main-table th { background: #e5e7eb; font-weight: bold; text-transform: uppercase; font-size: 10px; height: 38px; }
-        .cat-header { background: #d1d5db; font-weight: bold; text-transform: uppercase; font-size: 10px; height: 32px; text-align: center !important; }
-        tr.data-row { height: 32px; }
+        table.main-table th, table.main-table td { border-right: 1px solid #000; border-bottom: 1px solid #000; padding: 6px 4px; text-align: center; vertical-align: middle; line-height: 1.1; }
+        table.main-table th { background: #e5e7eb; font-weight: bold; text-transform: uppercase; font-size: 9.5px; height: 35px; }
+        .cat-header { background: #d1d5db; font-weight: bold; text-transform: uppercase; font-size: 9.5px; height: 30px; text-align: center !important; }
+        tr.data-row { height: 30px; }
         .text-left { text-align: left !important; }
         .font-bold { font-weight: bold; }
         .uppercase { text-transform: uppercase; }
-        .italic { font-style: italic; }
         
         /* Bilan & Council section */
-        .bilan-section { flex-shrink: 0; margin-top: 10px; }
-        .bilan-header { background: #d1d5db; font-weight: bold; text-align: center; padding: 7px; border: 1px solid #000; border-bottom: 0; text-transform: uppercase; font-size: 11px; }
-        .bilan-table { width: 100%; border-spacing: 0; border-collapse: separate; border-top: 1px solid #000; border-left: 1px solid #000; margin-bottom: 12px; }
-        .bilan-table td { border-right: 1px solid #000; border-bottom: 1px solid #000; padding: 8px 6px; font-size: 11px; vertical-align: middle; text-align: center; height: 38px; }
-        .lg-val { font-size: 18px; font-weight: bold; }
+        .bilan-section { flex-shrink: 0; margin-top: 8px; }
+        .bilan-header { background: #d1d5db; font-weight: bold; text-align: center; padding: 6px; border: 1px solid #000; border-bottom: 0; text-transform: uppercase; font-size: 10.5px; }
+        .bilan-table { width: 100%; border-spacing: 0; border-collapse: separate; border-top: 1px solid #000; border-left: 1px solid #000; margin-bottom: 8px; }
+        .bilan-table td { border-right: 1px solid #000; border-bottom: 1px solid #000; padding: 6px; font-size: 10.5px; vertical-align: middle; text-align: center; height: 34px; }
+        .lg-val { font-size: 17px; font-weight: bold; }
         
         .spacer { flex: 1; }
         .council-section { flex-shrink: 0; }
-        .council-header { background: #d1d5db; text-align: center; font-weight: bold; padding: 7px; border: 1px solid #000; border-bottom: 0; text-transform: uppercase; font-size: 11px; }
-        .council-box { display: flex; border: 1px solid #000; min-height: 110px; }
-        .app-box { width: 50%; border-right: 1px solid #000; display: flex; align-items: center; justify-content: center; font-size: 22px; font-weight: bold; padding: 10px; text-align: center; }
-        .sig-box { width: 50%; padding: 10px; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; }
+        .council-header { background: #d1d5db; text-align: center; font-weight: bold; padding: 6px; border: 1px solid #000; border-bottom: 0; text-transform: uppercase; font-size: 10.5px; }
+        .council-box { display: flex; border: 1px solid #000; min-height: 95px; }
+        .app-box { width: 50%; border-right: 1px solid #000; display: flex; align-items: center; justify-content: center; font-size: 20px; font-weight: bold; padding: 8px; text-align: center; }
+        .sig-box { width: 50%; padding: 8px; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; }
         
-        .footer-info { display: flex; justify-content: space-between; align-items: center; margin-top: 10px; font-size: 9px; color: #6b7280; flex-shrink: 0; }
+        .footer-info { display: flex; justify-content: space-between; align-items: center; margin-top: 8px; font-size: 8.5px; color: #6b7280; flex-shrink: 0; }
         .page-break { page-break-after: always; height: 100%; display: flex; flex-direction: column; }
     </style>
 </head>
@@ -336,14 +348,14 @@ exports.getBulletinHTML = (bulletin, schoolConfig) => {
         <div class="bilan-section">
             <div class="bilan-header">BILAN ${filiere === 'Technique' ? 'SEMESTRIEL' : 'TRIMESTRIEL'}</div>
             <table class="bilan-table">
-                <tr>
+                <tr class="data-row">
                     <td style="width: 20%;">Moyenne de l'élève</td>
                     <td class="lg-val" style="width: 10%;">${(bulletin.moyenneGenerale || 0).toFixed(2)}</td>
                     <td style="width: 25%; text-transform: uppercase;">RETRAIT DE POINTS</td>
                     <td class="font-bold" style="width: 10%;">${(bulletin.retraitPoints || 0).toFixed(2)}</td>
                     <td colspan="4" class="font-bold text-center" style="background: #eee;">NOMBRE D'HEURES D'ABSENCE</td>
                 </tr>
-                <tr>
+                <tr class="data-row">
                     <td>Moyenne de la classe</td>
                     <td class="font-bold">${(bulletin.moyenneClasse || 0).toFixed(2)}</td>
                     <td style="width: 25%; text-transform: uppercase;">MOYENNE DEFINITIVE</td>
@@ -353,7 +365,7 @@ exports.getBulletinHTML = (bulletin, schoolConfig) => {
                     <td style="width: 15%;">Non justifiées</td>
                     <td class="font-bold" style="width: 5%;">${bulletin.absencesNonJustifiees || 0}</td>
                 </tr>
-                <tr>
+                <tr class="data-row">
                     <td>Meilleure moyenne</td>
                     <td class="font-bold">${(bulletin.meilleureMoyenneClasse || 0).toFixed(2)}</td>
                     <td style="width: 25%; text-transform: uppercase;">Rang du trimestre</td>
@@ -361,7 +373,7 @@ exports.getBulletinHTML = (bulletin, schoolConfig) => {
                     <td class="font-bold uppercase" style="width: 10%;">Conduite</td>
                     <td colspan="3" class="font-bold">${bulletin.conduite || ''}</td>
                 </tr>
-                <tr>
+                <tr class="data-row">
                     <td>Moyenne la plus basse</td>
                     <td class="font-bold">${(bulletin.pireMoyenneClasse || 0).toFixed(2)}</td>
                     <td colspan="2"></td>

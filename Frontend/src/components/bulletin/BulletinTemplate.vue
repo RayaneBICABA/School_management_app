@@ -322,8 +322,8 @@ const maxCompo = computed(() => {
 const totalCols = computed(() => 7);
 const compactClasses = computed(() => {
   const count = props.bulletin.notes?.length || 0;
-  if (count > 20) return 'compact-level-2';
-  if (count > 14) return 'compact-level-1';
+  if (count > 16) return 'compact-2';
+  if (count > 12) return 'compact-1';
   return '';
 });
 
@@ -459,13 +459,43 @@ th {
   font-weight: bold;
 }
 
-.data-row {
+.cat-header-row {
+  height: 30px;
+  background-color: #e5e7eb;
+}
+
+/* Compact Modes */
+.compact-1 .bulletin {
+  padding: 8mm !important;
+  font-size: 10px;
+}
+.compact-1 .data-row, 
+.compact-1 .cat-header-row {
+  height: 28px;
+}
+.compact-1 th {
+  height: 35px;
+}
+.compact-1 .bilan-table td {
   height: 32px;
 }
 
-.cat-header-row {
-  height: 32px;
-  background-color: #e5e7eb;
+.compact-2 .bulletin {
+  padding: 6mm !important;
+  font-size: 9.5px;
+}
+.compact-2 .data-row, 
+.compact-2 .cat-header-row {
+  height: 24px;
+}
+.compact-2 th {
+  height: 28px;
+}
+.compact-2 .bilan-table td {
+  height: 28px;
+}
+.compact-2 .council-box {
+  min-height: 80px;
 }
 
 @media print {

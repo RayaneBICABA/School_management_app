@@ -332,7 +332,7 @@ exports.getBulletinsByClasse = asyncHandler(async (req, res, next) => {
     if (!anneeScolaire || !periode) {
         const academicSetting = await Setting.findOne({ key: 'academic_year_config' });
         if (!anneeScolaire) {
-            anneeScolaire = academicSetting ? (academicSetting.value.year || academicSetting.value.academicYear) : '2023-2024';
+            anneeScolaire = academicSetting ? (academicSetting.value.year || academicSetting.value.academicYear) : '2025-2026';
         }
         if (!periode) {
             // Chercher currentTrimester ou currentSemester
@@ -850,7 +850,7 @@ exports.getBulletinStats = asyncHandler(async (req, res, next) => {
 exports.getValidationPageStats = asyncHandler(async (req, res, next) => {
     const { periode, anneeScolaire } = req.query;
     const academicSetting = await Setting.findOne({ key: 'academic_year_config' });
-    const currentYear = anneeScolaire || (academicSetting ? (academicSetting.value.year || academicSetting.value.academicYear) : '2023-2024');
+    const currentYear = anneeScolaire || (academicSetting ? (academicSetting.value.year || academicSetting.value.academicYear) : '2025-2026');
     const selectedPeriod = periode || (async () => {
         const trimesterSetting = await Setting.findOne({ key: 'currentTrimester' });
         const semesterSetting = await Setting.findOne({ key: 'currentSemester' });
@@ -872,121 +872,156 @@ exports.getValidationPageStats = asyncHandler(async (req, res, next) => {
 
     // 1. Get all classes
     const classes = await Classe.find().populate('professeurPrincipal', 'nom prenom');
-    const Evaluation = require('../models/Evaluation');
-    const ClasseMatiere = require('../models/ClasseMatiere');
+    const classIds = classes.map(c => c._id);
+
+    // 2. Batch fetch all ClasseMatiere for these classes
+    const allMatieresDocs = await ClasseMatiere.find({ classe: { $in: classIds } });
+    const matieresByClass = {};
+    allMatieresDocs.forEach(m => {
+        if (!matieresByClass[m.classe.toString()]) matieresByClass[m.classe.toString()] = [];
+        matieresByClass[m.classe.toString()].push(m);
+    });
+
+    // 3. Batch fetch validated Notes counts for all classes and relevant periods
+    // We fetch for all trimesters and semesters to handle class-specific periods later
+    const validatedNotesCounts = await Note.aggregate([
+        {
+            $match: {
+                classe: { $in: classIds },
+                anneeScolaire: currentYear,
+                statut: 'VALIDEE'
+            }
+        },
+        { $group: { _id: { classe: "$classe", matiere: "$matiere", periode: "$periode" }, count: { $sum: 1 } } }
+    ]);
+
+    const notesCountMap = {};
+    validatedNotesCounts.forEach(item => {
+        const key = `${item._id.classe.toString()}-${item._id.matiere.toString()}-${item._id.periode}`;
+        notesCountMap[key] = item.count;
+    });
+
+    // 4. Batch fetch Bulletin stats for all classes
+    const bulletinStatsAggr = await Bulletin.aggregate([
+        { 
+            $match: { 
+                classe: { $in: classIds }, 
+                anneeScolaire: currentYear,
+                // We'll filter by period in code if needed, but better fetch all relevant ones
+                periode: { $in: ['Trimestre 1', 'Trimestre 2', 'Trimestre 3', 'Semestre 1', 'Semestre 2'] }
+            } 
+        },
+        {
+            $group: {
+                _id: { classe: "$classe", periode: "$periode" },
+                moyenne: { $avg: '$moyenneGenerale' },
+                min: { $min: '$moyenneGenerale' },
+                max: { $max: '$moyenneGenerale' },
+                count: { $sum: 1 },
+                signedCount: {
+                    $sum: { $cond: [{ $eq: ["$signatureProviseur", true] }, 1, 0] }
+                }
+            }
+        }
+    ]);
+
+    const bulletinStatsMap = {};
+    bulletinStatsAggr.forEach(item => {
+        const key = `${item._id.classe.toString()}-${item._id.periode}`;
+        bulletinStatsMap[key] = item;
+    });
 
     const result = [];
     let classesPretesCount = 0;
+
     for (const classe of classes) {
-        // Find assigned subjects for this class
-        const matieresDocs = await ClasseMatiere.find({ classe: classe._id });
-        let matiereIds = matieresDocs.map(m => m.matiere);
+        try {
+            const cid = classe._id.toString();
+            const classMatieres = matieresByClass[cid] || [];
+            let matiereIds = classMatieres.map(m => m.matiere);
 
-        // Determine effective period for this class
-        let classPeriode = finalPeriode;
-        if (classe.filiere === 'Technique') {
-            if (finalPeriode.includes('Trimestre 1') || finalPeriode.includes('Trimestre 2')) {
-                classPeriode = 'Semestre 1';
-            } else if (finalPeriode.includes('Trimestre 3')) {
-                classPeriode = 'Semestre 2';
+            // Determine effective period for this class
+            let classPeriode = finalPeriode;
+            if (classe.filiere === 'Technique') {
+                if (finalPeriode.includes('Trimestre 1') || finalPeriode.includes('Trimestre 2')) {
+                    classPeriode = 'Semestre 1';
+                } else if (finalPeriode.includes('Trimestre 3')) {
+                    classPeriode = 'Semestre 2';
+                }
             }
-        }
 
-        // Pour les filières techniques, exclure les matières sans notes validées dans la période
-        if (classe.filiere === 'Technique' && matiereIds.length > 0) {
-            const matieresWithNotes = await Note.distinct('matiere', {
-                classe: classe._id,
-                periode: classPeriode,
-                anneeScolaire: currentYear,
-                statut: 'VALIDEE'
-            });
-            matiereIds = matiereIds.filter(id =>
-                matieresWithNotes.some(mw => mw.toString() === id.toString())
-            );
-        }
+            // Pour les filières techniques, exclure les matières sans notes validées dans la période
+            if (classe.filiere === 'Technique' && matiereIds.length > 0) {
+                matiereIds = matiereIds.filter(id => {
+                    const key = `${cid}-${id.toString()}-${classPeriode}`;
+                    return (notesCountMap[key] || 0) > 0;
+                });
+            }
 
-        if (matiereIds.length === 0) {
-            // No subjects, not ready
+            if (matiereIds.length === 0) {
+                result.push({
+                    id: classe._id,
+                    nom: `${classe.niveau} ${classe.section}`,
+                    professeur: classe.professeurPrincipal ? `${classe.professeurPrincipal.prenom} ${classe.professeurPrincipal.nom}` : 'Non assigné',
+                    moyenne: '0.00',
+                    min: '0.00',
+                    max: '0.00',
+                    statut: 'En attente',
+                    details: 'Aucune matière',
+                    bulletinsCount: 0,
+                    signedCount: 0
+                });
+                continue;
+            }
+
+            // Check if all subjects have >= 1 validated evaluation (as per existing logic count > 0)
+            let allSubjectsReady = true;
+            for (const m of classMatieres) {
+                // If the matiereId was filtered out for Technical classes, we should skip it here too?
+                // Actually the filter above only applies to Technical classes.
+                // Let's check count for each matiere assigned.
+                const key = `${cid}-${m.matiere.toString()}-${classPeriode}`;
+                const count = notesCountMap[key] || 0;
+                if (count === 0) {
+                    // For technical classes, if it was filtered out, it means it has no notes.
+                    // If it's not technical, any missing notes block.
+                    allSubjectsReady = false;
+                    break;
+                }
+            }
+
+            const statut = allSubjectsReady ? 'Prêt' : 'En attente';
+            if (statut === 'Prêt') classesPretesCount++;
+
+            // Get pre-calculated stats
+            const classStats = bulletinStatsMap[`${cid}-${classPeriode}`] || { moyenne: 0, min: 0, max: 0, count: 0, signedCount: 0 };
+
             result.push({
                 id: classe._id,
                 nom: `${classe.niveau} ${classe.section}`,
                 professeur: classe.professeurPrincipal ? `${classe.professeurPrincipal.prenom} ${classe.professeurPrincipal.nom}` : 'Non assigné',
-                moyenne: '0.0',
-                min: '0.0',
-                max: '0.0',
-                statut: 'En attente',
-                details: 'Aucune matière'
+                moyenne: (classStats.moyenne || 0).toFixed(2),
+                min: (classStats.min || 0).toFixed(2),
+                max: (classStats.max || 0).toFixed(2),
+                statut,
+                bulletinsCount: classStats.count,
+                signedCount: classStats.signedCount
             });
-            continue;
+        } catch (innerError) {
+            console.error(`Error processing class ${classe._id}:`, innerError);
+            // Push a safe fallback for this class so the whole page doesn't break
+            result.push({
+                id: classe._id,
+                nom: `${classe.niveau} ${classe.section}`,
+                professeur: 'Erreur',
+                moyenne: '0.00',
+                min: '0.00',
+                max: '0.00',
+                statut: 'Erreur',
+                bulletinsCount: 0,
+                signedCount: 0
+            });
         }
-
-        // Check if all subjects have >= 2 validated evaluations
-        let allSubjectsReady = true;
-        // Optimization: Aggregate validated Notes count by matiere for this class/period
-        const validedNotesCounts = await Note.aggregate([
-            {
-                $match: {
-                    classe: classe._id,
-                    matiere: { $in: matiereIds },
-                    periode: classPeriode,
-                    anneeScolaire: currentYear,
-                    statut: 'VALIDEE'
-                }
-            },
-            { $group: { _id: "$matiere", count: { $sum: 1 } } }
-        ]);
-
-        const acc = {};
-        validedNotesCounts.forEach(e => { acc[e._id.toString()] = e.count; });
-
-        for (const m of matieresDocs) {
-            const count = acc[m.matiere.toString()] || 0;
-            // Une matière qui n'a pas du tout de note validée bloque la classe
-            if (count === 0) {
-                allSubjectsReady = false;
-                break;
-            }
-        }
-
-        let statut = allSubjectsReady ? 'Prêt' : 'En attente';
-
-        // Calculate Class Stats (Avg, Min, Max from Bulletins if they exist, or calculate from Grades?)
-        // To be fast, use existing Bulletins if any. 
-        const stats = await Bulletin.aggregate([
-            { $match: { classe: classe._id, periode: classPeriode, anneeScolaire: currentYear } },
-            {
-                $group: {
-                    _id: null,
-                    moyenne: { $avg: '$moyenneGenerale' },
-                    min: { $min: '$moyenneGenerale' },
-                    max: { $max: '$moyenneGenerale' },
-                    count: { $sum: 1 }, // To know if we have bulletins
-                    signedCount: {
-                        $sum: { $cond: [{ $eq: ["$signatureProviseur", true] }, 1, 0] }
-                    }
-                }
-            }
-        ]);
-
-        const classStats = stats.length > 0 ? stats[0] : { moyenne: 0, min: 0, max: 0, count: 0, signedCount: 0 };
-
-        // Refine Status: If all bulletins FINALISE, status could be different? 
-        // User requirements: "Classes prêtes affiche bien le nombre de classe où toute les matieres aurait minimum 2 evaluations validés"
-        // So Status 'Prêt' is strictly about Eval count. 
-
-        if (statut === 'Prêt') classesPretesCount++;
-
-        result.push({
-            id: classe._id,
-            nom: `${classe.niveau} ${classe.section}`,
-            professeur: classe.professeurPrincipal ? `${classe.professeurPrincipal.prenom} ${classe.professeurPrincipal.nom}` : 'Non assigné',
-            moyenne: (classStats.moyenne || 0).toFixed(2),
-            min: (classStats.min || 0).toFixed(2),
-            max: (classStats.max || 0).toFixed(2),
-            statut,
-            bulletinsCount: classStats.count,
-            signedCount: classStats.signedCount
-        });
     }
 
     res.status(200).json({
@@ -1011,7 +1046,7 @@ exports.validateClassBulletins = asyncHandler(async (req, res, next) => {
     }
 
     const academicSetting = await Setting.findOne({ key: 'academic_year_config' });
-    const currentYear = anneeScolaire || (academicSetting ? (academicSetting.value.year || academicSetting.value.academicYear) : '2023-2024');
+    const currentYear = anneeScolaire || (academicSetting ? (academicSetting.value.year || academicSetting.value.academicYear) : '2025-2026');
     const currentPeriode = periode || (async () => {
         const trimesterSetting = await Setting.findOne({ key: 'currentTrimester' });
         const semesterSetting = await Setting.findOne({ key: 'currentSemester' });

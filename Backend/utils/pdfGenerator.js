@@ -19,7 +19,7 @@ exports.generateBulletinPDF = async (bulletin, schoolConfig) => {
         const pdf = await page.pdf({
             format: 'A4',
             printBackground: true,
-            margin: { top: '5mm', right: '5mm', bottom: '5mm', left: '5mm' }
+            margin: { top: '0px', right: '0px', bottom: '0px', left: '0px' }
         });
 
         return pdf;
@@ -45,7 +45,7 @@ exports.generateClassBulletinsPDF = async (bulletins, schoolConfig) => {
             const html = exports.getBulletinHTML(bulletin, schoolConfig);
             const bodyMatch = html.match(/<body>([\s\S]*)<\/body>/);
             const content = bodyMatch ? bodyMatch[1] : html;
-            fullHtml += `<div class="page-break" style="${index > 0 ? 'page-break-before: always;' : ''}">${content}</div>`;
+            fullHtml += `<div class="page-break">${content}</div>`;
         });
 
         const baseHtml = exports.getBulletinHTML(bulletins[0], schoolConfig);
@@ -56,7 +56,7 @@ exports.generateClassBulletinsPDF = async (bulletins, schoolConfig) => {
         const pdf = await page.pdf({
             format: 'A4',
             printBackground: true,
-            margin: { top: '5mm', right: '5mm', bottom: '5mm', left: '5mm' }
+            margin: { top: '0px', right: '0px', bottom: '0px', left: '0px' }
         });
 
         return pdf;
@@ -158,9 +158,9 @@ exports.getBulletinHTML = (bulletin, schoolConfig) => {
 <head>
     <style>
         /* Core Layout - Full Page Flexbox */
-        body { font-family: Arial, Helvetica, sans-serif; color: #333; font-size: 10px; padding: 10mm; background: white; line-height: 1.1; display: flex; flex-direction: column; box-sizing: border-box; }
+        body { font-family: Arial, Helvetica, sans-serif; color: #333; font-size: 10px; padding: 0; margin: 0; background: white; line-height: 1.1; }
         p { margin: 0; padding: 0; }
-        .bulletin-card { width: 100%; display: flex; flex-direction: column; flex: 1; }
+        .bulletin-card { width: 100%; display: flex; flex-direction: column; box-sizing: border-box; padding: 8mm; min-height: 280mm; }
         
         /* Compact Modes */
         .compact-1 body { font-size: 9.5px; padding: 4mm; }
@@ -223,7 +223,8 @@ exports.getBulletinHTML = (bulletin, schoolConfig) => {
         .sig-box { width: 50%; padding: 6px; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; }
         
         .footer-info { display: flex; justify-content: space-between; align-items: center; margin-top: 4px; font-size: 8px; color: #000; flex-shrink: 0; }
-        .page-break { page-break-inside: avoid; height: 100%; display: flex; flex-direction: column; }
+        .page-break { page-break-after: always; display: flex; flex-direction: column; }
+        .page-break:last-child { page-break-after: auto; }
     </style>
 </head>
 <body>

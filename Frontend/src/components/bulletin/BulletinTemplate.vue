@@ -3,7 +3,7 @@
     <div ref="bulletinRef" class="bulletin max-w-[900px] mx-auto bg-white p-8 shadow-lg text-[#333] font-serif leading-tight flex flex-col min-h-[297mm]">
       <!-- Header -->
       <div class="header flex justify-between items-start mb-2 border-b-2 border-gray-100 pb-2 flex-shrink-0">
-        <div class="header-left w-[30%] text-[9px] font-bold uppercase leading-[1.1]">
+        <div class="header-left w-[30%] text-[10px] font-bold uppercase leading-[1.2]">
           <p>{{ schoolConfig.ministryName }}</p>
           <p>{{ schoolConfig.region }}</p>
           <p>{{ schoolConfig.city }}</p>
@@ -16,56 +16,56 @@
             <img :src="schoolConfig.logo.startsWith('data:image/') ? schoolConfig.logo : `${BASE_ASSET_URL}${schoolConfig.logo}`" class="h-full w-auto object-contain mx-auto" />
           </div>
           <div v-else class="text-3xl font-black tracking-tighter text-blue-900 leading-none">{{ schoolConfig.shortName }}</div>
-          <div v-if="schoolConfig.motto" class="text-[9px] font-bold text-gray-500 mt-1 uppercase tracking-widest leading-none">{{ schoolConfig.motto }}</div>
+          <div v-if="schoolConfig.motto" class="text-[10px] font-bold text-gray-400 mt-1 uppercase tracking-widest leading-none">{{ schoolConfig.motto }}</div>
         </div>
 
-        <div class="header-right w-[30%] text-right text-[9px] font-bold uppercase leading-[1.1]">
+        <div class="header-right w-[30%] text-right text-[10px] font-bold uppercase leading-[1.2]">
           <p>{{ schoolConfig.country }}</p>
-          <p class="text-[8px] italic normal-case font-normal">{{ schoolConfig.patrie }}</p>
+          <p class="text-[9px] italic normal-case font-normal">{{ schoolConfig.patrie }}</p>
         </div>
       </div>
 
       <!-- Title -->
-      <div class="title text-center my-2 flex-shrink-0">
+      <div class="title text-center my-1.5 flex-shrink-0">
         <h1 class="text-xl font-serif italic font-bold">BULLETIN DE NOTES</h1>
       </div>
 
       <!-- General Info -->
-      <div class="info-trimestre flex justify-between text-xs mb-1 flex-shrink-0">
+      <div class="info-trimestre flex justify-between text-sm mb-1 flex-shrink-0">
         <span>Année scolaire: <strong>{{ bulletin.anneeScolaire }}</strong></span>
         <span><strong>{{ bulletin.periode }}</strong></span>
         <span>Effectif: <strong>{{ bulletin.effectif }}</strong></span>
       </div>
 
       <!-- Student Name -->
-      <div class="student-name mb-1 flex items-baseline gap-1 text-[11px] font-medium leading-tight flex-shrink-0">
-        <span class="text-[10px] text-gray-500">Nom de l'élève:</span>
+      <div class="student-name mb-1 flex items-baseline gap-1 text-[13px] font-bold leading-tight flex-shrink-0">
+        <span class="text-[11px] text-gray-500 font-medium">Nom de l'élève:</span>
         <strong class="uppercase">{{ eleve.nom || 'Non renseigné' }} {{ eleve.prenom || 'Non renseigné' }}</strong>
       </div>
 
       <!-- Info Eleve -->
       <div class="info-eleve grid grid-cols-4 gap-1 mb-2 pb-1 border-b border-gray-200 flex-shrink-0">
         <div class="info-item flex items-baseline gap-1">
-          <span class="text-[10px] text-gray-500 text-xs">Né(e) le:</span>
-          <span class="font-bold text-[11px]">{{ formatDate(eleve.dateNaissance) || 'Non renseigné' }}</span>
+          <span class="text-[11px] text-gray-500">Né(e) le:</span>
+          <span class="font-bold text-[12px]">{{ formatDate(eleve.dateNaissance) || 'Non renseigné' }}</span>
         </div>
         <div class="info-item flex items-baseline gap-1">
-          <span class="text-[10px] text-gray-500 text-xs">Matricule:</span>
-          <strong class="text-[11px]">{{ eleve.matricule || 'Non renseigné' }}</strong>
+          <span class="text-[11px] text-gray-500">Matricule:</span>
+          <strong class="text-[12px]">{{ eleve.matricule || 'Non renseigné' }}</strong>
         </div>
         <div class="info-item flex items-baseline gap-1 justify-end lg:justify-start">
-          <span class="text-[10px] text-gray-500 text-xs">Classe:</span>
-          <strong class="text-[11px]">{{ classe.niveau || 'N/A' }} {{ classe.section || '' }}</strong>
+          <span class="text-[11px] text-gray-500">Classe:</span>
+          <strong class="text-[12px]">{{ classe.niveau || 'N/A' }} {{ classe.section || '' }}</strong>
         </div>
         <div class="info-item flex items-baseline gap-1 justify-end">
-          <span class="text-[10px] text-gray-500 text-xs">Redoublant:</span>
-          <strong class="text-[11px] font-bold">{{ eleve.redoublant ? 'OUI' : 'NON' }}</strong>
+          <span class="text-[11px] text-gray-500">Redoublant:</span>
+          <strong class="text-[12px] font-bold">{{ eleve.redoublant ? 'OUI' : 'NON' }}</strong>
         </div>
       </div>
 
       <!-- Grades Table -->
-      <div class="flex-grow min-h-0 overflow-hidden mb-4">
-        <table class="w-full border-collapse border border-black text-[10px]">
+      <div class="flex-grow min-h-0 overflow-hidden mb-2">
+        <table class="w-full border-collapse border border-black text-[12px] h-full">
           <thead>
             <tr class="bg-gray-200 text-center font-bold">
                 <th class="border border-black p-2 text-left" style="width: 30%;">Matières</th>
@@ -78,9 +78,9 @@
           <tbody>
             <template v-for="(category, catName) in groupedNotes" :key="catName">
               <tr class="bg-gray-300">
-                <td :colspan="totalCols" class="border border-black p-2 font-bold text-center uppercase">{{ catName }}</td>
+                <td :colspan="totalCols" class="border border-black p-2 font-bold text-center uppercase text-[11px]">{{ catName }}</td>
               </tr>
-              <tr v-for="note in category" :key="note.matiere?._id" class="text-center h-1">
+              <tr v-for="note in category" :key="note.matiere?._id" class="text-center">
                 <td class="border border-black p-2 text-left font-bold uppercase">{{ note.matiere?.nom }}</td>
                 <td class="border border-black p-1">{{ (note.coeff || note.matiere?.coefficient || 0).toFixed(1) }}</td>
                 
@@ -92,15 +92,15 @@
                   <td class="border border-black p-1">{{ (note.moyenneMatiere || 0).toFixed(2) }}</td>
                   <td class="border border-black p-1 font-bold">{{ (note.notePonderee || 0).toFixed(2) }}</td>
                 </template>
-                <td class="border border-black p-1 w-20 italic" :class="note.isDispensed ? '' : getAppreciationColor(getSubjectAppreciation(note.moyenneMatiere || 0))">
+                <td class="border border-black p-1 w-20 italic text-[11px]" :class="note.isDispensed ? '' : getAppreciationColor(getSubjectAppreciation(note.moyenneMatiere || 0))">
                   {{ note.isDispensed ? '' : getSubjectAppreciation(note.moyenneMatiere || 0) }}
                 </td>
-                <td class="border border-black p-1 text-[9px]" style="width: 60px; white-space: nowrap;">{{ note.professeur ? (note.professeur.civilite === 'Mr' ? 'M ' : (note.professeur.civilite ? note.professeur.civilite + ' ' : '')) + (note.professeur.nom || '').toUpperCase() : '' }}</td>
+                <td class="border border-black p-1 text-[10px]" style="width: 60px; white-space: nowrap;">{{ note.professeur ? (note.professeur.civilite === 'Mr' ? 'M ' : (note.professeur.civilite ? note.professeur.civilite + ' ' : '')) + (note.professeur.nom || '').toUpperCase() : '' }}</td>
                 <td class="border border-black p-1 w-20"></td>
               </tr>
               <!-- Category Totals -->
-              <tr class="bg-gray-100 font-bold h-1">
-                <td class="border border-black p-1 px-2 text-left uppercase text-[9px]">Total {{ catName }}</td>
+              <tr class="bg-gray-100 font-bold">
+                <td class="border border-black p-1 px-2 text-left uppercase text-[10px]">Total {{ catName }}</td>
                 <td class="border border-black p-1 text-center">{{ getCategoryTotalCoeff(category) }}</td>
                 <td class="border border-black p-1" colspan="1"></td>
                 <td class="border border-black p-1 text-center">{{ getCategoryTotalPoints(category) }}</td>
@@ -109,7 +109,7 @@
             </template>
 
             <!-- Global Totals -->
-            <tr class="bg-blue-50 font-bold text-center h-1">
+            <tr class="bg-blue-50 font-bold text-center">
               <td class="border border-black p-2 text-left uppercase">TOTAL GÉNÉRAL</td>
               <td class="border border-black p-1">{{ (bulletin.totalCoefficients || 0).toFixed(1) }}</td>
               <td class="border border-black p-1"></td>
@@ -122,23 +122,23 @@
  
       <!-- Bilan -->
       <div class="bilan flex-shrink-0 mt-auto">
-        <table class="w-full border-collapse border border-black text-[11px]">
+        <table class="w-full border-collapse border border-black text-[12px]">
           <tbody>
             <tr class="bg-gray-300 font-bold text-center">
-              <td colspan="8" class="border border-black p-2 uppercase">BILAN {{ classe.filiere === 'Technique' ? 'SEMESTRIEL' : 'TRIMESTRIEL' }}</td>
+              <td colspan="8" class="border border-black p-2 uppercase text-[11px]">BILAN {{ classe.filiere === 'Technique' ? 'SEMESTRIEL' : 'TRIMESTRIEL' }}</td>
             </tr>
             <tr class="text-center">
               <td class="border border-black p-2 text-left">Moyenne de l'élève</td>
-              <td class="border border-black p-2 font-bold text-lg">{{ (bulletin.moyenneGenerale || 0).toFixed(2) }}</td>
+              <td class="border border-black p-2 font-bold text-xl">{{ (bulletin.moyenneGenerale || 0).toFixed(2) }}</td>
               <td class="border border-black p-2 uppercase">RETRAIT DE POINTS</td>
               <td class="border border-black p-2 font-bold">{{ (bulletin.retraitPoints || 0).toFixed(2) }}</td>
-              <td colspan="4" class="border border-black p-2 text-center uppercase font-bold bg-gray-100">Nombre d'heures d'absence</td>
+              <td colspan="4" class="border border-black p-2 text-center uppercase font-bold bg-gray-100 text-[10px]">Nombre d'heures d'absence</td>
             </tr>
             <tr class="text-center">
               <td class="border border-black p-2 text-left">Moyenne de la classe</td>
               <td class="border border-black p-2 font-bold">{{ (bulletin.moyenneClasse || 0).toFixed(2) }}</td>
               <td class="border border-black p-2 uppercase">MOYENNE DEFINITIVE</td>
-              <td class="border border-black p-2 font-bold text-lg">{{ ((bulletin.moyenneGenerale || 0) - (bulletin.retraitPoints || 0)).toFixed(2) }}</td>
+              <td class="border border-black p-2 font-bold text-xl">{{ ((bulletin.moyenneGenerale || 0) - (bulletin.retraitPoints || 0)).toFixed(2) }}</td>
               <td class="border border-black p-2 text-center">Justifiées</td>
               <td class="border border-black p-2 font-bold text-center">{{ bulletin.absencesJustifiees || 0 }}</td>
               <td class="border border-black p-2 text-center">Non justifiées</td>

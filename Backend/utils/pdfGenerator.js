@@ -179,35 +179,35 @@ exports.getBulletinHTML = (bulletin, schoolConfig) => {
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         html, body { height: 100%; }
-        body { font-family: 'Inter', 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; color: #333; font-size: 10px; padding: 10mm; background: white; line-height: 1.1; height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
+        body { font-family: 'Inter', 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; color: #333; font-size: 11px; padding: 10mm; background: white; line-height: 1.15; height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
         .bulletin-card { width: 100%; height: 100%; display: flex; flex-direction: column; flex: 1; min-height: 0; }
         
         /* High-Fidelity Header */
-        .header { display: flex; justify-content: space-between; border-bottom: 2px solid #f1f5f9; padding-bottom: 8px; margin-bottom: 12px; flex-shrink: 0; }
-        .h-col { width: 33.33%; font-weight: bold; font-size: 8.5px; line-height: 1.2; text-transform: uppercase; }
+        .header { display: flex; justify-content: space-between; border-bottom: 2px solid #f1f5f9; padding-bottom: 8px; margin-bottom: 10px; flex-shrink: 0; }
+        .h-col { width: 33.33%; font-weight: bold; font-size: 9px; line-height: 1.25; text-transform: uppercase; }
         .h-center { text-align: center; display: flex; flex-direction: column; align-items: center; justify-content: center; width: 40% !important; }
         .h-col-side { width: 30% !important; }
         .h-right { text-align: right; }
         
         .logo-text { font-size: 26px; font-weight: 900; color: #1e3a8a; letter-spacing: -1px; line-height: 1; }
-        .motto { font-size: 8px; color: #6b7280; letter-spacing: 0.5px; margin-top: 3px; font-weight: bold; }
+        .motto { font-size: 8.5px; color: #6b7280; letter-spacing: 0.5px; margin-top: 3px; font-weight: bold; }
         
-        .title { text-align: center; margin: 8px 0; flex-shrink: 0; }
-        .title h1 { font-size: 22px; font-style: italic; font-weight: bold; border-top: 1px solid #eee; border-bottom: 1px solid #eee; padding: 5px 0; }
+        .title { text-align: center; margin: 6px 0; flex-shrink: 0; }
+        .title h1 { font-size: 20px; font-style: italic; font-weight: bold; border-top: 1px solid #eee; border-bottom: 1px solid #eee; padding: 4px 0; }
         
-        .info-bar { display: flex; justify-content: space-between; margin-bottom: 6px; font-size: 11px; flex-shrink: 0; }
-        .student-name { margin-bottom: 6px; font-size: 12px; font-weight: bold; padding-top: 5px; flex-shrink: 0; }
+        .info-bar { display: flex; justify-content: space-between; margin-bottom: 4px; font-size: 11.5px; flex-shrink: 0; }
+        .student-name { margin-bottom: 4px; font-size: 12.5px; font-weight: bold; padding-top: 4px; flex-shrink: 0; }
         
-        .grid-info { display: flex; justify-content: space-between; padding-bottom: 8px; margin-bottom: 10px; border-bottom: 1px solid #e2e8f0; flex-shrink: 0; }
-        .grid-item { font-size: 10px; display: flex; align-items: baseline; gap: 4px; }
-        .grid-item span { color: #64748b; font-size: 9px; }
+        .grid-info { display: flex; justify-content: space-between; padding-bottom: 6px; margin-bottom: 8px; border-bottom: 1px solid #e2e8f0; flex-shrink: 0; }
+        .grid-item { font-size: 11px; display: flex; align-items: baseline; gap: 4px; }
+        .grid-item span { color: #64748b; font-size: 10px; }
         
         /* Table Styles */
-        .table-container { flex: 1; display: flex; flex-direction: column; min-height: 0; margin-bottom: 15px; }
-        table { width: 100%; border-collapse: collapse; border: 1px solid #000; table-layout: fixed; }
-        th, td { border: 1px solid #000; padding: 4px; text-align: center; font-size: 9.5px; vertical-align: middle; height: 1px; }
-        th { background: #e5e7eb; font-weight: bold; text-transform: uppercase; font-size: 9px; height: 25px; }
-        .cat-header { background: #d1d5db; font-weight: bold; text-transform: uppercase; font-size: 9px; height: 22px; }
+        .table-container { flex: 1; display: flex; flex-direction: column; min-height: 0; margin-bottom: 10px; }
+        table { width: 100%; border-collapse: collapse; border: 1px solid #000; table-layout: fixed; flex: 1; }
+        th, td { border: 1px solid #000; padding: 5px; text-align: center; font-size: 11px; vertical-align: middle; }
+        th { background: #e5e7eb; font-weight: bold; text-transform: uppercase; font-size: 10.5px; height: 30px; }
+        .cat-header { background: #d1d5db; font-weight: bold; text-transform: uppercase; font-size: 10.5px; height: 25px; }
         .text-left { text-align: left; }
         .font-bold { font-weight: bold; }
         .uppercase { text-transform: uppercase; }
@@ -215,19 +215,19 @@ exports.getBulletinHTML = (bulletin, schoolConfig) => {
         
         /* Bilan Styles */
         .bilan-section { flex-shrink: 0; margin-top: auto; }
-        .bilan-header { background: #d1d5db; font-weight: bold; text-align: center; padding: 6px; border: 1px solid #000; border-bottom: 0; text-transform: uppercase; font-size: 10px; }
-        .bilan-table { width: 100%; border-collapse: collapse; margin-bottom: 10px; }
-        .bilan-table td { border: 1px solid #000; padding: 6px; font-size: 10px; vertical-align: middle; }
-        .lg-val { font-size: 16px; font-weight: bold; }
+        .bilan-header { background: #d1d5db; font-weight: bold; text-align: center; padding: 6px; border: 1px solid #000; border-bottom: 0; text-transform: uppercase; font-size: 11px; }
+        .bilan-table { width: 100%; border-collapse: collapse; margin-bottom: 8px; flex: 0; }
+        .bilan-table td { border: 1px solid #000; padding: 6px; font-size: 11px; vertical-align: middle; }
+        .lg-val { font-size: 18px; font-weight: bold; }
         
         /* Council Styles */
         .council-section { flex-shrink: 0; }
-        .council-header { background: #d1d5db; text-align: center; font-weight: bold; padding: 6px; border: 1px solid #000; border-bottom: 0; text-transform: uppercase; font-size: 10px; }
-        .council-box { display: flex; border: 1px solid #000; min-height: 90px; }
-        .app-box { width: 50%; border-right: 1px solid #000; display: flex; align-items: center; justify-content: center; font-size: 18px; font-weight: bold; padding: 10px; }
+        .council-header { background: #d1d5db; text-align: center; font-weight: bold; padding: 6px; border: 1px solid #000; border-bottom: 0; text-transform: uppercase; font-size: 11px; }
+        .council-box { display: flex; border: 1px solid #000; min-height: 80px; }
+        .app-box { width: 50%; border-right: 1px solid #000; display: flex; align-items: center; justify-content: center; font-size: 20px; font-weight: bold; padding: 10px; }
         .sig-box { width: 50%; padding: 8px; display: flex; flex-direction: column; align-items: center; justify-content: center; position: relative; }
         
-        .footer-info { flex-shrink: 0; display: flex; justify-content: space-between; align-items: center; margin-top: 10px; font-size: 8px; color: #6b7280; font-family: 'Inter', sans-serif; }
+        .footer-info { flex-shrink: 0; display: flex; justify-content: space-between; align-items: center; margin-top: 8px; font-size: 9px; color: #6b7280; font-family: 'Inter', sans-serif; }
         .page-break { page-break-after: always; height: 100vh; display: flex; flex-direction: column; }
     </style>
 </head>

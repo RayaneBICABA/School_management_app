@@ -158,9 +158,9 @@ exports.getBulletinHTML = (bulletin, schoolConfig) => {
 <head>
     <style>
         /* Core Layout - Full Page Flexbox */
-        body { font-family: Arial, Helvetica, sans-serif; color: #333; font-size: 10px; padding: 0; margin: 0; background: white; line-height: 1.1; }
+        html, body { font-family: Arial, Helvetica, sans-serif; color: #333; font-size: 10px; padding: 0; margin: 0; background: white; line-height: 1.1; height: auto; min-height: 0; -webkit-print-color-adjust: exact; }
         p { margin: 0; padding: 0; }
-        .bulletin-card { width: 100%; display: flex; flex-direction: column; box-sizing: border-box; padding: 8mm; min-height: 280mm; }
+        .bulletin-card { width: 100%; display: flex; flex-direction: column; box-sizing: border-box; padding: 10mm; min-height: 250mm; page-break-before: avoid !important; page-break-after: avoid; }
         
         /* Compact Modes */
         .compact-1 body { font-size: 9.5px; padding: 4mm; }
@@ -223,8 +223,8 @@ exports.getBulletinHTML = (bulletin, schoolConfig) => {
         .sig-box { width: 50%; padding: 6px; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; }
         
         .footer-info { display: flex; justify-content: space-between; align-items: center; margin-top: 4px; font-size: 8px; color: #000; flex-shrink: 0; }
-        .page-break { page-break-after: always; display: flex; flex-direction: column; }
-        .page-break:last-child { page-break-after: auto; }
+        .page-break { page-break-before: always; display: flex; flex-direction: column; }
+        .page-break:first-child { page-break-before: avoid !important; }
     </style>
 </head>
 <body>

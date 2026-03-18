@@ -156,8 +156,7 @@ exports.getBulletinHTML = (bulletin, schoolConfig) => {
 <head>
     <style>
         /* Core Layout - Full Page Flexbox */
-        html, body { width: 210mm; margin: 0; padding: 0; }
-        body { font-family: Arial, Helvetica, sans-serif; color: #333; font-size: 10px; padding: 5mm; background: white; line-height: 1.1; display: flex; flex-direction: column; box-sizing: border-box; min-height: 287mm; }
+        body { font-family: Arial, Helvetica, sans-serif; color: #333; font-size: 10px; padding: 15mm; background: white; line-height: 1.1; display: flex; flex-direction: column; box-sizing: border-box; min-height: 282mm; }
         .bulletin-card { width: 100%; display: flex; flex-direction: column; flex: 1; }
         
         /* Compact Modes */
@@ -274,11 +273,11 @@ exports.getBulletinHTML = (bulletin, schoolConfig) => {
             <table class="main-table">
                 <thead>
                     <tr>
-                        <th class="text-left" style="width: 45%;">Matières</th>
+                        <th class="text-left" style="width: 35%;">Matières</th>
                         <th style="width: 5%;">Coef</th>
                         <th style="width: 8%;">Moy</th>
                         <th style="width: 12%;">Pondérées</th>
-                        <th style="width: 30%;">Appréciations et signatures</th>
+                        <th colspan="3" style="width: 40%;">Appréciations et signatures</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -297,10 +296,9 @@ exports.getBulletinHTML = (bulletin, schoolConfig) => {
                             `<td class="italic font-bold">D</td><td class="italic font-bold">D</td>` :
                             `<td>${(note.moyenneMatiere || 0).toFixed(2)}</td><td class="font-bold">${(note.notePonderee || 0).toFixed(2)}</td>`
                         }
-                                    <td class="italic" style="font-size: 8.5px;">
-                                        ${app}
-                                        ${prof ? `<br><small style="font-size: 7px; color: #4b5563;">${prof}</small>` : ''}
-                                    </td>
+                                    <td class="italic" style="font-size: 8.5px; width: 15%;">${app}</td>
+                                    <td style="font-size: 8.5px; width: 15%; overflow: hidden;">${prof}</td>
+                                    <td style="width: 10%;"></td>
                                 </tr>
                             `;
                 }).join('')}
@@ -309,7 +307,7 @@ exports.getBulletinHTML = (bulletin, schoolConfig) => {
                             <td>${notes.reduce((sum, n) => sum + (n.coeff || 0), 0).toFixed(1)}</td>
                             <td></td>
                             <td>${notes.reduce((sum, n) => sum + (n.notePonderee || 0), 0).toFixed(2)}</td>
-                            <td></td>
+                            <td colspan="3"></td>
                         </tr>
                     `).join('')}
                     <tr class="font-bold" style="background: #f1f5f9; border-top: 2px solid #000; height: 35px;">
@@ -317,7 +315,7 @@ exports.getBulletinHTML = (bulletin, schoolConfig) => {
                         <td>${(bulletin.totalCoefficients || 0).toFixed(1)}</td>
                         <td></td>
                         <td class="font-bold">${(bulletin.totalPoints || 0).toFixed(2)}</td>
-                        <td></td>
+                        <td colspan="3"></td>
                     </tr>
                 </tbody>
             </table>

@@ -426,8 +426,8 @@ const downloadPDF = async () => {
 .bulletin {
   display: flex !important;
   flex-direction: column !important;
-  min-height: 297mm;
-  padding: 10mm !important;
+  min-height: 287mm;
+  padding: 8mm !important;
   background: white !important;
 }
 
@@ -449,50 +449,51 @@ td, th {
   border-right: 1px solid black !important;
   border-bottom: 1px solid black !important;
   vertical-align: middle !important;
-  padding: 8px 5px !important;
+  padding: 4px 3px !important;
   text-align: center;
 }
 
 th {
-  height: 40px;
+  height: 35px;
   background-color: #f3f4f6;
   font-weight: bold;
+  font-size: 9px;
 }
 
 .cat-header-row {
-  height: 30px;
+  height: 28px;
   background-color: #e5e7eb;
 }
 
 /* Compact Modes */
 .compact-1 .bulletin {
-  padding: 8mm !important;
-  font-size: 10px;
+  padding: 5mm !important;
+  font-size: 9.5px;
 }
 .compact-1 .data-row, 
 .compact-1 .cat-header-row {
-  height: 28px;
+  height: 26px;
 }
 .compact-1 th {
-  height: 35px;
+  height: 30px;
 }
 .compact-1 .bilan-table td {
-  height: 32px;
+  height: 30px;
 }
 
 .compact-2 .bulletin {
-  padding: 6mm !important;
-  font-size: 9.5px;
+  padding: 4mm !important;
+  font-size: 9px;
 }
 .compact-2 .data-row, 
 .compact-2 .cat-header-row {
-  height: 24px;
+  height: 22px;
 }
 .compact-2 th {
-  height: 28px;
+  height: 26px;
 }
 .compact-2 .bilan-table td {
-  height: 28px;
+  height: 26px;
 }
 .compact-2 .council-box {
   min-height: 80px;

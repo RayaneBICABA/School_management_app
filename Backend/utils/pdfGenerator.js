@@ -182,66 +182,68 @@ exports.getBulletinHTML = (bulletin, schoolConfig) => {
 <head>
     <style>
         /* Core Layout - Full Page Flexbox */
-        html, body { height: 297mm; width: 210mm; margin: 0; padding: 0; }
-        body { font-family: 'Inter', 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; color: #333; font-size: 10.5px; padding: 8mm; background: white; line-height: 1.15; display: flex; flex-direction: column; box-sizing: border-box; }
-        .bulletin-card { width: 100%; height: 100%; display: flex; flex-direction: column; }
+        html, body { width: 210mm; margin: 0; padding: 0; }
+        body { font-family: 'Inter', 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; color: #333; font-size: 10px; padding: 5mm; background: white; line-height: 1.1; display: flex; flex-direction: column; box-sizing: border-box; min-height: 287mm; }
+        .bulletin-card { width: 100%; display: flex; flex-direction: column; flex: 1; }
         
         /* Compact Modes */
-        .compact-1 body { font-size: 10px; padding: 6mm; }
-        .compact-1 tr.data-row { height: 28px; }
-        .compact-1 th { height: 32px; }
-        .compact-2 body { font-size: 9.5px; padding: 5mm; }
-        .compact-2 tr.data-row { height: 24px; font-size: 9px; }
-        .compact-2 th { height: 28px; font-size: 9px; }
-        .compact-2 .council-box { min-height: 80px; }
-        .compact-2 .h-col { font-size: 8px; }
+        .compact-1 body { font-size: 9.5px; padding: 4mm; }
+        .compact-1 tr.data-row { height: 26px; }
+        .compact-1 th { height: 30px; font-size: 8.5px; }
+        .compact-1 .council-box { min-height: 80px; }
+        
+        .compact-2 body { font-size: 9px; padding: 3mm; }
+        .compact-2 tr.data-row { height: 22px; font-size: 8.5px; }
+        .compact-2 th { height: 26px; font-size: 8.5px; }
+        .compact-2 .council-box { min-height: 70px; }
+        .compact-2 .logo-text { font-size: 20px; }
         
         /* Fixed/Shrinkable Header Sections */
-        .header { display: flex; justify-content: space-between; border-bottom: 2px solid #f1f5f9; padding-bottom: 6px; margin-bottom: 8px; flex-shrink: 0; }
-        .h-col { width: 33.33%; font-weight: bold; font-size: 9px; line-height: 1.25; text-transform: uppercase; }
+        .header { display: flex; justify-content: space-between; border-bottom: 2px solid #f1f5f9; padding-bottom: 4px; margin-bottom: 6px; flex-shrink: 0; }
+        .h-col { width: 33.33%; font-weight: bold; font-size: 8.5px; line-height: 1.2; text-transform: uppercase; }
         .h-center { text-align: center; display: flex; flex-direction: column; align-items: center; justify-content: center; width: 40% !important; }
         .h-col-side { width: 30% !important; }
         .h-right { text-align: right; }
         
-        .logo-text { font-size: 24px; font-weight: 900; color: #1e3a8a; line-height: 1; }
-        .motto { font-size: 8px; color: #6b7280; margin-top: 2px; font-weight: bold; }
+        .logo-text { font-size: 22px; font-weight: 900; color: #1e3a8a; line-height: 1; }
+        .motto { font-size: 8px; color: #6b7280; margin-top: 1px; font-weight: bold; }
         
-        .title { text-align: center; margin: 6px 0; flex-shrink: 0; }
-        .title h1 { font-size: 19px; font-style: italic; font-weight: bold; border-top: 1px solid #000; border-bottom: 1px solid #000; padding: 4px 0; }
+        .title { text-align: center; margin: 4px 0; flex-shrink: 0; }
+        .title h1 { font-size: 18px; font-style: italic; font-weight: bold; border-top: 1px solid #000; border-bottom: 1px solid #000; padding: 3px 0; }
         
-        .info-bar { display: flex; justify-content: space-between; margin-bottom: 4px; font-size: 11px; flex-shrink: 0; }
-        .student-name { margin-bottom: 4px; font-size: 12.5px; font-weight: bold; padding-top: 2px; flex-shrink: 0; }
+        .info-bar { display: flex; justify-content: space-between; margin-bottom: 3px; font-size: 10px; flex-shrink: 0; }
+        .student-name { margin-bottom: 2px; font-size: 11.5px; font-weight: bold; padding-top: 1px; flex-shrink: 0; }
         
-        .grid-info { display: flex; justify-content: space-between; padding-bottom: 4px; margin-bottom: 8px; border-bottom: 1px solid #e2e8f0; flex-shrink: 0; }
-        .grid-item { font-size: 10.5px; display: flex; align-items: baseline; gap: 4px; }
-        .grid-item span { color: #64748b; font-size: 9px; }
+        .grid-info { display: flex; justify-content: space-between; padding-bottom: 3px; margin-bottom: 6px; border-bottom: 1px solid #e2e8f0; flex-shrink: 0; }
+        .grid-item { font-size: 9.5px; display: flex; align-items: baseline; gap: 4px; }
+        .grid-item span { color: #64748b; font-size: 8.5px; }
         
         /* Table Styles */
         .table-container { flex: 1; display: flex; flex-direction: column; min-height: 0; }
         table.main-table { width: 100%; border-spacing: 0; border-collapse: separate; border-top: 1px solid #000; border-left: 1px solid #000; table-layout: fixed; }
-        table.main-table th, table.main-table td { border-right: 1px solid #000; border-bottom: 1px solid #000; padding: 6px 4px; text-align: center; vertical-align: middle; line-height: 1.1; }
-        table.main-table th { background: #e5e7eb; font-weight: bold; text-transform: uppercase; font-size: 9.5px; height: 35px; }
-        .cat-header { background: #d1d5db; font-weight: bold; text-transform: uppercase; font-size: 9.5px; height: 30px; text-align: center !important; }
-        tr.data-row { height: 30px; }
+        table.main-table th, table.main-table td { border-right: 1px solid #000; border-bottom: 1px solid #000; padding: 4px 3px; text-align: center; vertical-align: middle; line-height: 1.05; }
+        table.main-table th { background: #e5e7eb; font-weight: bold; text-transform: uppercase; font-size: 9px; height: 32px; }
+        .cat-header { background: #d1d5db; font-weight: bold; text-transform: uppercase; font-size: 9px; height: 26px; text-align: center !important; }
+        tr.data-row { height: 28px; }
         .text-left { text-align: left !important; }
         .font-bold { font-weight: bold; }
         .uppercase { text-transform: uppercase; }
         
         /* Bilan & Council section */
-        .bilan-section { flex-shrink: 0; margin-top: 8px; }
-        .bilan-header { background: #d1d5db; font-weight: bold; text-align: center; padding: 6px; border: 1px solid #000; border-bottom: 0; text-transform: uppercase; font-size: 10.5px; }
-        .bilan-table { width: 100%; border-spacing: 0; border-collapse: separate; border-top: 1px solid #000; border-left: 1px solid #000; margin-bottom: 8px; }
-        .bilan-table td { border-right: 1px solid #000; border-bottom: 1px solid #000; padding: 6px; font-size: 10.5px; vertical-align: middle; text-align: center; height: 34px; }
-        .lg-val { font-size: 17px; font-weight: bold; }
+        .bilan-section { flex-shrink: 0; margin-top: 6px; }
+        .bilan-header { background: #d1d5db; font-weight: bold; text-align: center; padding: 4px; border: 1px solid #000; border-bottom: 0; text-transform: uppercase; font-size: 10px; }
+        .bilan-table { width: 100%; border-spacing: 0; border-collapse: separate; border-top: 1px solid #000; border-left: 1px solid #000; margin-bottom: 6px; }
+        .bilan-table td { border-right: 1px solid #000; border-bottom: 1px solid #000; padding: 4px 5px; font-size: 10px; vertical-align: middle; text-align: center; height: 30px; }
+        .lg-val { font-size: 15px; font-weight: bold; }
         
-        .spacer { flex: 1; }
+        .spacer { flex: 1; min-height: 5px; }
         .council-section { flex-shrink: 0; }
-        .council-header { background: #d1d5db; text-align: center; font-weight: bold; padding: 6px; border: 1px solid #000; border-bottom: 0; text-transform: uppercase; font-size: 10.5px; }
-        .council-box { display: flex; border: 1px solid #000; min-height: 95px; }
-        .app-box { width: 50%; border-right: 1px solid #000; display: flex; align-items: center; justify-content: center; font-size: 20px; font-weight: bold; padding: 8px; text-align: center; }
-        .sig-box { width: 50%; padding: 8px; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; }
+        .council-header { background: #d1d5db; text-align: center; font-weight: bold; padding: 4px; border: 1px solid #000; border-bottom: 0; text-transform: uppercase; font-size: 10px; }
+        .council-box { display: flex; border: 1px solid #000; min-height: 90px; }
+        .app-box { width: 50%; border-right: 1px solid #000; display: flex; align-items: center; justify-content: center; font-size: 18px; font-weight: bold; padding: 6px; text-align: center; }
+        .sig-box { width: 50%; padding: 6px; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; }
         
-        .footer-info { display: flex; justify-content: space-between; align-items: center; margin-top: 8px; font-size: 8.5px; color: #6b7280; flex-shrink: 0; }
+        .footer-info { display: flex; justify-content: space-between; align-items: center; margin-top: 6px; font-size: 8px; color: #6b7280; flex-shrink: 0; }
         .page-break { page-break-after: always; height: 100%; display: flex; flex-direction: column; }
     </style>
 </head>

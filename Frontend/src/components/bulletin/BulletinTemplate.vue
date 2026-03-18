@@ -104,7 +104,8 @@
               </tr>
               <!-- Category Totals -->
               <tr class="bg-[#eee] font-bold text-[10px] h-[35px]">
-                <td colspan="2" class="border border-black p-1 px-2 text-left uppercase align-middle">Total {{ catName }}</td>
+                <td class="border border-black p-1 px-2 text-left uppercase align-middle">Total {{ catName }}</td>
+                <td class="border border-black p-1 text-center align-middle">{{ getCategoryTotalCoeff(category) }}</td>
                 <td class="border border-black p-1 align-middle"></td>
                 <td class="border border-black p-1 text-center align-middle">{{ getCategoryTotalPoints(category) }}</td>
                 <td colspan="3" class="border border-black p-1 align-middle"></td>
@@ -113,7 +114,8 @@
 
             <!-- Global Totals -->
             <tr class="bg-[#ddd] font-bold text-center border-t-2 border-black h-[40px]">
-              <td colspan="2" class="border border-black p-2 text-left uppercase align-middle">TOTAL GÉNÉRAL</td>
+              <td class="border border-black p-2 text-left uppercase align-middle">TOTAL GÉNÉRAL</td>
+              <td class="border border-black p-1 align-middle text-center">{{ (bulletin.totalCoefficients || 0).toFixed(1) }}</td>
               <td class="border border-black p-1 align-middle"></td>
               <td class="border border-black p-1 font-bold align-middle">{{ (bulletin.totalPoints || 0).toFixed(2) }}</td>
               <td colspan="3" class="border border-black p-1 align-middle"></td>

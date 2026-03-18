@@ -194,7 +194,7 @@ exports.getBulletinHTML = (bulletin, schoolConfig) => {
         /* Table Styles */
         .table-container { flex: 1; display: flex; flex-direction: column; min-height: 0; }
         table.main-table { width: 100%; border-spacing: 0; border-collapse: separate; border-top: 1px solid #000; border-left: 1px solid #000; table-layout: fixed; }
-        table.main-table th, table.main-table td { border-right: 1px solid #000; border-bottom: 1px solid #000; padding: 0 4px; text-align: center; vertical-align: middle !important; }
+        table.main-table th, table.main-table td { border-right: 1px solid #000; border-bottom: 1px solid #000; padding: 4px; text-align: center; vertical-align: middle !important; box-sizing: border-box; }
         table.main-table th { background: #ddd; font-weight: bold; text-transform: uppercase; font-size: 9px; height: 32px; color: #000; }
         .cat-header { background: #eee; font-weight: bold; text-transform: uppercase; font-size: 9px; height: 26px; text-align: center !important; color: #000; }
         .data-row td { height: 28px; }
@@ -305,14 +305,16 @@ exports.getBulletinHTML = (bulletin, schoolConfig) => {
                             `;
                 }).join('')}
                         <tr class="font-bold cat-total-row" style="font-size: 9px; background-color: #eee;">
-                            <td colspan="2" class="text-left uppercase" style="padding: 6px;">Total ${catName}</td>
+                            <td class="text-left uppercase" style="padding-left: 6px;">Total ${catName}</td>
+                            <td>${notes.reduce((sum, n) => sum + (n.coeff || 0), 0).toFixed(1)}</td>
                             <td></td>
                             <td>${notes.reduce((sum, n) => sum + (n.notePonderee || 0), 0).toFixed(2)}</td>
                             <td colspan="3"></td>
                         </tr>
                     `).join('')}
                     <tr class="font-bold total-general-row" style="background: #ddd; border-top: 2px solid #000;">
-                        <td colspan="2" class="text-left font-bold uppercase" style="padding: 6px;">TOTAL GÉNÉRAL</td>
+                        <td class="text-left font-bold uppercase" style="padding-left: 6px;">TOTAL GÉNÉRAL</td>
+                        <td>${(bulletin.totalCoefficients || 0).toFixed(1)}</td>
                         <td></td>
                         <td class="font-bold">${(bulletin.totalPoints || 0).toFixed(2)}</td>
                         <td colspan="3"></td>

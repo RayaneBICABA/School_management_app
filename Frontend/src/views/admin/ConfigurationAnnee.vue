@@ -274,6 +274,14 @@
                   <label class="text-xs font-bold text-slate-500 uppercase tracking-widest mb-1 block">Nom de l'établissement</label>
                   <input v-model="schoolConfig.schoolName" class="w-full bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 rounded-lg text-sm" type="text" placeholder="ex: LYCÉE WEND PUIRÉ DE SAABA" />
                 </div>
+                <div class="md:col-span-2">
+                  <label class="text-xs font-bold text-slate-500 uppercase tracking-widest mb-1 block">Direction Régionale</label>
+                  <input v-model="schoolConfig.directionRegionale" class="w-full bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 rounded-lg text-sm" type="text" placeholder="ex: DIRECTION REGIONALE L'ENSEIGNEMENT..." />
+                </div>
+                <div class="md:col-span-2">
+                  <label class="text-xs font-bold text-slate-500 uppercase tracking-widest mb-1 block">Circonscription</label>
+                  <input v-model="schoolConfig.circonscription" class="w-full bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 rounded-lg text-sm" type="text" placeholder="ex: CIRCONSCRIPTION DE L'ENSEIGNEMENT..." />
+                </div>
                 <div>
                   <label class="text-xs font-bold text-slate-500 uppercase tracking-widest mb-1 block">Sigle / Nom court</label>
                   <input v-model="schoolConfig.shortName" class="w-full bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 rounded-lg text-sm" type="text" placeholder="ex: LWS" />
@@ -348,6 +356,8 @@ const schoolConfig = ref({
     phone: '',
     city: '',
     region: '',
+    directionRegionale: '',
+    circonscription: '',
     subRegion: 'RÉGION CENTRE',
     country: 'BURKINA FASO',
     patrie: 'La Patrie ou la Mort, nous Vaincrons',

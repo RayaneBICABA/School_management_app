@@ -3,12 +3,17 @@
     <div ref="bulletinRef" class="bulletin max-w-[900px] mx-auto bg-white p-8 shadow-lg text-[#333] font-serif leading-tight flex flex-col min-h-[297mm]">
       <!-- Header -->
       <div class="header flex justify-between items-start flex-shrink-0">
-        <div class="header-left w-[30%] text-[10px] font-bold uppercase leading-none">
+        <div class="header-left w-[34%] text-[7px] font-bold uppercase leading-[0.9]">
           <p>{{ schoolConfig.ministryName }}</p>
+          <p class="text-center">*******</p>
           <p>{{ schoolConfig.region }}</p>
-          <p>{{ schoolConfig.city }}</p>
+          <p class="text-center">*******</p>
+          <p>{{ schoolConfig.directionRegionale }}</p>
+          <p class="text-center">*******</p>
+          <p>{{ schoolConfig.circonscription }}</p>
+          <p class="text-center">*******</p>
           <p>{{ schoolConfig.schoolName }}</p>
-          <p v-if="schoolConfig.phone">Tél : {{ schoolConfig.phone }}</p>
+          <p v-if="schoolConfig.phone" class="mt-1">Tél : {{ schoolConfig.phone }}</p>
         </div>
 
         <div class="header-center w-[40%] flex flex-col items-center text-center">
@@ -239,6 +244,8 @@ const schoolConfig = ref({
   phone: '51 54 88 11',
   city: 'OUAGADOUGOU',
   region: 'LA FORMATION PROFESSIONNELLE ET TECHNIQUE',
+  directionRegionale: '',
+  circonscription: '',
   subRegion: 'RÉGION CENTRE',
   country: 'BURKINA FASO',
   patrie: 'La Patrie ou la Mort, nous Vaincrons',
@@ -424,6 +431,10 @@ const downloadPDF = async () => {
   padding: 8mm !important;
   background: white !important;
   font-family: Arial, Helvetica, sans-serif !important;
+}
+
+.header-left p {
+  margin: 0 !important;
 }
 
 /* Fix ghost lines through text (Puppeteer/Browser scaling issue) */

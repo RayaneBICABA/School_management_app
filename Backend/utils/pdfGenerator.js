@@ -175,7 +175,8 @@ exports.getBulletinHTML = (bulletin, schoolConfig) => {
         
         /* Fixed/Shrinkable Header Sections */
         .header { display: flex; justify-content: space-between; border-bottom: 0; padding-bottom: 0; margin-bottom: 0; flex-shrink: 0; }
-        .h-col { width: 33.33%; font-weight: bold; font-size: 8.5px; line-height: 1.0; text-transform: uppercase; color: #000; }
+        .h-col { width: 33.33%; font-weight: bold; font-size: 7px; line-height: 1.0; text-transform: uppercase; color: #000; }
+        .h-col p { margin: 0 !important; }
         .h-center { text-align: center; display: flex; flex-direction: column; align-items: center; justify-content: center; width: 40% !important; }
         .h-col-side { width: 30% !important; }
         .h-right { text-align: right; }
@@ -228,12 +229,17 @@ exports.getBulletinHTML = (bulletin, schoolConfig) => {
 <body>
     <div class="bulletin-card">
         <div class="header">
-            <div class="h-col h-col-side left-header">
+            <div class="h-col h-col-side left-header" style="line-height: 1.0;">
                 <p>${schoolConfig.ministryName || 'MINISTÈRE DE L\'ENSEIGNEMENT'}</p>
+                <p style="text-align: center;">*******</p>
                 <p>${schoolConfig.region || 'FORMATION PROFESSIONNELLE ET TECHNIQUE'}</p>
-                <p>${schoolConfig.city || 'OUAGADOUGOU'}</p>
+                <p style="text-align: center;">*******</p>
+                <p>${schoolConfig.directionRegionale || ''}</p>
+                <p style="text-align: center;">*******</p>
+                <p>${schoolConfig.circonscription || ''}</p>
+                <p style="text-align: center;">*******</p>
                 <p>${schoolConfig.schoolName || 'LYCÉE WEND PUIRÉ DE SAABA'}</p>
-                <p>${schoolConfig.phone ? `TÉL : ${schoolConfig.phone}` : 'TÉL : 51 54 88 11'}</p>
+                <p style="margin-top: 2px;">${schoolConfig.phone ? `TÉL : ${schoolConfig.phone}` : 'TÉL : 51 54 88 11'}</p>
             </div>
             <div class="h-col h-center">
                 ${schoolConfig.logo ? 
@@ -412,12 +418,17 @@ exports.getMasterSheetHTML = (sheetsData, schoolConfig) => {
 
         const headerHtml = `
             <div class="header" style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 20px; border-bottom: 2px solid #f1f5f9; padding-bottom: 10px;">
-                <div style="width: 30%; font-[8.5px] font-weight: bold; text-transform: uppercase; line-height: 1.2;">
+                <div style="width: 32%; font-[7px] font-weight: bold; text-transform: uppercase; line-height: 0.9;">
                     <p style="margin: 0;">${schoolConfig.ministryName || 'MINISTÈRE DE L\'ENSEIGNEMENT'}</p>
+                    <p style="margin: 0; text-align: center;">*******</p>
                     <p style="margin: 0;">${schoolConfig.region || 'FORMATION PROFESSIONNELLE ET TECHNIQUE'}</p>
-                    <p style="margin: 0;">${schoolConfig.city || 'OUAGADOUGOU'}</p>
+                    <p style="margin: 0; text-align: center;">*******</p>
+                    <p style="margin: 0;">${schoolConfig.directionRegionale || ''}</p>
+                    <p style="margin: 0; text-align: center;">*******</p>
+                    <p style="margin: 0;">${schoolConfig.circonscription || ''}</p>
+                    <p style="margin: 0; text-align: center;">*******</p>
                     <p style="margin: 0;">${schoolConfig.schoolName || 'LYCÉE WEND PUIRÉ DE SAABA'}</p>
-                    <p style="margin: 0;">TÉL : ${schoolConfig.phone || '51 54 88 11'}</p>
+                    <p style="margin: 0; margin-top: 2px;">TÉL : ${schoolConfig.phone || '51 54 88 11'}</p>
                 </div>
                 <div style="width: 40%; display: flex; flex-direction: column; align-items: center; text-align: center; justify-content: center;">
                     ${schoolConfig.logo ? 
@@ -699,13 +710,17 @@ exports.getStudentProfileHTML = (student, schoolConfig) => {
 </head>
 <body>
     <!-- Header -->
-    <div class="header">
-        <div class="h-left">
+        <div class="h-left" style="font-size: 7px; line-height: 1.0; width: 33%; text-align: left;">
             <p>${val(schoolConfig.ministryName)}</p>
+            <p style="text-align: center;">*******</p>
             <p>${val(schoolConfig.region)}</p>
-            <p>${val(schoolConfig.city)}</p>
+            <p style="text-align: center;">*******</p>
+            <p>${val(schoolConfig.directionRegionale)}</p>
+            <p style="text-align: center;">*******</p>
+            <p>${val(schoolConfig.circonscription)}</p>
+            <p style="text-align: center;">*******</p>
             <p>${val(schoolConfig.schoolName)}</p>
-            <p>${schoolConfig.phone ? 'TÉL : ' + schoolConfig.phone : ''}</p>
+            <p style="margin-top: 2px;">${schoolConfig.phone ? 'TÉL : ' + schoolConfig.phone : ''}</p>
         </div>
         <div class="h-center">
             ${schoolConfig.logo ? 

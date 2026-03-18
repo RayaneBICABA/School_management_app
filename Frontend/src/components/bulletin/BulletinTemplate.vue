@@ -64,8 +64,8 @@
       </div>
 
       <!-- Grades Table -->
-      <div class="table-area flex-grow min-h-0 overflow-hidden mb-4 flex flex-col">
-        <table class="main-table w-full h-full border-collapse border-2 border-black text-[12px]">
+      <div class="table-area flex-grow min-h-0 mb-4 flex flex-col">
+        <table class="main-table w-full border-separate border-spacing-0 text-[12px]">
           <thead>
             <tr class="bg-gray-200 text-center font-bold">
                 <th class="border border-black p-2 text-left" style="width: 30%;">Matières</th>
@@ -77,10 +77,10 @@
           </thead>
           <tbody>
             <template v-for="(category, catName) in groupedNotes" :key="catName">
-              <tr class="bg-gray-300">
-                <td :colspan="totalCols" class="border border-black p-1 font-bold text-center uppercase text-[11px]">{{ catName }}</td>
+              <tr class="cat-header-row">
+                <td :colspan="totalCols" class="font-bold text-center uppercase text-[11px]">{{ catName }}</td>
               </tr>
-              <tr v-for="note in category" :key="note.matiere?._id" class="text-center">
+              <tr v-for="note in category" :key="note.matiere?._id" class="data-row text-center">
                 <td class="border border-black p-2 text-left font-bold uppercase">{{ note.matiere?.nom }}</td>
                 <td class="border border-black p-1">{{ (note.coeff || note.matiere?.coefficient || 0).toFixed(1) }}</td>
                 
@@ -121,60 +121,67 @@
       </div>
  
       <!-- Bilan -->
-      <div class="bilan flex-shrink-0">
-        <table class="w-full border-collapse border border-black text-[12px]">
+      <div class="bilan flex-shrink-0 mt-2">
+        <table class="bilan-table w-full border-separate border-spacing-0 text-[12px]">
           <tbody>
-            <tr class="bg-gray-300 font-bold text-center">
-              <td colspan="8" class="border border-black p-1 uppercase text-[11px]">BILAN {{ classe.filiere === 'Technique' ? 'SEMESTRIEL' : 'TRIMESTRIEL' }}</td>
+            <tr class="cat-header-row font-bold text-center">
+              <td colspan="8" class="uppercase text-[11px]">BILAN {{ classe.filiere === 'Technique' ? 'SEMESTRIEL' : 'TRIMESTRIEL' }}</td>
             </tr>
-            <tr class="text-center">
-              <td class="border border-black p-1 text-left">Moyenne de l'élève</td>
-              <td class="border border-black p-1 font-bold text-xl">{{ (bulletin.moyenneGenerale || 0).toFixed(2) }}</td>
-              <td class="border border-black p-1 uppercase">RETRAIT DE POINTS</td>
-              <td class="border border-black p-1 font-bold">{{ (bulletin.retraitPoints || 0).toFixed(2) }}</td>
-              <td colspan="4" class="border border-black p-1 text-center uppercase font-bold bg-gray-100 text-[10px]">Nombre d'heures d'absence</td>
+            <tr class="data-row text-center">
+              <td class="text-left font-semibold">Moyenne de l'élève</td>
+              <td class="font-bold text-xl">{{ (bulletin.moyenneGenerale || 0).toFixed(2) }}</td>
+              <td class="uppercase">RETRAIT DE POINTS</td>
+              <td class="font-bold">{{ (bulletin.retraitPoints || 0).toFixed(2) }}</td>
+              <td colspan="4" class="text-center uppercase font-bold bg-gray-100 text-[10px]">Nombre d'heures d'absence</td>
             </tr>
-            <tr class="text-center">
-              <td class="border border-black p-1 text-left">Moyenne de la classe</td>
-              <td class="border border-black p-1 font-bold">{{ (bulletin.moyenneClasse || 0).toFixed(2) }}</td>
-              <td class="border border-black p-1 uppercase">MOYENNE DEFINITIVE</td>
-              <td class="border border-black p-1 font-bold text-xl">{{ ((bulletin.moyenneGenerale || 0) - (bulletin.retraitPoints || 0)).toFixed(2) }}</td>
-              <td class="border border-black p-1 text-center">Justifiées</td>
-              <td class="border border-black p-1 font-bold text-center">{{ bulletin.absencesJustifiees || 0 }}</td>
-              <td class="border border-black p-1 text-center">Non justifiées</td>
-              <td class="border border-black p-1 font-bold text-center">{{ bulletin.absencesNonJustifiees || 0 }}</td>
+            <tr class="data-row text-center">
+              <td class="text-left font-semibold">Moyenne de la classe</td>
+              <td>{{ (bulletin.moyenneClasse || 0).toFixed(2) }}</td>
+              <td class="uppercase">MOYENNE DEFINITIVE</td>
+              <td class="font-bold text-xl">{{ ((bulletin.moyenneGenerale || 0) - (bulletin.retraitPoints || 0)).toFixed(2) }}</td>
+              <td>Justifiées</td>
+              <td class="font-bold">{{ bulletin.absencesJustifiees || 0 }}</td>
+              <td>Non justifiées</td>
+              <td class="font-bold">{{ bulletin.absencesNonJustifiees || 0 }}</td>
             </tr>
-            <tr class="text-center">
-              <td class="border border-black p-1 text-left">Meilleure moyenne</td>
-              <td class="border border-black p-1 font-bold">{{ (bulletin.meilleureMoyenneClasse || 0).toFixed(2) }}</td>
-              <td class="border border-black p-1 uppercase">Rang du trimestre</td>
-              <td class="border border-black p-1 font-bold">{{ bulletin.rang || '-' }}</td>
-              <td class="border border-black p-1 text-center uppercase font-bold">Conduite</td>
-              <td colspan="3" class="border border-black p-1 font-bold">{{ bulletin.conduite }}</td>
+            <tr class="data-row text-center">
+              <td class="text-left font-semibold">Meilleure moyenne</td>
+              <td>{{ (bulletin.meilleureMoyenneClasse || 0).toFixed(2) }}</td>
+              <td class="uppercase">Rang du trimestre</td>
+              <td class="font-bold text-lg">{{ bulletin.rang || '-' }}</td>
+              <td class="uppercase font-bold">Conduite</td>
+              <td colspan="3" class="font-bold">{{ bulletin.conduite }}</td>
             </tr>
-            <tr class="text-center">
-              <td class="border border-black p-1 text-left">Moyenne la plus basse</td>
-              <td class="border border-black p-1 font-bold">{{ (bulletin.pireMoyenneClasse || 0).toFixed(2) }}</td>
-              <td colspan="2" class="border border-black p-1"></td>
-              <td class="border border-black p-1 text-center uppercase font-bold">Rappel des Moyennes</td>
-              <td colspan="3" class="border border-black p-1"></td>
+            <tr class="data-row text-center">
+              <td class="text-left font-semibold">Moyenne la plus basse</td>
+              <td>{{ (bulletin.pireMoyenneClasse || 0).toFixed(2) }}</td>
+              <td colspan="2"></td>
+              <td class="font-bold uppercase">Rappel des Moyennes</td>
+              <td colspan="3"></td>
             </tr>
           </tbody>
         </table>
       </div>
 
+      <!-- Flexible Spacer -->
+      <div class="flex-grow min-h-[10px]"></div>
+
       <!-- Appreciation & Signatures -->
-      <div class="council flex-shrink-0 mt-4 relative">
-        <h3 class="bg-gray-300 text-center font-bold p-2 border border-black uppercase text-sm">Appréciations du conseil de classe</h3>
-        <div class="flex border border-black border-t-0 h-[100px]">
-          <div class="w-1/2 p-4 border-r border-black flex items-center justify-center text-center">
-            <div class="font-bold text-lg leading-tight">{{ getGeneralAppreciation(bulletin.moyenneGenerale) }}</div>
+      <div class="council-section flex-shrink-0 mt-4">
+        <div class="border border-black p-0 bg-white">
+          <div class="cat-header-row p-1 text-center font-bold uppercase text-[11px] border-b border-black flex items-center justify-center">
+            Appréciations du conseil de classe
           </div>
-          <div class="w-1/2 p-4 flex flex-col items-center justify-center text-center">
-            <div class="font-bold text-sm uppercase">Le Proviseur</div>
-            <div class="h-8"></div>
-            <div class="font-bold text-xs">{{ schoolConfig.proviseurName || '' }}</div>
-            <div class="italic text-[10px] text-gray-700 font-normal mt-0.5 leading-tight">{{ schoolConfig.proviseurTitle || 'Chevalier de l\'Ordre des Palmes Académiques' }}</div>
+          <div class="flex min-h-[110px]">
+            <div class="flex-1 border-r border-black p-4 flex items-center justify-center text-center font-bold text-2xl">
+              {{ isDispensedAll ? 'DISPENSÉ' : getGeneralAppreciation(bulletin.moyenneGenerale) }}
+            </div>
+            <div class="flex-1 p-4 flex flex-col items-center justify-center text-center">
+              <div class="font-bold uppercase text-[11px]">Le Proviseur</div>
+              <div class="flex-grow min-h-[50px]"></div>
+              <div class="font-bold text-[10px]">{{ schoolConfig.proviseurName || '' }}</div>
+              <div class="text-[8px] italic leading-tight mt-1">{{ schoolConfig.proviseurTitle || 'Chevalier de l\'Ordre des Palmes Académiques' }}</div>
+            </div>
           </div>
         </div>
       </div>
@@ -420,19 +427,45 @@ const downloadPDF = async () => {
   display: flex !important;
   flex-direction: column !important;
   min-height: 297mm;
-  height: 297mm;
-  overflow: hidden;
+  padding: 10mm !important;
+  background: white !important;
 }
 
-td, th {
-  border-width: 1px !important;
-  border-color: black !important;
-  vertical-align: middle !important;
-  height: 1px; /* Stretch rows proportionally */
+/* Fix ghost lines through text (Puppeteer/Browser scaling issue) */
+/* border-collapse: separate + border-spacing: 0 is the robust fix */
+table {
+  width: 100%;
+  border-spacing: 0;
+  border-collapse: separate;
+  border-top: 1px solid black;
+  border-left: 1px solid black;
 }
 
 table.main-table {
-  flex-grow: 1;
+  flex-grow: 0; /* Let it take its natural height */
+}
+
+td, th {
+  border-right: 1px solid black !important;
+  border-bottom: 1px solid black !important;
+  vertical-align: middle !important;
+  padding: 8px 5px !important;
+  text-align: center;
+}
+
+th {
+  height: 40px;
+  background-color: #f3f4f6;
+  font-weight: bold;
+}
+
+.data-row {
+  height: 32px;
+}
+
+.cat-header-row {
+  height: 32px;
+  background-color: #e5e7eb;
 }
 
 @media print {

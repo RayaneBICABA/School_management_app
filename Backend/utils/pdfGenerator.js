@@ -178,12 +178,12 @@ exports.getBulletinHTML = (bulletin, schoolConfig) => {
 <head>
     <style>
         /* Core Layout - Full Page Flexbox */
-        html, body { height: 297mm; width: 210mm; margin: 0; padding: 0; overflow: hidden; }
-        body { font-family: 'Inter', 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; color: #333; font-size: 11px; padding: 10mm; background: white; line-height: 1.15; display: flex; flex-direction: column; }
+        html, body { height: 297mm; width: 210mm; margin: 0; padding: 0; }
+        body { font-family: 'Inter', 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; color: #333; font-size: 10.5px; padding: 10mm; background: white; line-height: 1.2; display: flex; flex-direction: column; }
         .bulletin-card { width: 100%; height: 100%; display: flex; flex-direction: column; }
         
         /* Fixed/Shrinkable Header Sections */
-        .header { display: flex; justify-content: space-between; border-bottom: 2px solid #f1f5f9; padding-bottom: 8px; margin-bottom: 10px; flex-shrink: 0; }
+        .header { display: flex; justify-content: space-between; border-bottom: 2px solid #f1f5f9; padding-bottom: 8px; margin-bottom: 12px; flex-shrink: 0; }
         .h-col { width: 33.33%; font-weight: bold; font-size: 9px; line-height: 1.25; text-transform: uppercase; }
         .h-center { text-align: center; display: flex; flex-direction: column; align-items: center; justify-content: center; width: 40% !important; }
         .h-col-side { width: 30% !important; }
@@ -192,42 +192,45 @@ exports.getBulletinHTML = (bulletin, schoolConfig) => {
         .logo-text { font-size: 26px; font-weight: 900; color: #1e3a8a; letter-spacing: -1px; line-height: 1; }
         .motto { font-size: 8.5px; color: #6b7280; letter-spacing: 0.5px; margin-top: 3px; font-weight: bold; }
         
-        .title { text-align: center; margin: 6px 0; flex-shrink: 0; }
-        .title h1 { font-size: 20px; font-style: italic; font-weight: bold; border-top: 1px solid #eee; border-bottom: 1px solid #eee; padding: 4px 0; }
+        .title { text-align: center; margin: 8px 0; flex-shrink: 0; }
+        .title h1 { font-size: 21px; font-style: italic; font-weight: bold; border-top: 1px solid #000; border-bottom: 1px solid #000; padding: 5px 0; }
         
-        .info-bar { display: flex; justify-content: space-between; margin-bottom: 4px; font-size: 11.5px; flex-shrink: 0; }
-        .student-name { margin-bottom: 4px; font-size: 12.5px; font-weight: bold; padding-top: 4px; flex-shrink: 0; }
+        .info-bar { display: flex; justify-content: space-between; margin-bottom: 5px; font-size: 11.5px; flex-shrink: 0; }
+        .student-name { margin-bottom: 5px; font-size: 13px; font-weight: bold; padding-top: 4px; flex-shrink: 0; }
         
-        .grid-info { display: flex; justify-content: space-between; padding-bottom: 6px; margin-bottom: 8px; border-bottom: 1px solid #e2e8f0; flex-shrink: 0; }
+        .grid-info { display: flex; justify-content: space-between; padding-bottom: 6px; margin-bottom: 12px; border-bottom: 1px solid #e2e8f0; flex-shrink: 0; }
         .grid-item { font-size: 11px; display: flex; align-items: baseline; gap: 4px; }
         .grid-item span { color: #64748b; font-size: 10px; }
         
-        /* Dynamic Table - Fills remaining space */
-        .table-container { flex: 1; display: flex; flex-direction: column; min-height: 0; margin-bottom: 10px; }
-        table.main-table { width: 100%; height: 100%; border-collapse: collapse; border: 2px solid #000; table-layout: fixed; }
-        table.main-table th, table.main-table td { border: 1px solid #000; padding: 8px 10px; text-align: center; font-size: 11px; vertical-align: middle; line-height: 1.2; height: 1px; }
-        table.main-table th { background: #e5e7eb; font-weight: bold; text-transform: uppercase; font-size: 10.5px; height: 35px; }
-        .cat-header { background: #d1d5db; font-weight: bold; text-transform: uppercase; font-size: 10.5px; text-align: center !important; }
+        /* Table Styles - Fixed heights + centered content */
+        /* border-collapse: separate + border-spacing: 0 is the fix for ghost lines through text */
+        .table-container { flex: 1; display: flex; flex-direction: column; min-height: 0; }
+        table.main-table { width: 100%; border-spacing: 0; border-collapse: separate; border-top: 1px solid #000; border-left: 1px solid #000; table-layout: fixed; }
+        table.main-table th, table.main-table td { border-right: 1px solid #000; border-bottom: 1px solid #000; padding: 8px 5px; text-align: center; vertical-align: middle; line-height: 1.2; }
+        table.main-table th { background: #e5e7eb; font-weight: bold; text-transform: uppercase; font-size: 10px; height: 38px; }
+        .cat-header { background: #d1d5db; font-weight: bold; text-transform: uppercase; font-size: 10px; height: 32px; text-align: center !important; }
+        tr.data-row { height: 32px; }
         .text-left { text-align: left !important; }
         .font-bold { font-weight: bold; }
         .uppercase { text-transform: uppercase; }
         .italic { font-style: italic; }
         
-        /* Bilan & Council - Pushed to bottom */
-        .bilan-section { flex-shrink: 0; width: 100%; }
-        .bilan-header { background: #d1d5db; font-weight: bold; text-align: center; padding: 6px; border: 1px solid #000; border-bottom: 0; text-transform: uppercase; font-size: 11px; }
-        .bilan-table { width: 100%; border-collapse: collapse; margin-bottom: 8px; }
-        .bilan-table td { border: 1px solid #000; padding: 6px; font-size: 11px; vertical-align: middle; text-align: center; }
+        /* Bilan & Council section */
+        .bilan-section { flex-shrink: 0; margin-top: 10px; }
+        .bilan-header { background: #d1d5db; font-weight: bold; text-align: center; padding: 7px; border: 1px solid #000; border-bottom: 0; text-transform: uppercase; font-size: 11px; }
+        .bilan-table { width: 100%; border-spacing: 0; border-collapse: separate; border-top: 1px solid #000; border-left: 1px solid #000; margin-bottom: 12px; }
+        .bilan-table td { border-right: 1px solid #000; border-bottom: 1px solid #000; padding: 8px 6px; font-size: 11px; vertical-align: middle; text-align: center; height: 38px; }
         .lg-val { font-size: 18px; font-weight: bold; }
         
-        .council-section { flex-shrink: 0; width: 100%; }
-        .council-header { background: #d1d5db; text-align: center; font-weight: bold; padding: 6px; border: 1px solid #000; border-bottom: 0; text-transform: uppercase; font-size: 11px; }
-        .council-box { display: flex; border: 1px solid #000; height: 100px; }
-        .app-box { width: 50%; border-right: 1px solid #000; display: flex; align-items: center; justify-content: center; font-size: 20px; font-weight: bold; padding: 10px; text-align: center; }
-        .sig-box { width: 50%; padding: 8px; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; }
+        .spacer { flex: 1; }
+        .council-section { flex-shrink: 0; }
+        .council-header { background: #d1d5db; text-align: center; font-weight: bold; padding: 7px; border: 1px solid #000; border-bottom: 0; text-transform: uppercase; font-size: 11px; }
+        .council-box { display: flex; border: 1px solid #000; min-height: 110px; }
+        .app-box { width: 50%; border-right: 1px solid #000; display: flex; align-items: center; justify-content: center; font-size: 22px; font-weight: bold; padding: 10px; text-align: center; }
+        .sig-box { width: 50%; padding: 10px; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; }
         
-        .footer-info { flex-shrink: 0; display: flex; justify-content: space-between; align-items: center; margin-top: 8px; font-size: 9px; color: #6b7280; }
-        .page-break { page-break-after: always; height: 297mm; display: flex; flex-direction: column; overflow: hidden; }
+        .footer-info { display: flex; justify-content: space-between; align-items: center; margin-top: 10px; font-size: 9px; color: #6b7280; flex-shrink: 0; }
+        .page-break { page-break-after: always; height: 100%; display: flex; flex-direction: column; }
     </style>
 </head>
 <body>
@@ -298,7 +301,7 @@ exports.getBulletinHTML = (bulletin, schoolConfig) => {
                     const prof = note.professeur ? `${note.professeur.civilite === 'Mr' ? 'M ' : (note.professeur.civilite ? note.professeur.civilite + ' ' : '')}${note.professeur.nom || ''}`.toUpperCase().trim() : '';
                     const app = note.isDispensed ? '' : getGeneralAppreciation(note.moyenneMatiere || 0);
                     return `
-                                <tr>
+                                <tr class="data-row">
                                     <td class="text-left font-bold uppercase" style="font-size: 9px;">${note.matiere?.nom || ''}</td>
                                     <td>${(note.coeff || 1).toFixed(1)}</td>
                                     ${note.isDispensed ?
@@ -319,7 +322,7 @@ exports.getBulletinHTML = (bulletin, schoolConfig) => {
                             <td colspan="3"></td>
                         </tr>
                     `).join('')}
-                    <tr class="font-bold" style="background: #f1f5f9; border-top: 2px solid #000;">
+                    <tr class="font-bold" style="background: #f1f5f9; border-top: 2px solid #000; height: 35px;">
                         <td class="text-left font-bold uppercase" style="padding: 6px;">TOTAL GÉNÉRAL</td>
                         <td>${(bulletin.totalCoefficients || 0).toFixed(1)}</td>
                         <td></td>
@@ -367,6 +370,8 @@ exports.getBulletinHTML = (bulletin, schoolConfig) => {
                 </tr>
             </table>
         </div>
+
+        <div class="spacer"></div>
 
         <div class="council-section">
             <div class="council-header">Appréciations du conseil de classe</div>

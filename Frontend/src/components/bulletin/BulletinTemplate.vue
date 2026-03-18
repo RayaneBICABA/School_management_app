@@ -177,7 +177,7 @@
             Appréciations du conseil de classe
           </div>
           <div class="flex min-h-[110px]">
-            <div class="flex-1 border-r border-black p-4 flex items-center justify-center text-center font-bold text-2xl">
+            <div class="flex-1 border-r border-black p-4 flex items-center justify-center text-center font-bold text-2xl bg-[#eee]">
               {{ isDispensedAll ? 'DISPENSÉ' : getGeneralAppreciation(bulletin.moyenneGenerale) }}
             </div>
             <div class="flex-1 p-4 flex flex-col items-center justify-center text-center">
@@ -433,7 +433,7 @@ const downloadPDF = async () => {
   min-height: 287mm;
   padding: 8mm !important;
   background: white !important;
-  font-family: serif !important;
+  font-family: Arial, Helvetica, sans-serif !important;
 }
 
 /* Fix ghost lines through text (Puppeteer/Browser scaling issue) */
@@ -471,7 +471,7 @@ th {
 
 .cat-header-row td {
   height: 28px;
-  background-color: #e5e7eb;
+  background-color: #eee;
 }
 
 /* Compact Modes */

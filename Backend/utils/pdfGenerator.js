@@ -19,7 +19,7 @@ exports.generateBulletinPDF = async (bulletin, schoolConfig) => {
         const pdf = await page.pdf({
             format: 'A4',
             printBackground: true,
-            margin: { top: '5mm', right: '5mm', bottom: '5mm', left: '5mm' }
+            margin: { top: '0px', right: '0px', bottom: '0px', left: '0px' }
         });
 
         return pdf;
@@ -45,7 +45,7 @@ exports.generateClassBulletinsPDF = async (bulletins, schoolConfig) => {
             const html = exports.getBulletinHTML(bulletin, schoolConfig);
             const bodyMatch = html.match(/<body>([\s\S]*)<\/body>/);
             const content = bodyMatch ? bodyMatch[1] : html;
-            fullHtml += `<div class="page-break" style="${index > 0 ? 'page-break-before: always;' : ''}">${content}</div>`;
+            fullHtml += `<div class="page-break">${content}</div>`;
         });
 
         const baseHtml = exports.getBulletinHTML(bulletins[0], schoolConfig);
@@ -56,7 +56,7 @@ exports.generateClassBulletinsPDF = async (bulletins, schoolConfig) => {
         const pdf = await page.pdf({
             format: 'A4',
             printBackground: true,
-            margin: { top: '5mm', right: '5mm', bottom: '5mm', left: '5mm' }
+            margin: { top: '0px', right: '0px', bottom: '0px', left: '0px' }
         });
 
         return pdf;
@@ -158,8 +158,9 @@ exports.getBulletinHTML = (bulletin, schoolConfig) => {
 <head>
     <style>
         /* Core Layout - Full Page Flexbox */
-        body { font-family: Arial, Helvetica, sans-serif; color: #333; font-size: 10px; padding: 15mm; background: white; line-height: 1.1; display: flex; flex-direction: column; box-sizing: border-box; min-height: 282mm; }
-        .bulletin-card { width: 100%; display: flex; flex-direction: column; flex: 1; }
+        html, body { font-family: Arial, Helvetica, sans-serif; color: #333; font-size: 10px; padding: 0; margin: 0; background: white; line-height: 1.1; height: auto; min-height: 0; -webkit-print-color-adjust: exact; }
+        p { margin: 0; padding: 0; }
+        .bulletin-card { width: 100%; display: flex; flex-direction: column; box-sizing: border-box; padding: 6mm; min-height: 250mm; page-break-before: avoid !important; page-break-after: avoid; }
         
         /* Compact Modes */
         .compact-1 body { font-size: 9.5px; padding: 4mm; }
@@ -184,13 +185,13 @@ exports.getBulletinHTML = (bulletin, schoolConfig) => {
         .logo-text { font-size: 22px; font-weight: 900; color: #000; line-height: 1; }
         .motto { font-size: 8px; color: #000; margin-top: 0; font-weight: bold; }
         
-        .title { text-align: center; margin: 2px 0; flex-shrink: 0; }
-        .title h1 { font-size: 16px; font-style: italic; font-weight: bold; border-top: 1px solid #000; border-bottom: 1px solid #000; padding: 2px 0; }
+        .title { text-align: center; margin: 0; flex-shrink: 0; }
+        .title h1 { font-size: 15px; font-style: italic; font-weight: bold; border-top: 1px solid #000; border-bottom: 1px solid #000; padding: 1px 0; margin: 1px 0; }
         
         .info-bar { display: flex; justify-content: space-between; margin-bottom: 3px; font-size: 10px; flex-shrink: 0; }
         .student-name { margin-bottom: 2px; font-size: 11.5px; font-weight: bold; padding-top: 1px; flex-shrink: 0; }
         
-        .grid-info { display: flex; justify-content: space-between; padding-bottom: 3px; margin-bottom: 6px; border-bottom: 1px solid #333; flex-shrink: 0; }
+        .grid-info { display: flex; justify-content: space-between; padding-bottom: 2px; margin-bottom: 4px; border-bottom: 1px solid #333; flex-shrink: 0; }
         .grid-item { font-size: 9.5px; display: flex; align-items: baseline; gap: 4px; color: #000; }
         .grid-item span { color: #000; font-size: 8.5px; }
         
@@ -198,32 +199,33 @@ exports.getBulletinHTML = (bulletin, schoolConfig) => {
         .table-container { flex: 1; display: flex; flex-direction: column; min-height: 0; }
         table.main-table { width: 100%; border-spacing: 0; border-collapse: separate; border-top: 1px solid #000; border-left: 1px solid #000; table-layout: fixed; }
         table.main-table th, table.main-table td { border-right: 1px solid #000; border-bottom: 1px solid #000; padding: 0 6px; text-align: center; vertical-align: middle !important; box-sizing: border-box; line-height: 1.2; }
-        table.main-table th { background: #ddd; font-weight: bold; text-transform: uppercase; font-size: 9px; height: 32px; color: #000; }
-        .cat-header { background: #eee; font-weight: bold; text-transform: uppercase; font-size: 9px; height: 26px; text-align: center !important; color: #000; }
-        .data-row td { padding: 5px 4px; }
-        .cat-header-row td { padding: 4px 4px; }
-        .cat-total-row td { padding: 8px 4px; }
-        .total-general-row td { padding: 10px 4px; }
+        table.main-table th { background: #ddd; font-weight: bold; text-transform: uppercase; font-size: 9px; height: 26px; color: #000; }
+        .cat-header { background: #eee; font-weight: bold; text-transform: uppercase; font-size: 9px; height: 22px; text-align: center !important; color: #000; }
+        .data-row td { padding: 2.5px 4px; }
+        .cat-header-row td { padding: 2.5px 4px; }
+        .cat-total-row td { padding: 0 4px; height: 30px; }
+        .total-general-row td { padding: 0 4px; height: 34px; }
         .text-left { text-align: left; }
         .font-bold { font-weight: bold; }
         .uppercase { text-transform: uppercase; }
         
         /* Bilan & Council section */
         .bilan-section { flex-shrink: 0; margin-top: 6px; }
-        .bilan-header { background: #eee; font-weight: bold; text-align: center; padding: 4px; border: 1px solid #000; border-bottom: 0; text-transform: uppercase; font-size: 10px; color: #000; }
-        .bilan-table { width: 100%; border-spacing: 0; border-collapse: separate; border-top: 1px solid #000; border-left: 1px solid #000; margin-bottom: 6px; }
-        .bilan-table td { border-right: 1px solid #000; border-bottom: 1px solid #000; padding: 6px 5px; font-size: 10px; vertical-align: middle !important; text-align: center; color: #000; line-height: 1.2; }
+        .bilan-header { background: #eee; font-weight: bold; text-align: center; padding: 3px; border: 1px solid #000; border-bottom: 0; text-transform: uppercase; font-size: 10px; color: #000; }
+        .bilan-table { width: 100%; border-spacing: 0; border-collapse: separate; border-top: 1px solid #000; border-left: 1px solid #000; margin-bottom: 4px; }
+        .bilan-table td { border-right: 1px solid #000; border-bottom: 1px solid #000; padding: 4px 5px; font-size: 10px; vertical-align: middle !important; text-align: center; color: #000; line-height: 1.1; }
         .lg-val { font-size: 15px; font-weight: bold; }
         
         .spacer { flex: 1; min-height: 5px; }
         .council-section { flex-shrink: 0; }
-        .council-header { background: #eee; text-align: center; font-weight: bold; padding: 4px; border: 1px solid #000; border-bottom: 0; text-transform: uppercase; font-size: 10px; color: #000; }
-        .council-box { display: flex; border: 1px solid #000; min-height: 90px; color: #000; }
-        .app-box { width: 50%; border-right: 1px solid #000; display: flex; align-items: center; justify-content: center; font-size: 18px; font-weight: bold; padding: 6px; text-align: center; }
-        .sig-box { width: 50%; padding: 6px; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; }
+        .council-header { background: #eee; text-align: center; font-weight: bold; padding: 3px; border: 1px solid #000; border-bottom: 0; text-transform: uppercase; font-size: 10px; color: #000; }
+        .council-box { display: flex; border: 1px solid #000; min-height: 70px; color: #000; }
+        .app-box { width: 50%; border-right: 1px solid #000; display: flex; align-items: center; justify-content: center; font-size: 18px; font-weight: bold; padding: 4px; text-align: center; }
+        .sig-box { width: 50%; padding: 4px; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; }
         
-        .footer-info { display: flex; justify-content: space-between; align-items: center; margin-top: 6px; font-size: 8px; color: #000; flex-shrink: 0; }
-        .page-break { page-break-after: always; height: 100%; display: flex; flex-direction: column; }
+        .footer-info { display: flex; justify-content: space-between; align-items: center; margin-top: 4px; font-size: 8px; color: #000; flex-shrink: 0; }
+        .page-break { page-break-before: always; display: flex; flex-direction: column; }
+        .page-break:first-child { page-break-before: avoid !important; }
     </style>
 </head>
 <body>
@@ -384,7 +386,7 @@ exports.getBulletinHTML = (bulletin, schoolConfig) => {
             </div>
         </div>
         <div class="footer-info">
-            <div>Le : ${formatDate(new Date())}</div>
+            <div>Le : ${formatDate(new Date())} à ${new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}</div>
             <div style="font-weight: bold; font-style: italic;">Généré par Unica</div>
         </div>
     </div>
@@ -579,8 +581,8 @@ exports.getMasterSheetHTML = (sheetsData, schoolConfig) => {
                 </div>
                 
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 15px; font-size: 6px; color: #6b7280; border-top: 1px solid #e2e8f0; padding-top: 5px; font-family: 'Arial', sans-serif;">
-                    <div>Le : ${new Date().toLocaleDateString('fr-FR')}</div>
-                    <div style="font-weight: bold; font-style: italic;">Généré par Unica</div>
+                    <div>Le : ${new Date().toLocaleDateString('fr-FR')} à ${new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}</div>
+                    <div class="italic" style="font-weight: normal;">Généré par Unica</div>
                 </div>
             </div>
         `;
@@ -797,7 +799,7 @@ exports.getStudentProfileHTML = (student, schoolConfig) => {
 
     <!-- Footer -->
     <div class="footer">
-        <div>Généré le : ${new Date().toLocaleDateString('fr-FR')}</div>
+        <div>Généré le : ${new Date().toLocaleDateString('fr-FR')} à ${new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}</div>
         <div class="sig-block">
             <div class="sig-line">Le Proviseur<br><span style="font-size: 8px; font-weight: normal; font-style: italic;">${schoolConfig.proviseurName || ''}</span></div>
         </div>

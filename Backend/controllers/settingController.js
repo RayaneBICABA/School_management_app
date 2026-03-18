@@ -17,6 +17,7 @@ exports.getSettings = async (req, res) => {
 
 exports.getSettingByKey = async (req, res) => {
     try {
+        console.log('DEBUG: getSettingByKey called with key:', req.params.key);
         const setting = await Setting.findOne({ key: req.params.key });
         if (!setting) {
             return res.status(200).json({

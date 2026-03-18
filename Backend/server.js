@@ -58,9 +58,11 @@ app.use(fileUpload({
 
 // Set static folder
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+app.use(express.static(path.join(__dirname, 'uploads')));
 
 // Basic route/
 app.get('/', (req, res) => {
+    console.log('DEBUG: Root route matched!');
     res.send('API is running...');
 });
 

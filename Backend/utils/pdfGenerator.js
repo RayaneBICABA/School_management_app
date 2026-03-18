@@ -133,6 +133,8 @@ exports.getBulletinHTML = (bulletin, schoolConfig) => {
         if (!groupedNotes[cat]) groupedNotes[cat] = [];
         groupedNotes[cat].push(note);
     });
+ 
+    const isDispensedAll = bulletin.notes?.length > 0 && bulletin.notes.every(n => n.isDispensed);
 
     const getGeneralAppreciation = (moy) => {
         if (moy >= 18) return 'Excellent';
@@ -285,7 +287,7 @@ exports.getBulletinHTML = (bulletin, schoolConfig) => {
                 <tbody>
                     ${Object.entries(groupedNotes).map(([catName, notes]) => `
                         <tr class="cat-header">
-                            <td colspan="5">${catName}</td>
+                            <td colspan="7">${catName}</td>
                         </tr>
                         ${notes.map(note => {
                     const prof = note.professeur ? `${note.professeur.civilite === 'Mr' ? 'M ' : (note.professeur.civilite ? note.professeur.civilite + ' ' : '')}${note.professeur.nom || ''}`.toUpperCase().trim() : '';
@@ -366,7 +368,7 @@ exports.getBulletinHTML = (bulletin, schoolConfig) => {
         <div class="council-section">
             <div class="council-header">Appréciations du conseil de classe</div>
             <div class="council-box">
-                <div class="app-box">${getGeneralAppreciation(bulletin.moyenneGenerale || 0)}</div>
+                <div class="app-box">${isDispensedAll ? 'DISPENSÉ' : getGeneralAppreciation(bulletin.moyenneGenerale || 0)}</div>
                 <div class="sig-box">
                     <div class="font-bold uppercase" style="font-size: 11px;">Le Proviseur</div>
                     <div style="height: 40px;"></div>

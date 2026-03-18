@@ -65,10 +65,10 @@
 
       <!-- Grades Table -->
       <div class="flex-grow min-h-0 overflow-hidden mb-2 flex flex-col">
-        <table class="w-full border-collapse border border-black text-[12px]">
+        <table class="w-full border-collapse border border-black text-[12px]" style="flex: 3;">
           <thead>
             <tr class="bg-gray-200 text-center font-bold">
-                <th class="border border-black p-3 text-left" style="width: 30%;">Matières</th>
+                <th class="border border-black p-4 text-left" style="width: 30%;">Matières</th>
                 <th class="border border-black p-2 text-center" style="width: 8%;">Coef</th>
                 <th class="border border-black p-2 text-center" style="width: 10%;">Moy</th>
                 <th class="border border-black p-2 text-center" style="width: 10%;">Pondérées</th>
@@ -78,10 +78,10 @@
           <tbody>
             <template v-for="(category, catName) in groupedNotes" :key="catName">
               <tr class="bg-gray-300">
-                <td :colspan="totalCols" class="border border-black p-3 font-bold text-center uppercase text-[11px]">{{ catName }}</td>
+                <td :colspan="totalCols" class="border border-black p-4 font-bold text-center uppercase text-[11px]">{{ catName }}</td>
               </tr>
               <tr v-for="note in category" :key="note.matiere?._id" class="text-center">
-                <td class="border border-black p-3 text-left font-bold uppercase">{{ note.matiere?.nom }}</td>
+                <td class="border border-black p-4 text-left font-bold uppercase">{{ note.matiere?.nom }}</td>
                 <td class="border border-black p-2">{{ (note.coeff || note.matiere?.coefficient || 0).toFixed(1) }}</td>
                 
                 <template v-if="note.isDispensed">
@@ -110,7 +110,7 @@
 
             <!-- Global Totals -->
             <tr class="bg-blue-50 font-bold text-center">
-              <td class="border border-black p-3 text-left uppercase">TOTAL GÉNÉRAL</td>
+              <td class="border border-black p-4 text-left uppercase">TOTAL GÉNÉRAL</td>
               <td class="border border-black p-2">{{ (bulletin.totalCoefficients || 0).toFixed(1) }}</td>
               <td class="border border-black p-2"></td>
               <td class="border border-black p-2 font-bold">{{ (bulletin.totalPoints || 0).toFixed(2) }}</td>
@@ -118,7 +118,7 @@
             </tr>
           </tbody>
         </table>
-        <div class="grow"></div>
+        <div class="grow" style="flex: 1;"></div>
       </div>
  
       <!-- Bilan -->

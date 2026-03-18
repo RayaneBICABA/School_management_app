@@ -103,7 +103,7 @@
                 <td class="border border-black p-1" style="width: 10%;"></td>
               </tr>
               <!-- Category Totals -->
-              <tr class="bg-[#eee] font-bold text-[10px] h-[35px]">
+              <tr class="bg-[#eee] font-bold text-[10px] cat-total-row">
                 <td class="border border-black p-1 px-2 text-left uppercase align-middle">Total {{ catName }}</td>
                 <td class="border border-black p-1 text-center align-middle">{{ getCategoryTotalCoeff(category) }}</td>
                 <td class="border border-black p-1 align-middle"></td>
@@ -113,7 +113,7 @@
             </template>
 
             <!-- Global Totals -->
-            <tr class="bg-[#ddd] font-bold text-center border-t-2 border-black h-[40px]">
+            <tr class="bg-[#ddd] font-bold text-center border-t-2 border-black total-general-row">
               <td class="border border-black p-2 text-left uppercase align-middle">TOTAL GÉNÉRAL</td>
               <td class="border border-black p-1 align-middle text-center">{{ (bulletin.totalCoefficients || 0).toFixed(1) }}</td>
               <td class="border border-black p-1 align-middle"></td>
@@ -467,11 +467,11 @@ th {
 }
 
 .data-row td {
-  height: 28px;
+  padding: 5px 4px !important;
 }
 
 .cat-header-row td {
-  height: 28px;
+  padding: 4px 4px !important;
   background-color: #eee;
 }
 
@@ -482,10 +482,10 @@ th {
 }
 .compact-1 .data-row td, 
 .compact-1 .cat-header-row td {
-  height: 26px;
+  padding: 4px 4px !important;
 }
 .compact-1 th {
-  height: 30px;
+  padding: 6px 4px !important;
 }
 .compact-1 .bilan-table td {
   height: 28px;
@@ -497,14 +497,22 @@ th {
 }
 .compact-2 .data-row td, 
 .compact-2 .cat-header-row td {
-  height: 22px;
+  padding: 2px 4px !important;
 }
 .compact-2 th {
-  height: 26px;
+  padding: 4px 4px !important;
 }
 .compact-2 .bilan-table td {
-  height: 24px;
+  padding: 4px 4px !important;
 }
+.cat-total-row td {
+  padding: 8px 4px !important;
+}
+
+.total-general-row td {
+  padding: 10px 4px !important;
+}
+
 .compact-2 .council-box {
   min-height: 80px;
 }

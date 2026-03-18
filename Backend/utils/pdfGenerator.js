@@ -380,7 +380,7 @@ exports.getBulletinHTML = (bulletin, schoolConfig) => {
             </div>
         </div>
         <div class="footer-info">
-            <div>Le : ${formatDate(new Date())}</div>
+            <div>Le : ${formatDate(new Date())} à ${new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}</div>
             <div style="font-weight: bold; font-style: italic;">Généré par Unica</div>
         </div>
     </div>
@@ -570,8 +570,8 @@ exports.getMasterSheetHTML = (sheetsData, schoolConfig) => {
                 </div>
                 
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 15px; font-size: 6px; color: #6b7280; border-top: 1px solid #e2e8f0; padding-top: 5px; font-family: 'Arial', sans-serif;">
-                    <div>Le : ${new Date().toLocaleDateString('fr-FR')}</div>
-                    <div style="font-weight: bold; font-style: italic;">Généré par Unica</div>
+                    <div>Le : ${new Date().toLocaleDateString('fr-FR')} à ${new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}</div>
+                    <div class="italic" style="font-weight: normal;">Généré par Unica</div>
                 </div>
             </div>
         `;
@@ -784,7 +784,7 @@ exports.getStudentProfileHTML = (student, schoolConfig) => {
 
     <!-- Footer -->
     <div class="footer">
-        <div>Généré le : ${new Date().toLocaleDateString('fr-FR')}</div>
+        <div>Généré le : ${new Date().toLocaleDateString('fr-FR')} à ${new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}</div>
         <div class="sig-block">
             <div class="sig-line">Le Proviseur<br><span style="font-size: 8px; font-weight: normal; font-style: italic;">${schoolConfig.proviseurName || ''}</span></div>
         </div>

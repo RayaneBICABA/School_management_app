@@ -174,17 +174,17 @@ exports.getBulletinHTML = (bulletin, schoolConfig) => {
         .compact-2 .logo-text { font-size: 20px; }
         
         /* Fixed/Shrinkable Header Sections */
-        .header { display: flex; justify-content: space-between; border-bottom: 2px solid #333; padding-bottom: 4px; margin-bottom: 6px; flex-shrink: 0; }
-        .h-col { width: 33.33%; font-weight: bold; font-size: 8.5px; line-height: 1.2; text-transform: uppercase; color: #000; }
+        .header { display: flex; justify-content: space-between; border-bottom: 0; padding-bottom: 0; margin-bottom: 0; flex-shrink: 0; }
+        .h-col { width: 33.33%; font-weight: bold; font-size: 8.5px; line-height: 1.0; text-transform: uppercase; color: #000; }
         .h-center { text-align: center; display: flex; flex-direction: column; align-items: center; justify-content: center; width: 40% !important; }
         .h-col-side { width: 30% !important; }
         .h-right { text-align: right; }
         
         .logo-text { font-size: 22px; font-weight: 900; color: #000; line-height: 1; }
-        .motto { font-size: 8px; color: #000; margin-top: 1px; font-weight: bold; }
+        .motto { font-size: 8px; color: #000; margin-top: 0; font-weight: bold; }
         
-        .title { text-align: center; margin: 4px 0; flex-shrink: 0; }
-        .title h1 { font-size: 18px; font-style: italic; font-weight: bold; border-top: 1px solid #000; border-bottom: 1px solid #000; padding: 3px 0; }
+        .title { text-align: center; margin: 2px 0; flex-shrink: 0; }
+        .title h1 { font-size: 16px; font-style: italic; font-weight: bold; border-top: 1px solid #000; border-bottom: 1px solid #000; padding: 2px 0; }
         
         .info-bar { display: flex; justify-content: space-between; margin-bottom: 3px; font-size: 10px; flex-shrink: 0; }
         .student-name { margin-bottom: 2px; font-size: 11.5px; font-weight: bold; padding-top: 1px; flex-shrink: 0; }

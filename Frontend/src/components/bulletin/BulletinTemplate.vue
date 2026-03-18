@@ -2,8 +2,8 @@
   <div class="bulletin-container p-4 bg-gray-100 min-h-screen" :class="compactClasses">
     <div ref="bulletinRef" class="bulletin max-w-[900px] mx-auto bg-white p-8 shadow-lg text-[#333] font-serif leading-tight flex flex-col min-h-[297mm]">
       <!-- Header -->
-      <div class="header flex justify-between items-start mb-2 border-b-2 border-gray-100 pb-2 flex-shrink-0">
-        <div class="header-left w-[30%] text-[10px] font-bold uppercase leading-[1.2]">
+      <div class="header flex justify-between items-start flex-shrink-0">
+        <div class="header-left w-[30%] text-[10px] font-bold uppercase leading-none">
           <p>{{ schoolConfig.ministryName }}</p>
           <p>{{ schoolConfig.region }}</p>
           <p>{{ schoolConfig.city }}</p>
@@ -12,39 +12,35 @@
         </div>
 
         <div class="header-center w-[40%] flex flex-col items-center text-center">
-          <div v-if="schoolConfig.logo" class="h-16 mb-1">
-            <img :src="schoolConfig.logo.startsWith('data:image/') ? schoolConfig.logo : `${BASE_ASSET_URL}${schoolConfig.logo}`" class="h-full w-auto object-contain mx-auto" />
+          <div v-if="schoolConfig.logo" class="h-16 mb-0.5">
+            <img :src="schoolConfig.logo" class="h-full w-auto object-contain mx-auto" @load="onImageLoad" />
           </div>
           <div v-else class="text-3xl font-black tracking-tighter text-blue-900 leading-none">{{ schoolConfig.shortName }}</div>
-          <div v-if="schoolConfig.motto" class="text-[10px] font-bold text-gray-400 mt-1 uppercase tracking-widest leading-none">{{ schoolConfig.motto }}</div>
+          <div v-if="schoolConfig.motto" class="text-[10px] font-bold text-gray-400 mt-0.5 uppercase tracking-widest leading-none">{{ schoolConfig.motto }}</div>
         </div>
 
-        <div class="header-right w-[30%] text-right text-[10px] font-bold uppercase leading-[1.2]">
+        <div class="header-right w-[30%] text-right text-[10px] font-bold uppercase leading-none">
           <p>{{ schoolConfig.country }}</p>
           <p class="text-[9px] italic normal-case font-normal">{{ schoolConfig.patrie }}</p>
         </div>
       </div>
-
-      <!-- Title -->
-      <div class="title text-center my-1.5 flex-shrink-0">
-        <h1 class="text-xl font-serif italic font-bold">BULLETIN DE NOTES</h1>
+ 
+      <div class="title text-center mb-1 flex-shrink-0">
+        <h1 class="text-[18px] italic font-bold border-y border-black py-0.5">BULLETIN DE NOTES</h1>
       </div>
-
-      <!-- General Info -->
-      <div class="info-trimestre flex justify-between text-sm mb-1 flex-shrink-0">
+ 
+      <div class="info-bar flex justify-between mb-0.5 text-[10px] flex-shrink-0">
         <span>Année scolaire: <strong>{{ bulletin.anneeScolaire }}</strong></span>
         <span><strong>{{ bulletin.periode }}</strong></span>
         <span>Effectif: <strong>{{ bulletin.effectif }}</strong></span>
       </div>
-
-      <!-- Student Name -->
-      <div class="student-name mb-1 flex items-baseline gap-1 text-[13px] font-bold leading-tight flex-shrink-0">
-        <span class="text-[11px] text-gray-500 font-medium">Nom de l'élève:</span>
-        <strong class="uppercase text-blue-900">{{ eleve.nom || 'Non renseigné' }} {{ eleve.prenom || 'Non renseigné' }}</strong>
+ 
+      <div class="student-name mb-0.5 text-[11px] font-bold pt-0.5 flex-shrink-0">
+        <span class="text-gray-500 font-normal text-[10px]">Nom de l'élève:</span>
+        <span class="uppercase ml-2">{{ eleve.nom }} {{ eleve.prenom }}</span>
       </div>
-
-      <!-- Info Eleve -->
-      <div class="info-eleve grid grid-cols-4 gap-1 mb-2 pb-1 border-b border-gray-200 flex-shrink-0">
+ 
+      <div class="grid-info flex justify-between pb-0.5 mb-1 border-b border-gray-400 flex-shrink-0">
         <div class="info-item flex items-baseline gap-1">
           <span class="text-[11px] text-gray-500">Né(e) le:</span>
           <span class="font-bold text-[12px]">{{ formatDate(eleve.dateNaissance) || 'Non renseigné' }}</span>

@@ -68,32 +68,32 @@
         <table class="main-table w-full border-separate border-spacing-0 text-[12px]">
           <thead>
             <tr class="bg-gray-200 text-center font-bold">
-                <th class="border border-black p-2 text-left" style="width: 35%;">Matières</th>
-                <th class="border border-black p-1 text-center" style="width: 5%;">Coef</th>
-                <th class="border border-black p-1 text-center" style="width: 8%;">Moy</th>
-                <th class="border border-black p-1 text-center" style="width: 12%;">Pondérées</th>
-                <th colspan="3" class="border border-black p-1 text-center" style="width: 40%;">Appréciations et signatures</th>
+                <th class="border border-black p-2 text-left bg-[#ddd]" style="width: 35%;">Matières</th>
+                <th class="border border-black p-1 text-center bg-[#ddd]" style="width: 5%;">Coef</th>
+                <th class="border border-black p-1 text-center bg-[#ddd]" style="width: 8%;">Moy</th>
+                <th class="border border-black p-1 text-center bg-[#ddd]" style="width: 12%;">Pondérées</th>
+                <th colspan="3" class="border border-black p-1 text-center bg-[#ddd]" style="width: 40%;">Appréciations et signatures</th>
             </tr>
           </thead>
           <tbody>
             <template v-for="(category, catName) in groupedNotes" :key="catName">
-              <tr class="cat-header-row">
-                <td :colspan="totalCols" class="font-bold text-center uppercase text-[11px]">{{ catName }}</td>
+              <tr class="cat-header-row bg-[#eee]">
+                <td :colspan="totalCols" class="font-bold text-center uppercase text-[11px] border border-black p-1">{{ catName }}</td>
               </tr>
               <tr v-for="note in category" :key="note.matiere?._id" class="data-row text-center">
                 <td class="border border-black p-2 text-left font-bold uppercase">{{ note.matiere?.nom }}</td>
                 <td class="border border-black p-1">{{ (note.coeff || note.matiere?.coefficient || 0).toFixed(1) }}</td>
                 
                 <template v-if="note.isDispensed">
-                  <td class="border border-black p-1 font-bold italic text-rose-600">D</td>
-                  <td class="border border-black p-1 font-bold italic text-rose-600">D</td>
+                  <td class="border border-black p-1 font-bold italic">D</td>
+                  <td class="border border-black p-1 font-bold italic">D</td>
                 </template>
                 <template v-else>
                   <td class="border border-black p-1">{{ (note.moyenneMatiere || 0).toFixed(2) }}</td>
                   <td class="border border-black p-1 font-bold">{{ (note.notePonderee || 0).toFixed(2) }}</td>
                 </template>
                 <td class="border border-black p-1 italic text-[10px] text-center" style="width: 15%;">
-                  <div :class="note.isDispensed ? '' : getAppreciationColor(getSubjectAppreciation(note.moyenneMatiere || 0))">
+                  <div>
                     {{ note.isDispensed ? '' : getSubjectAppreciation(note.moyenneMatiere || 0) }}
                   </div>
                 </td>
@@ -103,9 +103,8 @@
                 <td class="border border-black p-1" style="width: 10%;"></td>
               </tr>
               <!-- Category Totals -->
-              <tr class="bg-gray-100 font-bold text-[10px]">
-                <td class="border border-black p-1 px-2 text-left uppercase">Total {{ catName }}</td>
-                <td class="border border-black p-1 text-center">{{ getCategoryTotalCoeff(category) }}</td>
+              <tr class="bg-[#eee] font-bold text-[10px]">
+                <td colspan="2" class="border border-black p-1 px-2 text-left uppercase">Total {{ catName }}</td>
                 <td class="border border-black p-1"></td>
                 <td class="border border-black p-1 text-center">{{ getCategoryTotalPoints(category) }}</td>
                 <td colspan="3" class="border border-black p-1"></td>
@@ -113,9 +112,8 @@
             </template>
 
             <!-- Global Totals -->
-            <tr class="bg-blue-50 font-bold text-center border-t-2 border-black">
-              <td class="border border-black p-2 text-left uppercase">TOTAL GÉNÉRAL</td>
-              <td class="border border-black p-1">{{ (bulletin.totalCoefficients || 0).toFixed(1) }}</td>
+            <tr class="bg-[#ddd] font-bold text-center border-t-2 border-black">
+              <td colspan="2" class="border border-black p-2 text-left uppercase">TOTAL GÉNÉRAL</td>
               <td class="border border-black p-1"></td>
               <td class="border border-black p-1 font-bold">{{ (bulletin.totalPoints || 0).toFixed(2) }}</td>
               <td colspan="3" class="border border-black p-1"></td>
@@ -128,15 +126,15 @@
       <div class="bilan flex-shrink-0 mt-2">
         <table class="bilan-table w-full border-separate border-spacing-0 text-[12px]">
           <tbody>
-            <tr class="cat-header-row font-bold text-center">
-              <td colspan="8" class="uppercase text-[11px]">BILAN {{ classe.filiere === 'Technique' ? 'SEMESTRIEL' : 'TRIMESTRIEL' }}</td>
+            <tr class="cat-header-row font-bold text-center bg-[#eee]">
+              <td colspan="8" class="uppercase text-[11px] border border-black p-1">BILAN {{ classe.filiere === 'Technique' ? 'SEMESTRIEL' : 'TRIMESTRIEL' }}</td>
             </tr>
             <tr class="data-row text-center">
               <td class="text-left font-semibold">Moyenne de l'élève</td>
               <td class="font-bold text-xl">{{ (bulletin.moyenneGenerale || 0).toFixed(2) }}</td>
               <td class="uppercase">RETRAIT DE POINTS</td>
-              <td class="font-bold">{{ (bulletin.retraitPoints || 0).toFixed(2) }}</td>
-              <td colspan="4" class="text-center uppercase font-bold bg-gray-100 text-[10px]">Nombre d'heures d'absence</td>
+              <td class="font-bold border border-black p-1">{{ (bulletin.retraitPoints || 0).toFixed(2) }}</td>
+              <td colspan="4" class="text-center uppercase font-bold bg-[#eee] text-[10px] border border-black p-1">Nombre d'heures d'absence</td>
             </tr>
             <tr class="data-row text-center">
               <td class="text-left font-semibold">Moyenne de la classe</td>

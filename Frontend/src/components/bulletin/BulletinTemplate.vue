@@ -429,7 +429,7 @@ const downloadPDF = async () => {
   min-height: 287mm;
   padding: 8mm !important;
   background: white !important;
-  font-family: Arial, Helvetica, sans-serif !important;
+  font-family: serif !important;
 }
 
 /* Fix ghost lines through text (Puppeteer/Browser scaling issue) */
@@ -538,6 +538,7 @@ th {
     overflow: visible !important;
     display: flex !important;
     flex-direction: column !important;
+    font-family: Arial, Helvetica, sans-serif !important;
   }
   
   /* Ensure backgrounds render */
@@ -552,33 +553,4 @@ th {
   .text-blue-900 { color: #1e3a8a !important; }
 }
 
-/* Dynamic Compact Styling */
-.compact-level-1 .bulletin {
-  padding: 1.5rem !important;
-}
-.compact-level-1 .header { margin-bottom: 0.25rem !important; pb: 0.25rem !important; }
-.compact-level-1 .title { margin-top: 0.25rem !important; margin-bottom: 0.25rem !important; }
-.compact-level-1 .title h1 { font-size: 1.125rem !important; }
-.compact-level-1 .info-eleve { margin-bottom: 0.5rem !important; pb: 0.25rem !important; font-size: 0.75rem !important; }
-.compact-level-1 table { font-size: 9px !important; }
-.compact-level-1 th, .compact-level-1 td { padding: 2px !important; }
-.compact-level-1 .bilan { mt: 0.5rem !important; }
-.compact-level-1 .council { mt: 0.5rem !important; }
-.compact-level-1 .council-content { height: 80px !important; }
-
-.compact-level-2 .bulletin {
-  padding: 1rem !important;
-}
-.compact-level-2 .header { margin-bottom: 0 !important; pb: 0 !important; font-size: 8px !important; }
-.compact-level-2 .header-left, .compact-level-2 .header-right { font-size: 8px !important; }
-.compact-level-2 .title { margin-top: 0 !important; margin-bottom: 0 !important; }
-.compact-level-2 .title h1 { font-size: 1rem !important; }
-.compact-level-2 .info-trimestre, .compact-level-2 .student-name { font-size: 10px !important; margin-bottom: 2px !important; }
-.compact-level-2 .info-eleve { margin-bottom: 0.25rem !important; pb: 0.125rem !important; font-size: 9px !important; gap: 4px !important; }
-.compact-level-2 table { font-size: 8px !important; }
-.compact-level-2 th, .compact-level-2 td { padding: 1px 2px !important; }
-.compact-level-2 .bilan { mt: 0.25rem !important; }
-.compact-level-2 .bilan table { font-size: 9px !important; }
-.compact-level-2 .council { mt: 0.25rem !important; }
-.compact-level-2 .council-content { height: 60px !important; }
 </style>

@@ -203,11 +203,11 @@ exports.getBulletinHTML = (bulletin, schoolConfig) => {
         .grid-item span { color: #64748b; font-size: 10px; }
         
         /* Table Styles */
-        .table-container { flex: 1; display: flex; flex-direction: column; min-height: 0; margin-bottom: 10px; padding: 0 15mm; }
-        table { width: 100%; border-collapse: collapse; border: 1px solid #000; table-layout: fixed; }
-        th, td { border: 1px solid #000 !important; padding: 12px 8px !important; text-align: center; font-size: 13px !important; vertical-align: middle !important; line-height: 1.1 !important; }
-        th { background: #e5e7eb !important; font-weight: bold !important; text-transform: uppercase; font-size: 12px !important; height: 40px !important; }
-        .cat-header { background: #d1d5db !important; font-weight: bold !important; text-transform: uppercase; font-size: 12px !important; height: 35px !important; }
+        .table-container { flex: 1; display: flex; flex-direction: column; min-height: 0; margin-bottom: 10px; }
+        table { width: 100%; border-collapse: collapse; border: 1px solid #000; table-layout: fixed; flex: 3; }
+        th, td { border: 1px solid #000; padding: 15px 10px; text-align: center; font-size: 11px; vertical-align: middle; line-height: 1.2; height: 1px; }
+        th { background: #e5e7eb; font-weight: bold; text-transform: uppercase; font-size: 10.5px; height: 40px; }
+        .cat-header { background: #d1d5db; font-weight: bold; text-transform: uppercase; font-size: 10.5px; height: 35px; }
         .text-left { text-align: left; }
         .font-bold { font-weight: bold; }
         .uppercase { text-transform: uppercase; }

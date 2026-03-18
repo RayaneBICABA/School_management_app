@@ -205,9 +205,9 @@ exports.getBulletinHTML = (bulletin, schoolConfig) => {
         /* Table Styles */
         .table-container { flex: 1; display: flex; flex-direction: column; min-height: 0; margin-bottom: 10px; }
         table { width: 100%; border-collapse: collapse; border: 1px solid #000; table-layout: fixed; }
-        th, td { border: 1px solid #000; padding: 6px 8px; text-align: center; font-size: 11px; vertical-align: middle; }
-        th { background: #e5e7eb; font-weight: bold; text-transform: uppercase; font-size: 10.5px; height: 30px; }
-        .cat-header { background: #d1d5db; font-weight: bold; text-transform: uppercase; font-size: 10.5px; height: 25px; }
+        th, td { border: 1px solid #000; padding: 10px 8px; text-align: center; font-size: 11px; vertical-align: middle; line-height: 1; }
+        th { background: #e5e7eb; font-weight: bold; text-transform: uppercase; font-size: 10.5px; height: 35px; }
+        .cat-header { background: #d1d5db; font-weight: bold; text-transform: uppercase; font-size: 10.5px; height: 30px; }
         .text-left { text-align: left; }
         .font-bold { font-weight: bold; }
         .uppercase { text-transform: uppercase; }

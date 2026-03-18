@@ -68,53 +68,53 @@
         <table class="w-full border-collapse border border-black text-[12px]">
           <thead>
             <tr class="bg-gray-200 text-center font-bold">
-                <th class="border border-black p-2 text-left" style="width: 30%;">Matières</th>
-                <th class="border border-black p-1 text-center" style="width: 8%;">Coef</th>
-                <th class="border border-black p-1 text-center" style="width: 10%;">Moy</th>
-                <th class="border border-black p-1 text-center" style="width: 10%;">Pondérées</th>
-                <th class="border border-black p-1 text-center" colspan="3">Appréciations et signatures</th>
+                <th class="border border-black p-3 text-left" style="width: 30%;">Matières</th>
+                <th class="border border-black p-2 text-center" style="width: 8%;">Coef</th>
+                <th class="border border-black p-2 text-center" style="width: 10%;">Moy</th>
+                <th class="border border-black p-2 text-center" style="width: 10%;">Pondérées</th>
+                <th class="border border-black p-2 text-center" colspan="3">Appréciations et signatures</th>
             </tr>
           </thead>
           <tbody>
             <template v-for="(category, catName) in groupedNotes" :key="catName">
               <tr class="bg-gray-300">
-                <td :colspan="totalCols" class="border border-black p-2 font-bold text-center uppercase text-[11px]">{{ catName }}</td>
+                <td :colspan="totalCols" class="border border-black p-3 font-bold text-center uppercase text-[11px]">{{ catName }}</td>
               </tr>
               <tr v-for="note in category" :key="note.matiere?._id" class="text-center">
-                <td class="border border-black p-2 text-left font-bold uppercase">{{ note.matiere?.nom }}</td>
-                <td class="border border-black p-1">{{ (note.coeff || note.matiere?.coefficient || 0).toFixed(1) }}</td>
+                <td class="border border-black p-3 text-left font-bold uppercase">{{ note.matiere?.nom }}</td>
+                <td class="border border-black p-2">{{ (note.coeff || note.matiere?.coefficient || 0).toFixed(1) }}</td>
                 
                 <template v-if="note.isDispensed">
-                  <td class="border border-black p-1 font-bold italic text-rose-600 text-center">D</td>
-                  <td class="border border-black p-1 font-bold italic text-rose-600 text-center">D</td>
+                  <td class="border border-black p-2 font-bold italic text-rose-600 text-center">D</td>
+                  <td class="border border-black p-2 font-bold italic text-rose-600 text-center">D</td>
                 </template>
                 <template v-else>
-                  <td class="border border-black p-1">{{ (note.moyenneMatiere || 0).toFixed(2) }}</td>
-                  <td class="border border-black p-1 font-bold">{{ (note.notePonderee || 0).toFixed(2) }}</td>
+                  <td class="border border-black p-2">{{ (note.moyenneMatiere || 0).toFixed(2) }}</td>
+                  <td class="border border-black p-2 font-bold">{{ (note.notePonderee || 0).toFixed(2) }}</td>
                 </template>
-                <td class="border border-black p-1 w-20 italic text-[11px]" :class="note.isDispensed ? '' : getAppreciationColor(getSubjectAppreciation(note.moyenneMatiere || 0))">
+                <td class="border border-black p-2 w-20 italic text-[11px]" :class="note.isDispensed ? '' : getAppreciationColor(getSubjectAppreciation(note.moyenneMatiere || 0))">
                   {{ note.isDispensed ? '' : getSubjectAppreciation(note.moyenneMatiere || 0) }}
                 </td>
-                <td class="border border-black p-1 text-[10px]" style="width: 60px; white-space: nowrap;">{{ note.professeur ? (note.professeur.civilite === 'Mr' ? 'M ' : (note.professeur.civilite ? note.professeur.civilite + ' ' : '')) + (note.professeur.nom || '').toUpperCase() : '' }}</td>
-                <td class="border border-black p-1 w-20"></td>
+                <td class="border border-black p-2 text-[10px]" style="width: 60px; white-space: nowrap;">{{ note.professeur ? (note.professeur.civilite === 'Mr' ? 'M ' : (note.professeur.civilite ? note.professeur.civilite + ' ' : '')) + (note.professeur.nom || '').toUpperCase() : '' }}</td>
+                <td class="border border-black p-2 w-20"></td>
               </tr>
               <!-- Category Totals -->
               <tr class="bg-gray-100 font-bold">
-                <td class="border border-black p-1 px-2 text-left uppercase text-[10px]">Total {{ catName }}</td>
-                <td class="border border-black p-1 text-center">{{ getCategoryTotalCoeff(category) }}</td>
-                <td class="border border-black p-1" colspan="1"></td>
-                <td class="border border-black p-1 text-center">{{ getCategoryTotalPoints(category) }}</td>
-                <td class="border border-black p-1" colspan="3"></td>
+                <td class="border border-black p-2 px-2 text-left uppercase text-[10px]">Total {{ catName }}</td>
+                <td class="border border-black p-2 text-center">{{ getCategoryTotalCoeff(category) }}</td>
+                <td class="border border-black p-2" colspan="1"></td>
+                <td class="border border-black p-2 text-center">{{ getCategoryTotalPoints(category) }}</td>
+                <td class="border border-black p-2" colspan="3"></td>
               </tr>
             </template>
 
             <!-- Global Totals -->
             <tr class="bg-blue-50 font-bold text-center">
-              <td class="border border-black p-2 text-left uppercase">TOTAL GÉNÉRAL</td>
-              <td class="border border-black p-1">{{ (bulletin.totalCoefficients || 0).toFixed(1) }}</td>
-              <td class="border border-black p-1"></td>
-              <td class="border border-black p-1 font-bold">{{ (bulletin.totalPoints || 0).toFixed(2) }}</td>
-              <td class="border border-black p-1" colspan="3"></td>
+              <td class="border border-black p-3 text-left uppercase">TOTAL GÉNÉRAL</td>
+              <td class="border border-black p-2">{{ (bulletin.totalCoefficients || 0).toFixed(1) }}</td>
+              <td class="border border-black p-2"></td>
+              <td class="border border-black p-2 font-bold">{{ (bulletin.totalPoints || 0).toFixed(2) }}</td>
+              <td class="border border-black p-2" colspan="3"></td>
             </tr>
           </tbody>
         </table>

@@ -183,16 +183,16 @@ exports.getBulletinHTML = (bulletin, schoolConfig) => {
     <style>
         /* Core Layout - Full Page Flexbox */
         html, body { width: 210mm; margin: 0; padding: 0; }
-        body { font-family: Arial, Helvetica, sans-serif; color: #333; font-size: 10px; padding: 5mm; background: white; line-height: 1.1; display: flex; flex-direction: column; box-sizing: border-box; min-height: 287mm; }
+        body { font-family: Arial, Helvetica, sans-serif; color: #333; font-size: 10px; padding: 10mm; background: white; line-height: 1.1; display: flex; flex-direction: column; box-sizing: border-box; min-height: 277mm; }
         .bulletin-card { width: 100%; display: flex; flex-direction: column; flex: 1; }
         
         /* Compact Modes */
-        .compact-1 body { font-size: 9.5px; padding: 4mm; }
+        .compact-1 body { font-size: 9.5px; padding: 8mm; min-height: 281mm; }
         .compact-1 .data-row td, .compact-1 .cat-header-row td { height: 26px; }
         .compact-1 th { height: 30px; font-size: 8.5px; }
         .compact-1 .council-box { min-height: 80px; }
         
-        .compact-2 body { font-size: 9px; padding: 3mm; }
+        .compact-2 body { font-size: 9px; padding: 6mm; min-height: 285mm; }
         .compact-2 .data-row td, .compact-2 .cat-header-row td { height: 22px; font-size: 8.5px; }
         .compact-2 th { height: 26px; font-size: 8.5px; }
         .compact-2 .council-box { min-height: 70px; }
@@ -304,13 +304,13 @@ exports.getBulletinHTML = (bulletin, schoolConfig) => {
                         <th style="width: 5%;">Coef</th>
                         <th style="width: 8%;">Moy</th>
                         <th style="width: 12%;">Pondérées</th>
-                        <th style="width: 30%;">Appréciations et signatures</th>
+                        <th colspan="3" style="width: 30%;">Appréciations et signatures</th>
                     </tr>
                 </thead>
                 <tbody>
                     ${Object.entries(groupedNotes).map(([catName, notes]) => `
                         <tr class="cat-header">
-                            <td colspan="5">${catName}</td>
+                            <td colspan="7">${catName}</td>
                         </tr>
                         ${notes.map(note => {
                     const prof = note.professeur ? `${note.professeur.civilite === 'Mr' ? 'M ' : (note.professeur.civilite ? note.professeur.civilite + ' ' : '')}${note.professeur.nom || ''}`.toUpperCase().trim() : '';
@@ -323,10 +323,9 @@ exports.getBulletinHTML = (bulletin, schoolConfig) => {
                             `<td class="italic font-bold">D</td><td class="italic font-bold">D</td>` :
                             `<td>${(note.moyenneMatiere || 0).toFixed(2)}</td><td class="font-bold">${(note.notePonderee || 0).toFixed(2)}</td>`
                         }
-                                    <td class="italic" style="font-size: 8.5px;">
-                                        ${app}
-                                        ${prof ? `<br><small style="font-size: 7px; color: #4b5563;">${prof}</small>` : ''}
-                                    </td>
+                                    <td class="italic" style="width: 12%; font-size: 8.5px;">${app}</td>
+                                    <td style="width: 13%; font-size: 8px; white-space: pre-wrap; word-break: break-word;">${prof}</td>
+                                    <td style="width: 5%;"></td>
                                 </tr>
                             `;
                 }).join('')}
@@ -335,7 +334,7 @@ exports.getBulletinHTML = (bulletin, schoolConfig) => {
                             <td>${notes.reduce((sum, n) => sum + (n.coeff || 0), 0).toFixed(1)}</td>
                             <td></td>
                             <td>${notes.reduce((sum, n) => sum + (n.notePonderee || 0), 0).toFixed(2)}</td>
-                            <td></td>
+                            <td colspan="3"></td>
                         </tr>
                     `).join('')}
                     <tr class="font-bold" style="background: #f1f5f9; border-top: 2px solid #000; height: 35px;">
@@ -343,7 +342,7 @@ exports.getBulletinHTML = (bulletin, schoolConfig) => {
                         <td>${(bulletin.totalCoefficients || 0).toFixed(1)}</td>
                         <td></td>
                         <td class="font-bold">${(bulletin.totalPoints || 0).toFixed(2)}</td>
-                        <td></td>
+                        <td colspan="3"></td>
                     </tr>
                 </tbody>
             </table>

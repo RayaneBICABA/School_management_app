@@ -194,14 +194,14 @@ exports.getBulletinHTML = (bulletin, schoolConfig) => {
         /* Table Styles */
         .table-container { flex: 1; display: flex; flex-direction: column; min-height: 0; }
         table.main-table { width: 100%; border-spacing: 0; border-collapse: separate; border-top: 1px solid #000; border-left: 1px solid #000; table-layout: fixed; }
-        table.main-table th, table.main-table td { border-right: 1px solid #000; border-bottom: 1px solid #000; padding: 0 6px; text-align: center; vertical-align: middle !important; box-sizing: border-box; line-height: 1; }
+        table.main-table th, table.main-table td { border-right: 1px solid #000; border-bottom: 1px solid #000; padding: 0 6px; text-align: center; vertical-align: middle !important; box-sizing: border-box; line-height: 1.2; }
         table.main-table th { background: #ddd; font-weight: bold; text-transform: uppercase; font-size: 9px; height: 32px; color: #000; }
         .cat-header { background: #eee; font-weight: bold; text-transform: uppercase; font-size: 9px; height: 26px; text-align: center !important; color: #000; }
         .data-row td { padding: 5px 4px; }
         .cat-header-row td { padding: 4px 4px; }
         .cat-total-row td { padding: 8px 4px; }
         .total-general-row td { padding: 10px 4px; }
-        .text-left { text-align: left !important; }
+        .text-left { text-align: left; }
         .font-bold { font-weight: bold; }
         .uppercase { text-transform: uppercase; }
         
@@ -209,7 +209,7 @@ exports.getBulletinHTML = (bulletin, schoolConfig) => {
         .bilan-section { flex-shrink: 0; margin-top: 6px; }
         .bilan-header { background: #eee; font-weight: bold; text-align: center; padding: 4px; border: 1px solid #000; border-bottom: 0; text-transform: uppercase; font-size: 10px; color: #000; }
         .bilan-table { width: 100%; border-spacing: 0; border-collapse: separate; border-top: 1px solid #000; border-left: 1px solid #000; margin-bottom: 6px; }
-        .bilan-table td { border-right: 1px solid #000; border-bottom: 1px solid #000; padding: 6px 5px; font-size: 10px; vertical-align: middle !important; text-align: center; color: #000; line-height: 1; }
+        .bilan-table td { border-right: 1px solid #000; border-bottom: 1px solid #000; padding: 6px 5px; font-size: 10px; vertical-align: middle !important; text-align: center; color: #000; line-height: 1.2; }
         .lg-val { font-size: 15px; font-weight: bold; }
         
         .spacer { flex: 1; min-height: 5px; }
@@ -275,7 +275,7 @@ exports.getBulletinHTML = (bulletin, schoolConfig) => {
             <table class="main-table">
                 <thead>
                     <tr>
-                        <th class="text-left" style="width: 35%;">Matières</th>
+                        <th style="width: 35%;">Matières</th>
                         <th style="width: 5%;">Coef</th>
                         <th style="width: 8%;">Moy</th>
                         <th style="width: 12%;">Pondérées</th>
@@ -292,7 +292,7 @@ exports.getBulletinHTML = (bulletin, schoolConfig) => {
                     const app = note.isDispensed ? '' : getGeneralAppreciation(note.moyenneMatiere || 0);
                     return `
                                 <tr class="data-row">
-                                    <td class="text-left font-bold uppercase" style="font-size: 9px;">${note.matiere?.nom || ''}</td>
+                                    <td class="font-bold uppercase" style="font-size: 9px;">${note.matiere?.nom || ''}</td>
                                     <td>${(note.coeff || 1).toFixed(1)}</td>
                                     ${note.isDispensed ?
                             `<td class="italic font-bold">D</td><td class="italic font-bold">D</td>` :
@@ -305,7 +305,7 @@ exports.getBulletinHTML = (bulletin, schoolConfig) => {
                             `;
                 }).join('')}
                         <tr class="font-bold cat-total-row" style="font-size: 9px; background-color: #eee;">
-                            <td class="text-left uppercase" style="padding-left: 6px;">Total ${catName}</td>
+                            <td class="uppercase" style="padding-left: 6px;">Total ${catName}</td>
                             <td>${notes.reduce((sum, n) => sum + (n.coeff || 0), 0).toFixed(1)}</td>
                             <td></td>
                             <td>${notes.reduce((sum, n) => sum + (n.notePonderee || 0), 0).toFixed(2)}</td>
@@ -313,7 +313,7 @@ exports.getBulletinHTML = (bulletin, schoolConfig) => {
                         </tr>
                     `).join('')}
                     <tr class="font-bold total-general-row" style="background: #ddd; border-top: 2px solid #000;">
-                        <td class="text-left font-bold uppercase" style="padding-left: 6px;">TOTAL GÉNÉRAL</td>
+                        <td class="font-bold uppercase" style="padding-left: 6px;">TOTAL GÉNÉRAL</td>
                         <td>${(bulletin.totalCoefficients || 0).toFixed(1)}</td>
                         <td></td>
                         <td class="font-bold">${(bulletin.totalPoints || 0).toFixed(2)}</td>
@@ -585,7 +585,7 @@ exports.getMasterSheetHTML = (sheetsData, schoolConfig) => {
         .sheet-page { width: 100%; padding: 5mm; }
         
         table { width: 100%; border-collapse: collapse; margin-top: 5px; table-layout: fixed; border: 1px solid #333; }
-        th, td { border: 1px solid #333; padding: 1px 0.5px; text-align: center; vertical-align: middle; font-size: 5.5px; overflow: hidden; white-space: nowrap; text-overflow: clip; }
+        th, td { border: 1px solid #333; padding: 1px 0.5px; text-align: center; vertical-align: middle; font-size: 5.5px; overflow: hidden; white-space: nowrap; text-overflow: clip; line-height: 1.2; }
         
         thead th { background-color: #f9fafb; font-weight: bold; font-size: 6px; }
         .matiere-group-header { background-color: #eff6ff !important; color: #1e3a8a; text-transform: uppercase; font-size: 5.5px; white-space: normal; line-height: 1; }
@@ -594,7 +594,7 @@ exports.getMasterSheetHTML = (sheetsData, schoolConfig) => {
         .sub-header-moy { background-color: #f9fafb; width: 24px; font-weight: bold; }
         .sub-header-pond { background-color: #fefce8; color: #854d0e; width: 28px; font-weight: bold; }
         
-        .name-col { text-align: left; padding-left: 2px; width: 120px; text-overflow: ellipsis; white-space: nowrap; }
+        .name-col { text-align: center; padding-left: 2px; width: 120px; text-overflow: ellipsis; white-space: nowrap; }
         .total-pts-header { background-color: #fff7ed; color: #9a3412; width: 35px; }
         .moy-gen-header { background-color: #f3f4f6; width: 35px; }
         
@@ -605,7 +605,7 @@ exports.getMasterSheetHTML = (sheetsData, schoolConfig) => {
         .dispensed { font-weight: bold; color: #e11d48; font-style: italic; }
         .font-bold { font-weight: bold; }
         .font-black { font-weight: 900; }
-        .text-left { text-align: left; }
+        .text-left { text-align: center; }
         .underline { text-decoration: underline; }
         
         .text-green { color: #16a34a !important; }

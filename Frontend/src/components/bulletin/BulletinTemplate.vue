@@ -68,11 +68,13 @@
         <table class="main-table w-full border-separate border-spacing-0 text-[12px]">
           <thead>
             <tr class="bg-gray-200 text-center font-bold">
-                <th class="border border-black p-2 text-left" style="width: 45%;">Matières</th>
+                <th class="border border-black p-2 text-left" style="width: 40%;">Matières</th>
                 <th class="border border-black p-1 text-center" style="width: 5%;">Coef</th>
                 <th class="border border-black p-1 text-center" style="width: 8%;">Moy</th>
                 <th class="border border-black p-1 text-center" style="width: 12%;">Pondérées</th>
-                <th colspan="3" class="border border-black p-1 text-center" style="width: 30%;">Appréciations et signatures</th>
+                <th class="border border-black p-1 text-center" style="width: 13%;">Appréciation</th>
+                <th class="border border-black p-1 text-center" style="width: 13%;">Enseignant</th>
+                <th class="border border-black p-1 text-center" style="width: 9%;">Signature</th>
             </tr>
           </thead>
           <tbody>
@@ -92,15 +94,15 @@
                   <td class="border border-black p-1">{{ (note.moyenneMatiere || 0).toFixed(2) }}</td>
                   <td class="border border-black p-1 font-bold">{{ (note.notePonderee || 0).toFixed(2) }}</td>
                 </template>
-                <td class="border border-black p-1 italic text-[10px]" style="width: 12%;">
+                <td class="border border-black p-1 italic text-[10px]" style="width: 13%;">
                   <div :class="note.isDispensed ? '' : getAppreciationColor(getSubjectAppreciation(note.moyenneMatiere || 0))">
                     {{ note.isDispensed ? '' : getSubjectAppreciation(note.moyenneMatiere || 0) }}
                   </div>
                 </td>
-                <td class="border border-black p-1 text-[8px] text-gray-500" style="width: 13%; white-space: pre-wrap; word-break: break-word;">
+                <td class="border border-black p-1 text-[8px] text-gray-600 font-semibold" style="width: 13%;">
                   {{ note.professeur ? (note.professeur.civilite === 'Mr' ? 'M ' : (note.professeur.civilite ? note.professeur.civilite + ' ' : '')) + (note.professeur.nom || '').toUpperCase() : '' }}
                 </td>
-                <td class="border border-black p-1" style="width: 5%;"></td>
+                <td class="border border-black p-1" style="width: 9%;"></td>
               </tr>
               <!-- Category Totals -->
               <tr class="bg-gray-100 font-bold text-[10px]">

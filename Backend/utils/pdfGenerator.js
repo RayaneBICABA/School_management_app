@@ -199,6 +199,8 @@ exports.getBulletinHTML = (bulletin, schoolConfig) => {
         .cat-header { background: #eee; font-weight: bold; text-transform: uppercase; font-size: 9px; height: 26px; text-align: center !important; color: #000; }
         .data-row td { height: 28px; }
         .cat-header-row td { height: 26px; }
+        .cat-total-row td { height: 35px; }
+        .total-general-row td { height: 40px; }
         .text-left { text-align: left !important; }
         .font-bold { font-weight: bold; }
         .uppercase { text-transform: uppercase; }
@@ -302,14 +304,14 @@ exports.getBulletinHTML = (bulletin, schoolConfig) => {
                                 </tr>
                             `;
                 }).join('')}
-                        <tr class="font-bold" style="font-size: 9px; background-color: #eee;">
+                        <tr class="font-bold cat-total-row" style="font-size: 9px; background-color: #eee;">
                             <td colspan="2" class="text-left uppercase" style="padding: 6px;">Total ${catName}</td>
                             <td></td>
                             <td>${notes.reduce((sum, n) => sum + (n.notePonderee || 0), 0).toFixed(2)}</td>
                             <td colspan="3"></td>
                         </tr>
                     `).join('')}
-                    <tr class="font-bold" style="background: #ddd; border-top: 2px solid #000; height: 35px;">
+                    <tr class="font-bold total-general-row" style="background: #ddd; border-top: 2px solid #000;">
                         <td colspan="2" class="text-left font-bold uppercase" style="padding: 6px;">TOTAL GÉNÉRAL</td>
                         <td></td>
                         <td class="font-bold">${(bulletin.totalPoints || 0).toFixed(2)}</td>

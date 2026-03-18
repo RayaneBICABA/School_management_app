@@ -182,17 +182,17 @@ exports.getBulletinHTML = (bulletin, schoolConfig) => {
 <head>
     <style>
         /* Core Layout - Full Page Flexbox */
-        html, body { width: 210mm; margin: 0; padding: 0; }
-        body { font-family: Arial, Helvetica, sans-serif; color: #333; font-size: 10px; padding: 10mm; background: white; line-height: 1.1; display: flex; flex-direction: column; box-sizing: border-box; min-height: 277mm; }
-        .bulletin-card { width: 100%; display: flex; flex-direction: column; flex: 1; }
+        html, body { width: 210mm; margin: 0; padding: 0; height: 100%; }
+        body { font-family: Arial, Helvetica, sans-serif; color: #333; font-size: 10px; padding: 10mm; background: white; line-height: 1.1; display: flex; flex-direction: column; box-sizing: border-box; height: 287mm; overflow: hidden; }
+        .bulletin-card { width: 100%; height: 100%; display: flex; flex-direction: column; flex: 1; }
         
         /* Compact Modes */
-        .compact-1 body { font-size: 9.5px; padding: 8mm; min-height: 281mm; }
+        .compact-1 body { font-size: 9.5px; padding: 8mm; height: 287mm; }
         .compact-1 .data-row td, .compact-1 .cat-header-row td { height: 26px; }
         .compact-1 th { height: 30px; font-size: 8.5px; }
         .compact-1 .council-box { min-height: 80px; }
         
-        .compact-2 body { font-size: 9px; padding: 6mm; min-height: 285mm; }
+        .compact-2 body { font-size: 9px; padding: 6mm; height: 287mm; }
         .compact-2 .data-row td, .compact-2 .cat-header-row td { height: 22px; font-size: 8.5px; }
         .compact-2 th { height: 26px; font-size: 8.5px; }
         .compact-2 .council-box { min-height: 70px; }
@@ -220,8 +220,8 @@ exports.getBulletinHTML = (bulletin, schoolConfig) => {
         
         /* Table Styles */
         .table-container { flex: 1; display: flex; flex-direction: column; min-height: 0; }
-        table.main-table { width: 100%; border-spacing: 0; border-collapse: separate; border-top: 1px solid #000; border-left: 1px solid #000; table-layout: fixed; }
-        table.main-table th, table.main-table td { border-right: 1px solid #000; border-bottom: 1px solid #000; padding: 0 4px; text-align: center; vertical-align: middle !important; }
+        table.main-table { width: 100%; height: 100%; border-spacing: 0; border-collapse: separate; border-top: 1px solid #000; border-left: 1px solid #000; table-layout: fixed; }
+        table.main-table th, table.main-table td { border-right: 1px solid #000; border-bottom: 1px solid #000; padding: 0 4px; text-align: center; vertical-align: middle !important; height: 100%; }
         table.main-table th { background: #e5e7eb; font-weight: bold; text-transform: uppercase; font-size: 9px; height: 32px; }
         .cat-header { background: #d1d5db; font-weight: bold; text-transform: uppercase; font-size: 9px; height: 26px; text-align: center !important; }
         .data-row td { height: 28px; }
@@ -245,7 +245,7 @@ exports.getBulletinHTML = (bulletin, schoolConfig) => {
         .sig-box { width: 50%; padding: 6px; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; }
         
         .footer-info { display: flex; justify-content: space-between; align-items: center; margin-top: 6px; font-size: 8px; color: #6b7280; flex-shrink: 0; }
-        .page-break { page-break-after: always; height: 100%; display: flex; flex-direction: column; }
+        .page-break { page-break-after: always; height: 287mm; display: flex; flex-direction: column; overflow: hidden; box-sizing: border-box; }
     </style>
 </head>
 <body>

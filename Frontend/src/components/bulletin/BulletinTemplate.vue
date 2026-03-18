@@ -72,7 +72,7 @@
                 <th class="border border-black p-1 text-center" style="width: 5%;">Coef</th>
                 <th class="border border-black p-1 text-center" style="width: 8%;">Moy</th>
                 <th class="border border-black p-1 text-center" style="width: 12%;">Pondérées</th>
-                <th class="border border-black p-1 text-center" style="width: 30%;">Appréciations et signatures</th>
+                <th colspan="3" class="border border-black p-1 text-center" style="width: 30%;">Appréciations et signatures</th>
             </tr>
           </thead>
           <tbody>
@@ -92,14 +92,15 @@
                   <td class="border border-black p-1">{{ (note.moyenneMatiere || 0).toFixed(2) }}</td>
                   <td class="border border-black p-1 font-bold">{{ (note.notePonderee || 0).toFixed(2) }}</td>
                 </template>
-                <td class="border border-black p-1 italic text-[10px]">
+                <td class="border border-black p-1 italic text-[10px]" style="width: 12%;">
                   <div :class="note.isDispensed ? '' : getAppreciationColor(getSubjectAppreciation(note.moyenneMatiere || 0))">
                     {{ note.isDispensed ? '' : getSubjectAppreciation(note.moyenneMatiere || 0) }}
                   </div>
-                  <div v-if="note.professeur" class="text-[8px] text-gray-500 mt-0.5">
-                    {{ (note.professeur.civilite === 'Mr' ? 'M ' : (note.professeur.civilite ? note.professeur.civilite + ' ' : '')) + (note.professeur.nom || '').toUpperCase() }}
-                  </div>
                 </td>
+                <td class="border border-black p-1 text-[8px] text-gray-500" style="width: 13%; white-space: pre-wrap; word-break: break-word;">
+                  {{ note.professeur ? (note.professeur.civilite === 'Mr' ? 'M ' : (note.professeur.civilite ? note.professeur.civilite + ' ' : '')) + (note.professeur.nom || '').toUpperCase() : '' }}
+                </td>
+                <td class="border border-black p-1" style="width: 5%;"></td>
               </tr>
               <!-- Category Totals -->
               <tr class="bg-gray-100 font-bold text-[10px]">
@@ -107,7 +108,7 @@
                 <td class="border border-black p-1 text-center">{{ getCategoryTotalCoeff(category) }}</td>
                 <td class="border border-black p-1"></td>
                 <td class="border border-black p-1 text-center">{{ getCategoryTotalPoints(category) }}</td>
-                <td class="border border-black p-1"></td>
+                <td class="border border-black p-1" colspan="3"></td>
               </tr>
             </template>
 
@@ -117,7 +118,7 @@
               <td class="border border-black p-1">{{ (bulletin.totalCoefficients || 0).toFixed(1) }}</td>
               <td class="border border-black p-1"></td>
               <td class="border border-black p-1 font-bold">{{ (bulletin.totalPoints || 0).toFixed(2) }}</td>
-              <td class="border border-black p-1"></td>
+              <td class="border border-black p-1" colspan="3"></td>
             </tr>
           </tbody>
         </table>
@@ -322,7 +323,7 @@ const maxCompo = computed(() => {
   return max;
 });
 
-const totalCols = computed(() => 5);
+const totalCols = computed(() => 7);
 const compactClasses = computed(() => {
   const count = props.bulletin.notes?.length || 0;
   if (count > 16) return 'compact-2';

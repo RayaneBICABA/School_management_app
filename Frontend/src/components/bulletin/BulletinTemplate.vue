@@ -173,11 +173,11 @@
       <!-- Appreciation & Signatures -->
       <div class="council-section flex-shrink-0 mt-4">
         <div class="border border-black p-0 bg-white">
-          <div class="cat-header-row p-1 text-center font-bold uppercase text-[11px] border-b border-black flex items-center justify-center">
+          <div class="cat-header-row p-1 text-center font-bold uppercase text-[11px] border-b border-black flex items-center justify-center bg-[#eee]">
             Appréciations du conseil de classe
           </div>
           <div class="flex min-h-[110px]">
-            <div class="flex-1 border-r border-black p-4 flex items-center justify-center text-center font-bold text-2xl bg-[#eee]">
+            <div class="flex-1 border-r border-black p-4 flex items-center justify-center text-center font-bold text-2xl">
               {{ isDispensedAll ? 'DISPENSÉ' : getGeneralAppreciation(bulletin.moyenneGenerale) }}
             </div>
             <div class="flex-1 p-4 flex flex-col items-center justify-center text-center">
@@ -454,8 +454,9 @@ td, th {
   border-right: 1px solid black !important;
   border-bottom: 1px solid black !important;
   vertical-align: middle !important;
-  padding: 0 4px !important;
+  padding: 4px !important;
   text-align: center;
+  line-height: normal !important;
 }
 
 th {

@@ -146,7 +146,7 @@ exports.getBulletinHTML = (bulletin, schoolConfig) => {
 
     let tableRows = '';
     Object.entries(groupedNotes).forEach(([catName, notes]) => {
-        tableRows += `<tr class="cat-header-row"><td colspan="7" class="cat-header">${catName}</td></tr>`;
+        tableRows += `<tr class="cat-header-row"><td colspan="5" class="cat-header">${catName}</td></tr>`;
 
         notes.forEach(note => {
             const prof = note.professeur ? `${note.professeur.civilite || ''} ${note.professeur.nom || ''}`.trim() : '';
@@ -300,17 +300,17 @@ exports.getBulletinHTML = (bulletin, schoolConfig) => {
             <table class="main-table">
                 <thead>
                     <tr>
-                        <th class="text-left" style="width: 25%;">Matières</th>
-                        <th style="width: 7%;">Coef</th>
-                        <th style="width: 9%;">Moy</th>
-                        <th style="width: 9%;">Pondérées</th>
-                        <th colspan="3">Appréciations et signatures</th>
+                        <th class="text-left" style="width: 45%;">Matières</th>
+                        <th style="width: 5%;">Coef</th>
+                        <th style="width: 8%;">Moy</th>
+                        <th style="width: 12%;">Pondérées</th>
+                        <th style="width: 30%;">Appréciations et signatures</th>
                     </tr>
                 </thead>
                 <tbody>
                     ${Object.entries(groupedNotes).map(([catName, notes]) => `
                         <tr class="cat-header">
-                            <td colspan="7">${catName}</td>
+                            <td colspan="5">${catName}</td>
                         </tr>
                         ${notes.map(note => {
                     const prof = note.professeur ? `${note.professeur.civilite === 'Mr' ? 'M ' : (note.professeur.civilite ? note.professeur.civilite + ' ' : '')}${note.professeur.nom || ''}`.toUpperCase().trim() : '';
@@ -323,9 +323,10 @@ exports.getBulletinHTML = (bulletin, schoolConfig) => {
                             `<td class="italic font-bold">D</td><td class="italic font-bold">D</td>` :
                             `<td>${(note.moyenneMatiere || 0).toFixed(2)}</td><td class="font-bold">${(note.notePonderee || 0).toFixed(2)}</td>`
                         }
-                                    <td class="italic" style="width: 75px; font-size: 8.5px;">${app}</td>
-                                    <td style="font-size: 8.5px; width: 110px; white-space: nowrap;">${prof}</td>
-                                    <td style="width: 35px;"></td>
+                                    <td class="italic" style="font-size: 8.5px;">
+                                        ${app}
+                                        ${prof ? `<br><small style="font-size: 7px; color: #4b5563;">${prof}</small>` : ''}
+                                    </td>
                                 </tr>
                             `;
                 }).join('')}
@@ -334,7 +335,7 @@ exports.getBulletinHTML = (bulletin, schoolConfig) => {
                             <td>${notes.reduce((sum, n) => sum + (n.coeff || 0), 0).toFixed(1)}</td>
                             <td></td>
                             <td>${notes.reduce((sum, n) => sum + (n.notePonderee || 0), 0).toFixed(2)}</td>
-                            <td colspan="3"></td>
+                            <td></td>
                         </tr>
                     `).join('')}
                     <tr class="font-bold" style="background: #f1f5f9; border-top: 2px solid #000; height: 35px;">
@@ -342,7 +343,7 @@ exports.getBulletinHTML = (bulletin, schoolConfig) => {
                         <td>${(bulletin.totalCoefficients || 0).toFixed(1)}</td>
                         <td></td>
                         <td class="font-bold">${(bulletin.totalPoints || 0).toFixed(2)}</td>
-                        <td colspan="3"></td>
+                        <td></td>
                     </tr>
                 </tbody>
             </table>

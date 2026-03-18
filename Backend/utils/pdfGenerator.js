@@ -19,8 +19,7 @@ exports.generateBulletinPDF = async (bulletin, schoolConfig) => {
         const pdf = await page.pdf({
             format: 'A4',
             printBackground: true,
-            preferCSSPageSize: true,
-            margin: { top: '0', right: '0', bottom: '0', left: '0' }
+            margin: { top: '5mm', right: '5mm', bottom: '5mm', left: '5mm' }
         });
 
         return pdf;
@@ -46,19 +45,18 @@ exports.generateClassBulletinsPDF = async (bulletins, schoolConfig) => {
             const html = exports.getBulletinHTML(bulletin, schoolConfig);
             const bodyMatch = html.match(/<body>([\s\S]*)<\/body>/);
             const content = bodyMatch ? bodyMatch[1] : html;
-            fullHtml += `<div class="page-wrap" style="${index > 0 ? 'page-break-before: always;' : ''}">${content}</div>`;
+            fullHtml += `<div class="page-break" style="${index > 0 ? 'page-break-before: always;' : ''}">${content}</div>`;
         });
 
         const baseHtml = exports.getBulletinHTML(bulletins[0], schoolConfig);
-        const completeHtml = baseHtml.replace(/<body>[\s\S]*<\/body>/, `<body style="display: block; padding: 0; margin: 0; height: auto; width: auto; overflow: visible; background: white;">${fullHtml}</body>`);
+        const completeHtml = baseHtml.replace(/<body>[\s\S]*<\/body>/, `<body>${fullHtml}</body>`);
 
         await page.setContent(completeHtml, { waitUntil: 'networkidle0' });
 
         const pdf = await page.pdf({
             format: 'A4',
             printBackground: true,
-            preferCSSPageSize: true,
-            margin: { top: '0', right: '0', bottom: '0', left: '0' }
+            margin: { top: '5mm', right: '5mm', bottom: '5mm', left: '5mm' }
         });
 
         return pdf;
@@ -128,6 +126,7 @@ exports.getBulletinHTML = (bulletin, schoolConfig) => {
     const classe = bulletin.classe || {};
     const filiere = classe.filiere || 'Générale';
 
+    // Group notes by category using frontend logic
     const groupedNotes = {};
     bulletin.notes.forEach(note => {
         const cat = getSmartCategory(note, filiere);
@@ -151,292 +150,236 @@ exports.getBulletinHTML = (bulletin, schoolConfig) => {
     const compactLevel = totalNotes > 16 ? 2 : (totalNotes > 12 ? 1 : 0);
     const compactClass = compactLevel === 2 ? 'compact-2' : (compactLevel === 1 ? 'compact-1' : '');
 
-    // Row heights by compact level (px at 96dpi, matches CSS)
-    const ROW_H    = compactLevel === 2 ? 20 : compactLevel === 1 ? 24 : 28;
-    const CAT_H    = compactLevel === 2 ? 20 : compactLevel === 1 ? 24 : 24;
-    const TOTAL_H  = compactLevel === 2 ? 20 : compactLevel === 1 ? 24 : 26;
-    const HEADER_H = compactLevel === 2 ? 24 : compactLevel === 1 ? 28 : 30;
-
-    // Count how many rows (of height ROW_H) the table body will have
-    let usedRows = 0;
-    const categories = Object.entries(groupedNotes);
-    categories.forEach(([, notes]) => {
-        usedRows += Math.ceil(CAT_H / ROW_H);   // cat header ≈ 1 row
-        usedRows += notes.length;                 // data rows
-        usedRows += Math.ceil(TOTAL_H / ROW_H);  // category total ≈ 1 row
-    });
-    usedRows += Math.ceil(32 / ROW_H); // grand total row
-
-    // Target: how many ROW_H rows fit in the table area
-    // A4 body = 297mm - 2*8mm padding = 281mm ≈ 1061px at 96dpi (3.78px/mm)
-    // Fixed sections: header~52, title~28, infobar~18, studentname~18, gridinfo~18,
-    //   thead~HEADER_H, bilan~(28*4+22)=134, council~112, footer~20 => ~422px fixed
-    // Available for table body rows ≈ 1061 - 422 - HEADER_H
-    const PX_PER_MM = 3.7795;
-    const bodyHeightPx = (297 - 16) * PX_PER_MM; // 297mm - 2*8mm padding
-    const fixedPx = 52 + 28 + 18 + 18 + 18 + HEADER_H + 134 + 112 + 20 + 10; // approx fixed sections
-    const availablePx = bodyHeightPx - fixedPx;
-    const targetRows = Math.floor(availablePx / ROW_H);
-
-    const paddingRows = Math.max(0, targetRows - usedRows);
-
-    // Build table body rows
-    const tableBodyRows = categories.map(([catName, notes]) => `
-        <tr class="cat-header">
-            <td colspan="7">${catName}</td>
-        </tr>
-        ${notes.map(note => {
-            const prof = note.professeur
-                ? `${note.professeur.civilite === 'Mr' ? 'M ' : (note.professeur.civilite ? note.professeur.civilite + ' ' : '')}${(note.professeur.nom || '').toUpperCase()}`.trim()
-                : '';
-            const app = note.isDispensed ? '' : getGeneralAppreciation(note.moyenneMatiere || 0);
-            return `
-            <tr class="data-row">
-                <td class="text-left bold uppercase" style="font-size: 9px;">${note.matiere?.nom || ''}</td>
-                <td>${(note.coeff || 1).toFixed(1)}</td>
-                ${note.isDispensed
-                    ? `<td class="dispensed">D</td><td class="dispensed">D</td>`
-                    : `<td>${(note.moyenneMatiere || 0).toFixed(2)}</td><td class="bold">${(note.notePonderee || 0).toFixed(2)}</td>`
-                }
-                <td class="italic" style="font-size: 8.5px;">${app}</td>
-                <td style="font-size: 8px; font-weight: 600;">${prof}</td>
-                <td></td>
-            </tr>`;
-        }).join('')}
-        <tr class="total-row">
-            <td class="text-left uppercase">Total ${catName}</td>
-            <td>${notes.reduce((s, n) => s + (n.coeff || 0), 0).toFixed(1)}</td>
-            <td></td>
-            <td>${notes.reduce((s, n) => s + (n.notePonderee || 0), 0).toFixed(2)}</td>
-            <td colspan="3"></td>
-        </tr>
-    `).join('');
-
-    // Padding rows to fill the table and maintain column lines
-    const paddingHtml = Array(paddingRows).fill(
-        `<tr class="pad-row"><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>`
-    ).join('');
-
     return `
 <!DOCTYPE html>
 <html class="${compactClass}">
 <head>
-    <meta charset="utf-8">
     <style>
-        @page { size: A4 portrait; margin: 0; }
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        html { width: 210mm; height: 297mm; }
-        body {
-            font-family: Arial, Helvetica, sans-serif;
-            color: #333;
-            font-size: 10px;
-            width: 210mm;
-            height: 297mm;
-            padding: 8mm 10mm;
-            background: white;
-            line-height: 1.2;
-            display: flex;
-            flex-direction: column;
-        }
-
-        .compact-1 body { font-size: 9.5px; padding: 6mm 8mm; }
-        .compact-1 .data-row td { height: 24px; }
-        .compact-1 .cat-header td { height: 24px; }
-        .compact-1 .total-row td { height: 24px; }
-        .compact-1 .pad-row td { height: 24px; }
-        .compact-1 th { height: 28px; }
-
-        .compact-2 body { font-size: 9px; padding: 5mm 7mm; }
-        .compact-2 .data-row td { height: 20px; }
-        .compact-2 .cat-header td { height: 20px; }
-        .compact-2 .total-row td { height: 20px; }
-        .compact-2 .pad-row td { height: 20px; }
-        .compact-2 th { height: 24px; }
-        .compact-2 .logo-text { font-size: 18px; }
-
-        .header { display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 1.5px solid #ccc; padding-bottom: 4px; margin-bottom: 5px; flex-shrink: 0; }
-        .h-left, .h-right { width: 30%; font-weight: bold; font-size: 8px; line-height: 1.35; text-transform: uppercase; }
+        /* Core Layout - Full Page Flexbox */
+        html, body { width: 210mm; margin: 0; padding: 0; }
+        body { font-family: Arial, Helvetica, sans-serif; color: #333; font-size: 10px; padding: 5mm; background: white; line-height: 1.1; display: flex; flex-direction: column; box-sizing: border-box; min-height: 287mm; }
+        .bulletin-card { width: 100%; display: flex; flex-direction: column; flex: 1; }
+        
+        /* Compact Modes */
+        .compact-1 body { font-size: 9.5px; padding: 4mm; }
+        .compact-1 .data-row td, .compact-1 .cat-header-row td { height: 26px; }
+        .compact-1 th { height: 30px; font-size: 8.5px; }
+        .compact-1 .council-box { min-height: 80px; }
+        
+        .compact-2 body { font-size: 9px; padding: 3mm; }
+        .compact-2 .data-row td, .compact-2 .cat-header-row td { height: 22px; font-size: 8.5px; }
+        .compact-2 th { height: 26px; font-size: 8.5px; }
+        .compact-2 .council-box { min-height: 70px; }
+        .compact-2 .logo-text { font-size: 20px; }
+        
+        /* Fixed/Shrinkable Header Sections */
+        .header { display: flex; justify-content: space-between; border-bottom: 2px solid #f1f5f9; padding-bottom: 4px; margin-bottom: 6px; flex-shrink: 0; }
+        .h-col { width: 33.33%; font-weight: bold; font-size: 8.5px; line-height: 1.2; text-transform: uppercase; }
+        .h-center { text-align: center; display: flex; flex-direction: column; align-items: center; justify-content: center; width: 40% !important; }
+        .h-col-side { width: 30% !important; }
         .h-right { text-align: right; }
-        .h-center { width: 40%; text-align: center; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+        
         .logo-text { font-size: 22px; font-weight: 900; color: #1e3a8a; line-height: 1; }
-        .motto { font-size: 7.5px; color: #555; margin-top: 2px; font-weight: bold; letter-spacing: 0.5px; }
-
+        .motto { font-size: 8px; color: #6b7280; margin-top: 1px; font-weight: bold; }
+        
         .title { text-align: center; margin: 4px 0; flex-shrink: 0; }
-        .title h1 { font-size: 17px; font-style: italic; font-weight: bold; border-top: 1px solid #000; border-bottom: 1px solid #000; padding: 2px 0; width: 100%; }
-
+        .title h1 { font-size: 18px; font-style: italic; font-weight: bold; border-top: 1px solid #000; border-bottom: 1px solid #000; padding: 3px 0; }
+        
         .info-bar { display: flex; justify-content: space-between; margin-bottom: 3px; font-size: 10px; flex-shrink: 0; }
-        .student-name { margin-bottom: 2px; font-size: 11px; font-weight: bold; flex-shrink: 0; }
-        .student-name .label { color: #64748b; font-weight: normal; font-size: 9px; }
-        .grid-info { display: flex; justify-content: space-between; padding-bottom: 3px; margin-bottom: 5px; border-bottom: 1px solid #ccc; flex-shrink: 0; }
-        .grid-item { font-size: 9px; display: flex; align-items: baseline; gap: 3px; }
-        .grid-item .lbl { color: #64748b; font-size: 8px; }
-
-        .table-wrapper { flex-shrink: 0; }
-        table.main-table { width: 100%; border-collapse: collapse; border: 1px solid #000; table-layout: fixed; }
-        table.main-table th { border: 1px solid #000; background: #e5e7eb; font-weight: bold; font-size: 9px; height: ${HEADER_H}px; padding: 0 4px; text-align: center; vertical-align: middle; }
-        table.main-table td { border: 1px solid #000; padding: 0 4px; text-align: center; vertical-align: middle; }
-        .cat-header td { background: #d1d5db; font-weight: bold; text-transform: uppercase; font-size: 9px; height: 24px; }
-        .data-row td { height: ${ROW_H}px; }
-        .total-row td { background: #f8fafc; font-weight: bold; font-size: 9px; height: ${TOTAL_H}px; }
-        .grand-total td { background: #f1f5f9; font-weight: bold; height: 32px; border-top: 2px solid #000; }
-        .pad-row td { height: ${ROW_H}px; background: white; }
-        .text-left { text-align: left !important; padding-left: 6px !important; }
-        .italic { font-style: italic; }
-        .bold { font-weight: bold; }
+        .student-name { margin-bottom: 2px; font-size: 11.5px; font-weight: bold; padding-top: 1px; flex-shrink: 0; }
+        
+        .grid-info { display: flex; justify-content: space-between; padding-bottom: 3px; margin-bottom: 6px; border-bottom: 1px solid #e2e8f0; flex-shrink: 0; }
+        .grid-item { font-size: 9.5px; display: flex; align-items: baseline; gap: 4px; }
+        .grid-item span { color: #64748b; font-size: 8.5px; }
+        
+        /* Table Styles */
+        .table-container { flex: 1; display: flex; flex-direction: column; min-height: 0; }
+        table.main-table { width: 100%; border-spacing: 0; border-collapse: separate; border-top: 1px solid #000; border-left: 1px solid #000; table-layout: fixed; }
+        table.main-table th, table.main-table td { border-right: 1px solid #000; border-bottom: 1px solid #000; padding: 0 4px; text-align: center; vertical-align: middle !important; }
+        table.main-table th { background: #e5e7eb; font-weight: bold; text-transform: uppercase; font-size: 9px; height: 32px; }
+        .cat-header { background: #d1d5db; font-weight: bold; text-transform: uppercase; font-size: 9px; height: 26px; text-align: center !important; }
+        .data-row td { height: 28px; }
+        .cat-header-row td { height: 26px; }
+        .text-left { text-align: left !important; }
+        .font-bold { font-weight: bold; }
         .uppercase { text-transform: uppercase; }
-        .dispensed { font-weight: bold; font-style: italic; color: #dc2626; }
-
-        .bilan-section { flex-shrink: 0; margin-top: 5px; }
-        .bilan-header { background: #d1d5db; font-weight: bold; text-align: center; padding: 3px; border: 1px solid #000; border-bottom: none; text-transform: uppercase; font-size: 9.5px; }
-        table.bilan-table { width: 100%; border-collapse: collapse; border: 1px solid #000; margin-bottom: 5px; }
-        table.bilan-table td { border: 1px solid #000; padding: 0 5px; font-size: 9.5px; text-align: center; vertical-align: middle; height: 28px; }
-        .lg-val { font-size: 14px; font-weight: bold; }
-
-        .spacer { flex: 1; min-height: 4px; }
-
+        
+        /* Bilan & Council section */
+        .bilan-section { flex-shrink: 0; margin-top: 6px; }
+        .bilan-header { background: #d1d5db; font-weight: bold; text-align: center; padding: 4px; border: 1px solid #000; border-bottom: 0; text-transform: uppercase; font-size: 10px; }
+        .bilan-table { width: 100%; border-spacing: 0; border-collapse: separate; border-top: 1px solid #000; border-left: 1px solid #000; margin-bottom: 6px; }
+        .bilan-table td { border-right: 1px solid #000; border-bottom: 1px solid #000; padding: 0 5px; font-size: 10px; vertical-align: middle !important; text-align: center; height: 30px; }
+        .lg-val { font-size: 15px; font-weight: bold; }
+        
+        .spacer { flex: 1; min-height: 5px; }
         .council-section { flex-shrink: 0; }
-        .council-header { background: #d1d5db; text-align: center; font-weight: bold; padding: 3px; border: 1px solid #000; border-bottom: none; text-transform: uppercase; font-size: 9.5px; }
-        .council-box { display: flex; border: 1px solid #000; min-height: 85px; }
+        .council-header { background: #d1d5db; text-align: center; font-weight: bold; padding: 4px; border: 1px solid #000; border-bottom: 0; text-transform: uppercase; font-size: 10px; }
+        .council-box { display: flex; border: 1px solid #000; min-height: 90px; }
         .app-box { width: 50%; border-right: 1px solid #000; display: flex; align-items: center; justify-content: center; font-size: 18px; font-weight: bold; padding: 6px; text-align: center; }
-        .sig-box { width: 50%; padding: 6px; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; gap: 2px; }
-
-        .footer-info { display: flex; justify-content: space-between; align-items: center; margin-top: 4px; font-size: 8px; color: #6b7280; flex-shrink: 0; }
-
-        .page-wrap { width: 210mm; height: 297mm; padding: 8mm 10mm; display: flex; flex-direction: column; box-sizing: border-box; page-break-after: always; }
-        .page-wrap:last-child { page-break-after: avoid; }
+        .sig-box { width: 50%; padding: 6px; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; }
+        
+        .footer-info { display: flex; justify-content: space-between; align-items: center; margin-top: 6px; font-size: 8px; color: #6b7280; flex-shrink: 0; }
+        .page-break { page-break-after: always; height: 100%; display: flex; flex-direction: column; }
     </style>
 </head>
 <body>
-
-    <div class="header">
-        <div class="h-left">
-            <p>${schoolConfig.ministryName || 'MINISTÈRE DE L\'ENSEIGNEMENT'}</p>
-            <p>${schoolConfig.region || 'FORMATION PROFESSIONNELLE ET TECHNIQUE'}</p>
-            <p>${schoolConfig.city || 'OUAGADOUGOU'}</p>
-            <p>${schoolConfig.schoolName || 'LYCÉE WEND PUIRÉ DE SAABA'}</p>
-            ${schoolConfig.phone ? `<p>TÉL : ${schoolConfig.phone}</p>` : ''}
-        </div>
-        <div class="h-center">
-            ${schoolConfig.logo
-                ? `<img src="${schoolConfig.logo.startsWith('data:image/') ? schoolConfig.logo : (schoolConfig.baseUrl || '') + schoolConfig.logo}" style="height: 56px; max-width: 140px; object-fit: contain;" />`
-                : `<div class="logo-text">${schoolConfig.shortName || 'LWS'}</div>`
-            }
-            ${schoolConfig.motto !== undefined
-                ? (schoolConfig.motto ? `<div class="motto">${schoolConfig.motto}</div>` : '')
-                : `<div class="motto">DISCIPLINE-TRAVAIL-SUCCES</div>`
-            }
-        </div>
-        <div class="h-right">
-            <p>${schoolConfig.country || 'BURKINA FASO'}</p>
-            <p style="font-weight: normal; text-transform: none; font-size: 7.5px; font-style: italic;">${schoolConfig.patrie || 'La Patrie ou la Mort, nous Vaincrons'}</p>
-        </div>
-    </div>
-
-    <div class="title"><h1>BULLETIN DE NOTES</h1></div>
-
-    <div class="info-bar">
-        <span>Année scolaire: <strong>${bulletin.anneeScolaire}</strong></span>
-        <span><strong>${bulletin.periode}</strong></span>
-        <span>Effectif: <strong>${bulletin.effectif || ''}</strong></span>
-    </div>
-
-    <div class="student-name">
-        <span class="label">Nom de l'élève: </span>
-        <span class="uppercase" style="color: #1e3a8a;">${eleve.nom || ''} ${eleve.prenom || ''}</span>
-    </div>
-
-    <div class="grid-info">
-        <div class="grid-item"><span class="lbl">Né(e) le:</span><strong>${formatDate(eleve.dateNaissance)}</strong></div>
-        <div class="grid-item"><span class="lbl">Matricule:</span><strong>${eleve.matricule || ''}</strong></div>
-        <div class="grid-item"><span class="lbl">Classe:</span><strong>${classe.niveau || ''} ${classe.section || ''}</strong></div>
-        <div class="grid-item"><span class="lbl">Redoublant:</span><strong>${eleve.redoublant ? 'OUI' : 'NON'}</strong></div>
-    </div>
-
-    <div class="table-wrapper">
-        <table class="main-table">
-            <thead>
-                <tr>
-                    <th class="text-left" style="width: 40%;">MATIÈRES</th>
-                    <th style="width: 5%;">COEF</th>
-                    <th style="width: 8%;">MOY</th>
-                    <th style="width: 12%;">PONDÉRÉES</th>
-                    <th style="width: 13%;">APPRÉCIATION</th>
-                    <th style="width: 13%;">ENSEIGNANT</th>
-                    <th style="width: 9%;">SIGNATURE</th>
-                </tr>
-            </thead>
-            <tbody>
-                ${tableBodyRows}
-                ${paddingHtml}
-                <tr class="grand-total">
-                    <td class="text-left uppercase bold" style="padding-left: 6px;">TOTAL GÉNÉRAL</td>
-                    <td>${(bulletin.totalCoefficients || 0).toFixed(1)}</td>
-                    <td></td>
-                    <td class="bold">${(bulletin.totalPoints || 0).toFixed(2)}</td>
-                    <td colspan="3"></td>
-                </tr>
-            </tbody>
-        </table>
-    </div>
-
-    <div class="bilan-section">
-        <div class="bilan-header">BILAN ${filiere === 'Technique' ? 'SEMESTRIEL' : 'TRIMESTRIEL'}</div>
-        <table class="bilan-table">
-            <tr>
-                <td style="width: 20%; text-align: left; padding-left: 5px;">Moyenne de l'élève</td>
-                <td class="lg-val" style="width: 10%;">${(bulletin.moyenneGenerale || 0).toFixed(2)}</td>
-                <td style="width: 22%; text-transform: uppercase;">RETRAIT DE POINTS</td>
-                <td class="bold" style="width: 8%;">${(bulletin.retraitPoints || 0).toFixed(2)}</td>
-                <td colspan="4" class="bold" style="background: #eee;">NOMBRE D'HEURES D'ABSENCE</td>
-            </tr>
-            <tr>
-                <td style="text-align: left; padding-left: 5px;">Moyenne de la classe</td>
-                <td class="bold">${(bulletin.moyenneClasse || 0).toFixed(2)}</td>
-                <td style="text-transform: uppercase;">MOYENNE DEFINITIVE</td>
-                <td class="lg-val">${((bulletin.moyenneGenerale || 0) - (bulletin.retraitPoints || 0)).toFixed(2)}</td>
-                <td style="width: 12%;">Justifiées</td>
-                <td class="bold" style="width: 6%;">${bulletin.absencesJustifiees || 0}</td>
-                <td style="width: 14%;">Non justifiées</td>
-                <td class="bold" style="width: 6%;">${bulletin.absencesNonJustifiees || 0}</td>
-            </tr>
-            <tr>
-                <td style="text-align: left; padding-left: 5px;">Meilleure moyenne</td>
-                <td class="bold">${(bulletin.meilleureMoyenneClasse || 0).toFixed(2)}</td>
-                <td style="text-transform: uppercase;">Rang du trimestre</td>
-                <td class="bold" style="font-size: 13px;">${bulletin.rang || '-'}</td>
-                <td class="bold uppercase">Conduite</td>
-                <td colspan="3" class="bold">${bulletin.conduite || ''}</td>
-            </tr>
-            <tr>
-                <td style="text-align: left; padding-left: 5px;">Moyenne la plus basse</td>
-                <td class="bold">${(bulletin.pireMoyenneClasse || 0).toFixed(2)}</td>
-                <td colspan="2"></td>
-                <td class="bold uppercase">Rappel des Moyennes</td>
-                <td colspan="3"></td>
-            </tr>
-        </table>
-    </div>
-
-    <div class="spacer"></div>
-
-    <div class="council-section">
-        <div class="council-header">APPRÉCIATIONS DU CONSEIL DE CLASSE</div>
-        <div class="council-box">
-            <div class="app-box">${getGeneralAppreciation(bulletin.moyenneGenerale || 0)}</div>
-            <div class="sig-box">
-                <div class="bold uppercase" style="font-size: 10px;">Le Proviseur</div>
-                <div style="flex: 1; min-height: 35px;"></div>
-                <div class="bold" style="font-size: 9.5px;">${schoolConfig.proviseurName || ''}</div>
-                <div class="italic" style="font-size: 7.5px; color: #444;">${schoolConfig.proviseurTitle || 'Administrateur des Lycées et Collèges'}</div>
+    <div class="bulletin-card">
+        <div class="header">
+            <div class="h-col h-col-side left-header">
+                <p>${schoolConfig.ministryName || 'MINISTÈRE DE L\'ENSEIGNEMENT'}</p>
+                <p>${schoolConfig.region || 'FORMATION PROFESSIONNELLE ET TECHNIQUE'}</p>
+                <p>${schoolConfig.city || 'OUAGADOUGOU'}</p>
+                <p>${schoolConfig.schoolName || 'LYCÉE WEND PUIRÉ DE SAABA'}</p>
+                <p>${schoolConfig.phone ? `TÉL : ${schoolConfig.phone}` : 'TÉL : 51 54 88 11'}</p>
+            </div>
+            <div class="h-col h-center">
+                ${schoolConfig.logo ? 
+                    `<img src="${schoolConfig.logo.startsWith('data:image/') ? schoolConfig.logo : (schoolConfig.baseUrl || '') + schoolConfig.logo}" style="height: 60px; max-width: 150px; object-fit: contain;" />` : 
+                    `<div class="logo-text">${schoolConfig.shortName || 'LWS'}</div>`
+                }
+                ${schoolConfig.motto !== undefined ?
+                    (schoolConfig.motto ? `<div class="motto">${schoolConfig.motto}</div>` : '')
+                    : `<div class="motto">DISCIPLINE-TRAVAIL-SUCCES</div>`
+                }
+            </div>
+            <div class="h-col h-col-side h-right right-header">
+                <p>${schoolConfig.country || 'BURKINA FASO'}</p>
+                <p class="italic patrie" style="font-weight: normal; text-transform: none; font-size: 7.5px;">${schoolConfig.patrie || 'La Patrie ou la Mort, nous Vaincrons'}</p>
             </div>
         </div>
-    </div>
 
-    <div class="footer-info">
-        <div>Le : ${formatDate(new Date())}</div>
-        <div style="font-weight: bold; font-style: italic;">Généré par Unica</div>
-    </div>
+        <div class="title">
+            <h1>BULLETIN DE NOTES</h1>
+        </div>
 
+        <div class="info-bar">
+            <span>Année scolaire: <strong>${bulletin.anneeScolaire}</strong></span>
+            <span><strong>${bulletin.periode}</strong></span>
+            <span>Effectif: <strong>${bulletin.effectif || ''}</strong></span>
+        </div>
+
+        <div class="student-name">
+            <span style="color: #64748b; font-weight: normal; font-size: 10px;">Nom de l'élève:</span>
+            <span class="uppercase">${eleve.nom || ''} ${eleve.prenom || ''}</span>
+        </div>
+
+        <div class="grid-info">
+            <div class="grid-item"><span>Né(e) le:</span><strong>${formatDate(eleve.dateNaissance)}</strong></div>
+            <div class="grid-item"><span>Matricule:</span><strong>${eleve.matricule || ''}</strong></div>
+            <div class="grid-item"><span>Classe:</span><strong>${classe.niveau || ''} ${classe.section || ''}</strong></div>
+            <div class="grid-item" style="text-align: right;"><span>Redoublant:</span><strong>${eleve.redoublant ? 'OUI' : 'NON'}</strong></div>
+        </div>
+
+        <div class="table-container">
+            <table class="main-table">
+                <thead>
+                    <tr>
+                        <th class="text-left" style="width: 45%;">Matières</th>
+                        <th style="width: 5%;">Coef</th>
+                        <th style="width: 8%;">Moy</th>
+                        <th style="width: 12%;">Pondérées</th>
+                        <th style="width: 30%;">Appréciations et signatures</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${Object.entries(groupedNotes).map(([catName, notes]) => `
+                        <tr class="cat-header">
+                            <td colspan="5">${catName}</td>
+                        </tr>
+                        ${notes.map(note => {
+                    const prof = note.professeur ? `${note.professeur.civilite === 'Mr' ? 'M ' : (note.professeur.civilite ? note.professeur.civilite + ' ' : '')}${note.professeur.nom || ''}`.toUpperCase().trim() : '';
+                    const app = note.isDispensed ? '' : getGeneralAppreciation(note.moyenneMatiere || 0);
+                    return `
+                                <tr class="data-row">
+                                    <td class="text-left font-bold uppercase" style="font-size: 9px;">${note.matiere?.nom || ''}</td>
+                                    <td>${(note.coeff || 1).toFixed(1)}</td>
+                                    ${note.isDispensed ?
+                            `<td class="italic font-bold">D</td><td class="italic font-bold">D</td>` :
+                            `<td>${(note.moyenneMatiere || 0).toFixed(2)}</td><td class="font-bold">${(note.notePonderee || 0).toFixed(2)}</td>`
+                        }
+                                    <td class="italic" style="font-size: 8.5px;">
+                                        ${app}
+                                        ${prof ? `<br><small style="font-size: 7px; color: #4b5563;">${prof}</small>` : ''}
+                                    </td>
+                                </tr>
+                            `;
+                }).join('')}
+                        <tr class="font-bold bg-gray-100" style="font-size: 9px; background-color: #f8fafc;">
+                            <td class="text-left uppercase">Total ${catName}</td>
+                            <td>${notes.reduce((sum, n) => sum + (n.coeff || 0), 0).toFixed(1)}</td>
+                            <td></td>
+                            <td>${notes.reduce((sum, n) => sum + (n.notePonderee || 0), 0).toFixed(2)}</td>
+                            <td></td>
+                        </tr>
+                    `).join('')}
+                    <tr class="font-bold" style="background: #f1f5f9; border-top: 2px solid #000; height: 35px;">
+                        <td class="text-left font-bold uppercase" style="padding: 6px;">TOTAL GÉNÉRAL</td>
+                        <td>${(bulletin.totalCoefficients || 0).toFixed(1)}</td>
+                        <td></td>
+                        <td class="font-bold">${(bulletin.totalPoints || 0).toFixed(2)}</td>
+                        <td></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="bilan-section">
+            <div class="bilan-header">BILAN ${filiere === 'Technique' ? 'SEMESTRIEL' : 'TRIMESTRIEL'}</div>
+            <table class="bilan-table">
+                <tr class="data-row">
+                    <td style="width: 20%;">Moyenne de l'élève</td>
+                    <td class="lg-val" style="width: 10%;">${(bulletin.moyenneGenerale || 0).toFixed(2)}</td>
+                    <td style="width: 25%; text-transform: uppercase;">RETRAIT DE POINTS</td>
+                    <td class="font-bold" style="width: 10%;">${(bulletin.retraitPoints || 0).toFixed(2)}</td>
+                    <td colspan="4" class="font-bold text-center" style="background: #eee;">NOMBRE D'HEURES D'ABSENCE</td>
+                </tr>
+                <tr class="data-row">
+                    <td>Moyenne de la classe</td>
+                    <td class="font-bold">${(bulletin.moyenneClasse || 0).toFixed(2)}</td>
+                    <td style="width: 25%; text-transform: uppercase;">MOYENNE DEFINITIVE</td>
+                    <td class="lg-val">${((bulletin.moyenneGenerale || 0) - (bulletin.retraitPoints || 0)).toFixed(2)}</td>
+                    <td style="width: 10%;">Justifiées</td>
+                    <td class="font-bold" style="width: 5%;">${bulletin.absencesJustifiees || 0}</td>
+                    <td style="width: 15%;">Non justifiées</td>
+                    <td class="font-bold" style="width: 5%;">${bulletin.absencesNonJustifiees || 0}</td>
+                </tr>
+                <tr class="data-row">
+                    <td>Meilleure moyenne</td>
+                    <td class="font-bold">${(bulletin.meilleureMoyenneClasse || 0).toFixed(2)}</td>
+                    <td style="width: 25%; text-transform: uppercase;">Rang du trimestre</td>
+                    <td class="font-bold text-lg">${bulletin.rang || '-'}</td>
+                    <td class="font-bold uppercase" style="width: 10%;">Conduite</td>
+                    <td colspan="3" class="font-bold">${bulletin.conduite || ''}</td>
+                </tr>
+                <tr class="data-row">
+                    <td>Moyenne la plus basse</td>
+                    <td class="font-bold">${(bulletin.pireMoyenneClasse || 0).toFixed(2)}</td>
+                    <td colspan="2"></td>
+                    <td class="font-bold uppercase">Rappel des Moyennes</td>
+                    <td colspan="3"></td>
+                </tr>
+            </table>
+        </div>
+
+        <div class="spacer"></div>
+
+        <div class="council-section">
+            <div class="council-header">Appréciations du conseil de classe</div>
+            <div class="council-box">
+                <div class="app-box">${getGeneralAppreciation(bulletin.moyenneGenerale || 0)}</div>
+                <div class="sig-box">
+                    <div class="font-bold uppercase" style="font-size: 11px;">Le Proviseur</div>
+                    <div style="height: 40px;"></div>
+                    <div class="font-bold" style="font-size: 10px;">${schoolConfig.proviseurName || ''}</div>
+                    <div class="italic" style="font-size: 8px; font-weight: normal; margin-top: 2px;">${schoolConfig.proviseurTitle || 'Chevalier de l\'Ordre des Palmes Académiques'}</div>
+                </div>
+            </div>
+        </div>
+        <div class="footer-info">
+            <div>Le : ${formatDate(new Date())}</div>
+            <div style="font-weight: bold; font-style: italic;">Généré par Unica</div>
+        </div>
+    </div>
 </body>
 </html>
     `;
@@ -873,3 +816,4 @@ exports.generateStudentProfilePDF = async (student, schoolConfig) => {
         await browser.close();
     }
 };
+

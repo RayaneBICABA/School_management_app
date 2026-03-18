@@ -158,7 +158,8 @@ exports.getBulletinHTML = (bulletin, schoolConfig) => {
 <head>
     <style>
         /* Core Layout - Full Page Flexbox */
-        body { font-family: Arial, Helvetica, sans-serif; color: #333; font-size: 10px; padding: 15mm; background: white; line-height: 1.1; display: flex; flex-direction: column; box-sizing: border-box; min-height: 282mm; }
+        body { font-family: Arial, Helvetica, sans-serif; color: #333; font-size: 10px; padding: 10mm; background: white; line-height: 1.1; display: flex; flex-direction: column; box-sizing: border-box; }
+        p { margin: 0; padding: 0; }
         .bulletin-card { width: 100%; display: flex; flex-direction: column; flex: 1; }
         
         /* Compact Modes */
@@ -174,8 +175,8 @@ exports.getBulletinHTML = (bulletin, schoolConfig) => {
         .compact-2 .logo-text { font-size: 20px; }
         
         /* Fixed/Shrinkable Header Sections */
-        .header { display: flex; justify-content: space-between; border-bottom: 2px solid #333; padding-bottom: 2px; margin-bottom: 4px; flex-shrink: 0; }
-        .h-col { width: 33.33%; font-weight: bold; font-size: 8.5px; line-height: 1.4; text-transform: uppercase; color: #000; }
+        .header { display: flex; justify-content: space-between; border-bottom: 0px solid #333; padding-bottom: 0; margin-bottom: 2px; flex-shrink: 0; }
+        .h-col { width: 33.33%; font-weight: bold; font-size: 8.5px; line-height: 1.3; text-transform: uppercase; color: #000; }
         .h-center { text-align: center; display: flex; flex-direction: column; align-items: center; justify-content: center; width: 40% !important; }
         .h-col-side { width: 30% !important; }
         .h-right { text-align: right; }
@@ -183,13 +184,13 @@ exports.getBulletinHTML = (bulletin, schoolConfig) => {
         .logo-text { font-size: 22px; font-weight: 900; color: #000; line-height: 1; }
         .motto { font-size: 8px; color: #000; margin-top: 0; font-weight: bold; }
         
-        .title { text-align: center; margin: 2px 0; flex-shrink: 0; }
-        .title h1 { font-size: 16px; font-style: italic; font-weight: bold; border-top: 1px solid #000; border-bottom: 1px solid #000; padding: 2px 0; }
+        .title { text-align: center; margin: 0; flex-shrink: 0; }
+        .title h1 { font-size: 15px; font-style: italic; font-weight: bold; border-top: 1px solid #000; border-bottom: 1px solid #000; padding: 1px 0; margin: 1px 0; }
         
         .info-bar { display: flex; justify-content: space-between; margin-bottom: 3px; font-size: 10px; flex-shrink: 0; }
         .student-name { margin-bottom: 2px; font-size: 11.5px; font-weight: bold; padding-top: 1px; flex-shrink: 0; }
         
-        .grid-info { display: flex; justify-content: space-between; padding-bottom: 3px; margin-bottom: 6px; border-bottom: 1px solid #333; flex-shrink: 0; }
+        .grid-info { display: flex; justify-content: space-between; padding-bottom: 2px; margin-bottom: 4px; border-bottom: 1px solid #333; flex-shrink: 0; }
         .grid-item { font-size: 9.5px; display: flex; align-items: baseline; gap: 4px; color: #000; }
         .grid-item span { color: #000; font-size: 8.5px; }
         
@@ -199,10 +200,10 @@ exports.getBulletinHTML = (bulletin, schoolConfig) => {
         table.main-table th, table.main-table td { border-right: 1px solid #000; border-bottom: 1px solid #000; padding: 0 6px; text-align: center; vertical-align: middle !important; box-sizing: border-box; line-height: 1.2; }
         table.main-table th { background: #ddd; font-weight: bold; text-transform: uppercase; font-size: 9px; height: 32px; color: #000; }
         .cat-header { background: #eee; font-weight: bold; text-transform: uppercase; font-size: 9px; height: 26px; text-align: center !important; color: #000; }
-        .data-row td { padding: 5px 4px; }
+        .data-row td { padding: 4px 4px; }
         .cat-header-row td { padding: 4px 4px; }
-        .cat-total-row td { padding: 12px 4px; }
-        .total-general-row td { padding: 14px 4px; }
+        .cat-total-row td { padding: 0 4px; height: 35px; }
+        .total-general-row td { padding: 0 4px; height: 40px; }
         .text-left { text-align: left; }
         .font-bold { font-weight: bold; }
         .uppercase { text-transform: uppercase; }
@@ -221,8 +222,8 @@ exports.getBulletinHTML = (bulletin, schoolConfig) => {
         .app-box { width: 50%; border-right: 1px solid #000; display: flex; align-items: center; justify-content: center; font-size: 18px; font-weight: bold; padding: 6px; text-align: center; }
         .sig-box { width: 50%; padding: 6px; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; }
         
-        .footer-info { display: flex; justify-content: space-between; align-items: center; margin-top: 6px; font-size: 8px; color: #000; flex-shrink: 0; }
-        .page-break { page-break-after: always; height: 100%; display: flex; flex-direction: column; }
+        .footer-info { display: flex; justify-content: space-between; align-items: center; margin-top: 4px; font-size: 8px; color: #000; flex-shrink: 0; }
+        .page-break { page-break-inside: avoid; height: 100%; display: flex; flex-direction: column; }
     </style>
 </head>
 <body>

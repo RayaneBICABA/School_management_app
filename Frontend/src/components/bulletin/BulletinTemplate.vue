@@ -309,6 +309,11 @@ const groupedNotes = computed(() => {
   }
   return groups;
 });
+ 
+const isDispensedAll = computed(() => {
+  if (!props.bulletin.notes || props.bulletin.notes.length === 0) return false;
+  return props.bulletin.notes.every(note => note.isDispensed);
+});
 
 const maxInt = computed(() => 0);
 const maxDev = computed(() => 0);
@@ -396,30 +401,19 @@ const downloadPDF = async () => {
   isExporting.value = true;
   
   try {
-    const element = bulletinRef.value;
-    const canvas = await html2canvas(element, {
-      scale: 2,
-      useCORS: true,
-      logging: false,
-      backgroundColor: '#ffffff'
-    });
-    
-    const imgData = canvas.toDataURL('image/png');
-    const pdf = new jsPDF({
-      orientation: 'portrait',
-      unit: 'mm',
-      format: 'a4'
-    });
-    
-    const imgProps = pdf.getImageProperties(imgData);
-    const pdfWidth = pdf.internal.pageSize.getWidth();
-    const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
-    
-    pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
-    pdf.save(`Bulletin_${props.eleve.nom}_${props.eleve.prenom}_${props.bulletin.periode.replace(' ', '_')}.pdf`);
+    const response = await api.downloadBulletinPDF(props.bulletin._id);
+    const url = window.URL.createObjectURL(new Blob([response.data]));
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', `Bulletin_${props.eleve.nom}_${props.eleve.prenom}_${props.bulletin.periode.replace(' ', '_')}.pdf`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    window.URL.revokeObjectURL(url);
+    emit('download');
   } catch (error) {
-    console.error('Erreur lors de la génération du PDF:', error);
-    alert('Une erreur est survenue lors de la génération du PDF.');
+    console.error('Erreur lors du téléchargement du PDF:', error);
+    alert('Une erreur est survenue lors du téléchargement du PDF.');
   } finally {
     isExporting.value = false;
   }

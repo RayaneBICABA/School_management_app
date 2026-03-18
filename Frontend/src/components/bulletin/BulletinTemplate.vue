@@ -64,8 +64,8 @@
       </div>
 
       <!-- Grades Table -->
-      <div class="flex-grow min-h-0 overflow-hidden mb-2">
-        <table class="w-full border-collapse border border-black text-[12px] h-full">
+      <div class="flex-grow min-h-0 overflow-hidden mb-2 flex flex-col">
+        <table class="w-full border-collapse border border-black text-[12px]">
           <thead>
             <tr class="bg-gray-200 text-center font-bold">
                 <th class="border border-black p-2 text-left" style="width: 30%;">Matières</th>
@@ -118,6 +118,7 @@
             </tr>
           </tbody>
         </table>
+        <div class="grow"></div>
       </div>
  
       <!-- Bilan -->

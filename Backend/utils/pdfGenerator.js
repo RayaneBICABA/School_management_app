@@ -194,7 +194,7 @@ exports.getBulletinHTML = (bulletin, schoolConfig) => {
         /* Table Styles */
         .table-container { flex: 1; display: flex; flex-direction: column; min-height: 0; }
         table.main-table { width: 100%; border-spacing: 0; border-collapse: separate; border-top: 1px solid #000; border-left: 1px solid #000; table-layout: fixed; }
-        table.main-table th, table.main-table td { border-right: 1px solid #000; border-bottom: 1px solid #000; padding: 4px 6px; text-align: center; vertical-align: middle !important; box-sizing: border-box; line-height: 1.1; }
+        table.main-table th, table.main-table td { border-right: 1px solid #000; border-bottom: 1px solid #000; padding: 0 6px; text-align: center; vertical-align: middle !important; box-sizing: border-box; line-height: 1; }
         table.main-table th { background: #ddd; font-weight: bold; text-transform: uppercase; font-size: 9px; height: 32px; color: #000; }
         .cat-header { background: #eee; font-weight: bold; text-transform: uppercase; font-size: 9px; height: 26px; text-align: center !important; color: #000; }
         .data-row td { height: 28px; }
@@ -209,7 +209,7 @@ exports.getBulletinHTML = (bulletin, schoolConfig) => {
         .bilan-section { flex-shrink: 0; margin-top: 6px; }
         .bilan-header { background: #eee; font-weight: bold; text-align: center; padding: 4px; border: 1px solid #000; border-bottom: 0; text-transform: uppercase; font-size: 10px; color: #000; }
         .bilan-table { width: 100%; border-spacing: 0; border-collapse: separate; border-top: 1px solid #000; border-left: 1px solid #000; margin-bottom: 6px; }
-        .bilan-table td { border-right: 1px solid #000; border-bottom: 1px solid #000; padding: 0 5px; font-size: 10px; vertical-align: middle !important; text-align: center; height: 30px; color: #000; }
+        .bilan-table td { border-right: 1px solid #000; border-bottom: 1px solid #000; padding: 0 5px; font-size: 10px; vertical-align: middle !important; text-align: center; height: 30px; color: #000; line-height: 1; }
         .lg-val { font-size: 15px; font-weight: bold; }
         
         .spacer { flex: 1; min-height: 5px; }

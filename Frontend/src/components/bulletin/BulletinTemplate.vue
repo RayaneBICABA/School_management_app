@@ -454,9 +454,9 @@ td, th {
   border-right: 1px solid black !important;
   border-bottom: 1px solid black !important;
   vertical-align: middle !important;
-  padding: 4px !important;
+  padding: 0 4px !important;
   text-align: center;
-  line-height: normal !important;
+  line-height: 1 !important;
 }
 
 th {

@@ -168,7 +168,7 @@
         <h3 class="bg-gray-300 text-center font-bold p-2 border border-black uppercase text-sm">Appréciations du conseil de classe</h3>
         <div class="flex border border-black border-t-0 h-[100px]">
           <div class="w-1/2 p-4 border-r border-black flex items-center justify-center text-center">
-              <div class="font-bold text-lg leading-tight">{{ getGeneralAppreciation(bulletin.moyenneGenerale) }}</div>
+            <div class="font-bold text-lg leading-tight">{{ getGeneralAppreciation(bulletin.moyenneGenerale) }}</div>
           </div>
           <div class="w-1/2 p-4 flex flex-col items-center justify-center text-center">
             <div class="font-bold text-sm uppercase">Le Proviseur</div>
@@ -176,6 +176,7 @@
             <div class="font-bold text-xs">{{ schoolConfig.proviseurName || '' }}</div>
             <div class="italic text-[10px] text-gray-700 font-normal mt-0.5 leading-tight">{{ schoolConfig.proviseurTitle || 'Chevalier de l\'Ordre des Palmes Académiques' }}</div>
           </div>
+        </div>
       </div>
 
       <!-- Footer Info -->

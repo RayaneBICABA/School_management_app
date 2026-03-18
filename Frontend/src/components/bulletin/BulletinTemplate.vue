@@ -1,8 +1,8 @@
 <template>
   <div class="bulletin-container p-4 bg-gray-100 min-h-screen" :class="compactClasses">
-    <div ref="bulletinRef" class="bulletin max-w-[900px] mx-auto bg-white p-8 shadow-lg text-[#333] font-serif leading-tight">
+    <div ref="bulletinRef" class="bulletin max-w-[900px] mx-auto bg-white p-8 shadow-lg text-[#333] font-serif leading-tight flex flex-col min-h-[297mm]">
       <!-- Header -->
-      <div class="header flex justify-between items-start mb-2 border-b-2 border-gray-100 pb-2">
+      <div class="header flex justify-between items-start mb-2 border-b-2 border-gray-100 pb-2 flex-shrink-0">
         <div class="header-left w-[30%] text-[9px] font-bold uppercase leading-[1.1]">
           <p>{{ schoolConfig.ministryName }}</p>
           <p>{{ schoolConfig.region }}</p>
@@ -26,25 +26,25 @@
       </div>
 
       <!-- Title -->
-      <div class="title text-center my-2">
+      <div class="title text-center my-2 flex-shrink-0">
         <h1 class="text-xl font-serif italic font-bold">BULLETIN DE NOTES</h1>
       </div>
 
       <!-- General Info -->
-      <div class="info-trimestre flex justify-between text-xs mb-1">
+      <div class="info-trimestre flex justify-between text-xs mb-1 flex-shrink-0">
         <span>Année scolaire: <strong>{{ bulletin.anneeScolaire }}</strong></span>
         <span><strong>{{ bulletin.periode }}</strong></span>
         <span>Effectif: <strong>{{ bulletin.effectif }}</strong></span>
       </div>
 
       <!-- Student Name -->
-      <div class="student-name mb-1 flex items-baseline gap-1 text-[11px] font-medium leading-tight">
+      <div class="student-name mb-1 flex items-baseline gap-1 text-[11px] font-medium leading-tight flex-shrink-0">
         <span class="text-[10px] text-gray-500">Nom de l'élève:</span>
         <strong class="uppercase">{{ eleve.nom || 'Non renseigné' }} {{ eleve.prenom || 'Non renseigné' }}</strong>
       </div>
 
       <!-- Info Eleve -->
-      <div class="info-eleve grid grid-cols-4 gap-1 mb-2 pb-1 border-b border-gray-200">
+      <div class="info-eleve grid grid-cols-4 gap-1 mb-2 pb-1 border-b border-gray-200 flex-shrink-0">
         <div class="info-item flex items-baseline gap-1">
           <span class="text-[10px] text-gray-500 text-xs">Né(e) le:</span>
           <span class="font-bold text-[11px]">{{ formatDate(eleve.dateNaissance) || 'Non renseigné' }}</span>
@@ -64,62 +64,64 @@
       </div>
 
       <!-- Grades Table -->
-      <table class="w-full border-collapse border border-black text-[10px]">
-        <thead>
-          <tr class="bg-gray-200 text-center font-bold">
-              <th class="border border-black p-2 text-left" style="width: 30%;">Matières</th>
-              <th class="border border-black p-1 text-center" style="width: 8%;">Coef</th>
-              <th class="border border-black p-1 text-center" style="width: 10%;">Moy</th>
-              <th class="border border-black p-1 text-center" style="width: 10%;">Pondérées</th>
-              <th class="border border-black p-1 text-center" colspan="3">Appréciations et signatures</th>
-          </tr>
-        </thead>
-        <tbody>
-          <template v-for="(category, catName) in groupedNotes" :key="catName">
-            <tr class="bg-gray-300">
-              <td :colspan="totalCols" class="border border-black p-2 font-bold text-center uppercase">{{ catName }}</td>
+      <div class="flex-grow min-h-0 overflow-hidden mb-4">
+        <table class="w-full border-collapse border border-black text-[10px]">
+          <thead>
+            <tr class="bg-gray-200 text-center font-bold">
+                <th class="border border-black p-2 text-left" style="width: 30%;">Matières</th>
+                <th class="border border-black p-1 text-center" style="width: 8%;">Coef</th>
+                <th class="border border-black p-1 text-center" style="width: 10%;">Moy</th>
+                <th class="border border-black p-1 text-center" style="width: 10%;">Pondérées</th>
+                <th class="border border-black p-1 text-center" colspan="3">Appréciations et signatures</th>
             </tr>
-            <tr v-for="note in category" :key="note.matiere?._id" class="text-center">
-              <td class="border border-black p-2 text-left font-bold uppercase">{{ note.matiere?.nom }}</td>
-              <td class="border border-black p-1">{{ (note.coeff || note.matiere?.coefficient || 0).toFixed(1) }}</td>
-              
-              <template v-if="note.isDispensed">
-                <td class="border border-black p-1 font-bold italic text-rose-600 text-center">D</td>
-                <td class="border border-black p-1 font-bold italic text-rose-600 text-center">D</td>
-              </template>
-              <template v-else>
-                <td class="border border-black p-1">{{ (note.moyenneMatiere || 0).toFixed(2) }}</td>
-                <td class="border border-black p-1 font-bold">{{ (note.notePonderee || 0).toFixed(2) }}</td>
-              </template>
-              <td class="border border-black p-1 w-20 italic" :class="note.isDispensed ? '' : getAppreciationColor(getSubjectAppreciation(note.moyenneMatiere || 0))">
-                {{ note.isDispensed ? '' : getSubjectAppreciation(note.moyenneMatiere || 0) }}
-              </td>
-              <td class="border border-black p-1 text-[9px]" style="width: 60px; white-space: nowrap;">{{ note.professeur ? (note.professeur.civilite === 'Mr' ? 'M ' : (note.professeur.civilite ? note.professeur.civilite + ' ' : '')) + (note.professeur.nom || '').toUpperCase() : '' }}</td>
-              <td class="border border-black p-1 w-20"></td>
-            </tr>
-            <!-- Category Totals -->
-            <tr class="bg-gray-100 font-bold">
-              <td class="border border-black p-1 px-2 text-left uppercase text-[9px]">Total {{ catName }}</td>
-              <td class="border border-black p-1 text-center">{{ getCategoryTotalCoeff(category) }}</td>
-              <td class="border border-black p-1" colspan="1"></td>
-              <td class="border border-black p-1 text-center">{{ getCategoryTotalPoints(category) }}</td>
+          </thead>
+          <tbody>
+            <template v-for="(category, catName) in groupedNotes" :key="catName">
+              <tr class="bg-gray-300">
+                <td :colspan="totalCols" class="border border-black p-2 font-bold text-center uppercase">{{ catName }}</td>
+              </tr>
+              <tr v-for="note in category" :key="note.matiere?._id" class="text-center h-1">
+                <td class="border border-black p-2 text-left font-bold uppercase">{{ note.matiere?.nom }}</td>
+                <td class="border border-black p-1">{{ (note.coeff || note.matiere?.coefficient || 0).toFixed(1) }}</td>
+                
+                <template v-if="note.isDispensed">
+                  <td class="border border-black p-1 font-bold italic text-rose-600 text-center">D</td>
+                  <td class="border border-black p-1 font-bold italic text-rose-600 text-center">D</td>
+                </template>
+                <template v-else>
+                  <td class="border border-black p-1">{{ (note.moyenneMatiere || 0).toFixed(2) }}</td>
+                  <td class="border border-black p-1 font-bold">{{ (note.notePonderee || 0).toFixed(2) }}</td>
+                </template>
+                <td class="border border-black p-1 w-20 italic" :class="note.isDispensed ? '' : getAppreciationColor(getSubjectAppreciation(note.moyenneMatiere || 0))">
+                  {{ note.isDispensed ? '' : getSubjectAppreciation(note.moyenneMatiere || 0) }}
+                </td>
+                <td class="border border-black p-1 text-[9px]" style="width: 60px; white-space: nowrap;">{{ note.professeur ? (note.professeur.civilite === 'Mr' ? 'M ' : (note.professeur.civilite ? note.professeur.civilite + ' ' : '')) + (note.professeur.nom || '').toUpperCase() : '' }}</td>
+                <td class="border border-black p-1 w-20"></td>
+              </tr>
+              <!-- Category Totals -->
+              <tr class="bg-gray-100 font-bold h-1">
+                <td class="border border-black p-1 px-2 text-left uppercase text-[9px]">Total {{ catName }}</td>
+                <td class="border border-black p-1 text-center">{{ getCategoryTotalCoeff(category) }}</td>
+                <td class="border border-black p-1" colspan="1"></td>
+                <td class="border border-black p-1 text-center">{{ getCategoryTotalPoints(category) }}</td>
+                <td class="border border-black p-1" colspan="3"></td>
+              </tr>
+            </template>
+
+            <!-- Global Totals -->
+            <tr class="bg-blue-50 font-bold text-center h-1">
+              <td class="border border-black p-2 text-left uppercase">TOTAL GÉNÉRAL</td>
+              <td class="border border-black p-1">{{ (bulletin.totalCoefficients || 0).toFixed(1) }}</td>
+              <td class="border border-black p-1"></td>
+              <td class="border border-black p-1 font-bold">{{ (bulletin.totalPoints || 0).toFixed(2) }}</td>
               <td class="border border-black p-1" colspan="3"></td>
             </tr>
-          </template>
-
-          <!-- Global Totals -->
-          <tr class="bg-blue-50 font-bold text-center">
-            <td class="border border-black p-2 text-left uppercase">TOTAL GÉNÉRAL</td>
-            <td class="border border-black p-1">{{ (bulletin.totalCoefficients || 0).toFixed(1) }}</td>
-            <td class="border border-black p-1"></td>
-            <td class="border border-black p-1 font-bold">{{ (bulletin.totalPoints || 0).toFixed(2) }}</td>
-            <td class="border border-black p-1" colspan="3"></td>
-          </tr>
-        </tbody>
-      </table>
+          </tbody>
+        </table>
+      </div>
  
       <!-- Bilan -->
-      <div class="bilan mt-6">
+      <div class="bilan flex-shrink-0 mt-auto">
         <table class="w-full border-collapse border border-black text-[11px]">
           <tbody>
             <tr class="bg-gray-300 font-bold text-center">
@@ -161,32 +163,25 @@
         </table>
       </div>
 
-      <!-- Spacer to push council section down -->
-      <div class="flex-grow min-h-[20px]"></div>
-
       <!-- Appreciation & Signatures -->
-      <div class="council mt-4 relative overflow-hidden">
-
+      <div class="council flex-shrink-0 mt-4 relative overflow-hidden">
         <h3 class="bg-gray-300 text-center font-bold p-2 border border-black uppercase text-sm">Appréciations du conseil de classe</h3>
-        <div class="flex border border-black border-t-0 h-28">
-          <div class="w-1/2 p-4 border-r border-black flex flex-col items-center justify-center gap-4">
-               <div class="text-center min-w-[200px]">
-                  <div class="font-bold text-lg">{{ getGeneralAppreciation(bulletin.moyenneGenerale) }}</div>
-               </div>
+        <div class="flex border border-black border-t-0 min-h-[90px]">
+          <div class="w-1/2 p-4 border-r border-black flex flex-col items-center justify-center gap-4 text-center">
+              <div class="font-bold text-lg leading-tight">{{ getGeneralAppreciation(bulletin.moyenneGenerale) }}</div>
           </div>
-          <div class="w-1/2 p-4 flex flex-col items-center justify-center">
+          <div class="w-1/2 p-4 flex flex-col items-center justify-center text-center">
             <div class="font-bold text-sm uppercase">Le Proviseur</div>
             <!-- Signature space -->
-            <div class="mt-2 h-24 w-full"></div>
-            <div class="font-bold text-xs mt-1">{{ schoolConfig.proviseurName || '' }}</div>
-            <div class="italic text-[10px] text-gray-700 font-normal mt-0.5">{{ schoolConfig.proviseurTitle || 'Chevalier de l\'Ordre des Palmes Académiques' }}</div>
-            <!-- <div v-if="bulletin.signatureProviseur" class="mt-4 text-blue-700 italic border-2 border-blue-700 rounded-full px-4 py-1 rotate-[-5deg]">Signé Électroniquement</div> -->
+            <div class="h-10"></div>
+            <div class="font-bold text-xs">{{ schoolConfig.proviseurName || '' }}</div>
+            <div class="italic text-[10px] text-gray-700 font-normal mt-0.5 leading-tight">{{ schoolConfig.proviseurTitle || 'Chevalier de l\'Ordre des Palmes Académiques' }}</div>
           </div>
         </div>
       </div>
 
       <!-- Footer Info -->
-      <div class="flex justify-between items-center mt-6 text-[9px] text-gray-500 font-sans">
+      <div class="flex justify-between items-center mt-4 text-[9px] text-gray-500 font-sans flex-shrink-0">
         <div>Le : {{ new Date().toLocaleDateString('fr-FR') }}</div>
         <div class="font-bold italic">Généré par Unica</div>
       </div>
@@ -426,12 +421,15 @@ const downloadPDF = async () => {
   display: flex !important;
   flex-direction: column !important;
   min-height: 297mm;
+  height: 297mm;
+  overflow: hidden;
 }
 
 td, th {
   border-width: 1px !important;
   border-color: black !important;
   vertical-align: middle !important;
+  height: 1px; /* Hack to make vertical-align work with flex parents if needed, or simply ensure they don't collapse */
 }
 
 @media print {

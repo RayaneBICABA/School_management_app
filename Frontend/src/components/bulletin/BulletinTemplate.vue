@@ -118,22 +118,22 @@
         </tbody>
       </table>
  
-      <!-- Global Bilan -->
+      <!-- Bilan -->
       <div class="bilan mt-6">
         <table class="w-full border-collapse border border-black text-[11px]">
           <tbody>
             <tr class="bg-gray-300 font-bold text-center">
               <td colspan="8" class="border border-black p-2 uppercase">BILAN {{ classe.filiere === 'Technique' ? 'SEMESTRIEL' : 'TRIMESTRIEL' }}</td>
             </tr>
-            <tr>
-              <td class="border border-black p-2">Moyenne de l'élève</td>
+            <tr class="text-center">
+              <td class="border border-black p-2 text-left">Moyenne de l'élève</td>
               <td class="border border-black p-2 font-bold text-lg">{{ (bulletin.moyenneGenerale || 0).toFixed(2) }}</td>
               <td class="border border-black p-2 uppercase">RETRAIT DE POINTS</td>
               <td class="border border-black p-2 font-bold">{{ (bulletin.retraitPoints || 0).toFixed(2) }}</td>
-              <td colspan="4" class="border border-black p-2 text-center uppercase font-bold">Nombre d'heures d'absence</td>
+              <td colspan="4" class="border border-black p-2 text-center uppercase font-bold bg-gray-100">Nombre d'heures d'absence</td>
             </tr>
-            <tr>
-              <td class="border border-black p-2">Moyenne de la classe</td>
+            <tr class="text-center">
+              <td class="border border-black p-2 text-left">Moyenne de la classe</td>
               <td class="border border-black p-2 font-bold">{{ (bulletin.moyenneClasse || 0).toFixed(2) }}</td>
               <td class="border border-black p-2 uppercase">MOYENNE DEFINITIVE</td>
               <td class="border border-black p-2 font-bold text-lg">{{ ((bulletin.moyenneGenerale || 0) - (bulletin.retraitPoints || 0)).toFixed(2) }}</td>
@@ -142,16 +142,16 @@
               <td class="border border-black p-2 text-center">Non justifiées</td>
               <td class="border border-black p-2 font-bold text-center">{{ bulletin.absencesNonJustifiees || 0 }}</td>
             </tr>
-            <tr>
-              <td class="border border-black p-2">Meilleure moyenne</td>
+            <tr class="text-center">
+              <td class="border border-black p-2 text-left">Meilleure moyenne</td>
               <td class="border border-black p-2 font-bold">{{ (bulletin.meilleureMoyenneClasse || 0).toFixed(2) }}</td>
               <td class="border border-black p-2 uppercase">Rang du trimestre</td>
               <td class="border border-black p-2 font-bold">{{ bulletin.rang || '-' }}</td>
               <td class="border border-black p-2 text-center uppercase font-bold">Conduite</td>
               <td colspan="3" class="border border-black p-2 font-bold">{{ bulletin.conduite }}</td>
             </tr>
-            <tr>
-              <td class="border border-black p-2">Moyenne la plus basse</td>
+            <tr class="text-center">
+              <td class="border border-black p-2 text-left">Moyenne la plus basse</td>
               <td class="border border-black p-2 font-bold">{{ (bulletin.pireMoyenneClasse || 0).toFixed(2) }}</td>
               <td colspan="2" class="border border-black p-2"></td>
               <td class="border border-black p-2 text-center uppercase font-bold">Rappel des Moyennes</td>
@@ -161,8 +161,11 @@
         </table>
       </div>
 
+      <!-- Spacer to push council section down -->
+      <div class="flex-grow min-h-[20px]"></div>
+
       <!-- Appreciation & Signatures -->
-      <div class="council mt-6 relative overflow-hidden">
+      <div class="council mt-4 relative overflow-hidden">
 
         <h3 class="bg-gray-300 text-center font-bold p-2 border border-black uppercase text-sm">Appréciations du conseil de classe</h3>
         <div class="flex border border-black border-t-0 h-28">
@@ -419,9 +422,16 @@ const downloadPDF = async () => {
 </script>
 
 <style scoped>
+.bulletin {
+  display: flex !important;
+  flex-direction: column !important;
+  min-height: 297mm;
+}
+
 td, th {
   border-width: 1px !important;
   border-color: black !important;
+  vertical-align: middle !important;
 }
 
 @media print {
@@ -452,10 +462,12 @@ td, th {
     box-shadow: none !important;
     max-width: none !important;
     width: 210mm !important; /* A4 width */
-    height: auto !important;
+    min-height: 297mm !important;
     margin: 0 auto !important;
     padding: 10mm !important; /* Proper margin for print */
     overflow: visible !important;
+    display: flex !important;
+    flex-direction: column !important;
   }
   
   /* Ensure backgrounds render */

@@ -178,8 +178,9 @@ exports.getBulletinHTML = (bulletin, schoolConfig) => {
 <head>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
+        html, body { height: 100%; }
         body { font-family: 'Inter', 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; color: #333; font-size: 10px; padding: 10mm; background: white; line-height: 1.1; }
-        .bulletin-card { width: 100%; }
+        .bulletin-card { width: 100%; min-height: 100%; display: flex; flex-direction: column; }
         
         /* High-Fidelity Header */
         .header { display: flex; justify-content: space-between; border-bottom: 2px solid #f1f5f9; padding-bottom: 8px; margin-bottom: 15px; }
@@ -203,7 +204,7 @@ exports.getBulletinHTML = (bulletin, schoolConfig) => {
         
         /* Table Styles */
         table { width: 100%; border-collapse: collapse; margin-bottom: 15px; border: 1px solid #000; }
-        th, td { border: 1px solid #000; padding: 4px; text-align: center; font-size: 9.5px; }
+        th, td { border: 1px solid #000; padding: 4px; text-align: center; font-size: 9.5px; vertical-align: middle; }
         th { background: #e5e7eb; font-weight: bold; text-transform: uppercase; font-size: 9px; }
         .cat-header { background: #d1d5db; font-weight: bold; text-transform: uppercase; font-size: 9px; }
         .text-left { text-align: left; }
@@ -214,16 +215,17 @@ exports.getBulletinHTML = (bulletin, schoolConfig) => {
         /* Bilan Styles */
         .bilan-header { background: #d1d5db; font-weight: bold; text-align: center; padding: 6px; border: 1px solid #000; border-bottom: 0; text-transform: uppercase; font-size: 10px; }
         .bilan-table { width: 100%; border-collapse: collapse; margin-bottom: 15px; }
-        .bilan-table td { border: 1px solid #000; padding: 8px 6px; font-size: 10px; }
+        .bilan-table td { border: 1px solid #000; padding: 8px 6px; font-size: 10px; vertical-align: middle; }
         .lg-val { font-size: 16px; font-weight: bold; }
         
         /* Council Styles */
         .council-header { background: #d1d5db; text-align: center; font-weight: bold; padding: 6px; border: 1px solid #000; border-bottom: 0; text-transform: uppercase; font-size: 10px; }
-        .council-box { display: flex; border: 1px solid #000; height: 110px; }
-        .app-box { width: 50%; border-right: 1px solid #000; display: flex; align-items: center; justify-content: center; font-size: 18px; font-weight: bold; }
+        .council-box { display: flex; border: 1px solid #000; min-height: 110px; }
+        .app-box { width: 50%; border-right: 1px solid #000; display: flex; align-items: center; justify-content: center; font-size: 18px; font-weight: bold; padding: 10px; }
         .sig-box { width: 50%; padding: 8px; display: flex; flex-direction: column; align-items: center; justify-content: space-between; position: relative; }
         
-        .page-break { page-break-after: always; }
+        .spacer { flex: 1; min-height: 20px; }
+        .page-break { page-break-after: always; height: 100%; }
     </style>
 </head>
 <body>
@@ -360,6 +362,7 @@ exports.getBulletinHTML = (bulletin, schoolConfig) => {
             </tr>
         </table>
 
+        <div class="spacer"></div>
         <div class="council-header">Appréciations du conseil de classe</div>
         <div class="council-box">
             <div class="app-box">${getGeneralAppreciation(bulletin.moyenneGenerale || 0)}</div>

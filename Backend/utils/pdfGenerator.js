@@ -54,7 +54,7 @@ exports.generateClassBulletinsPDF = async (bulletins, schoolConfig) => {
         // Increase timeout for large classes
         await page.setDefaultNavigationTimeout(60000);
         await page.setContent(completeHtml, { 
-            waitUntil: 'networkidle0',
+            waitUntil: 'load',
             timeout: 60000
         });
 

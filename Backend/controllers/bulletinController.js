@@ -771,22 +771,9 @@ exports.downloadClassBulletinsPDF = asyncHandler(async (req, res, next) => {
             return next(new ErrorResponse('Aucun bulletin trouvé pour cette classe et cette période', 404));
         }
 
-        // Aggressive Refresh: Ensure all non-distributed bulletins have latest data before PDF generation
-        let refreshCount = 0;
-        for (const b of bulletins) {
-            // Safety: Skip if no student is linked to this bulletin
-            if (!b.eleve) {
-                console.warn(`WARNING: Bulletin ${b._id} has no student linked. Skipping refresh.`);
-                continue;
-            }
-            
-            if (b.statut !== 'DISTRIBUE') {
-                await createOrUpdateBulletin(b.eleve._id || b.eleve, b.classe._id || b.classe, b.periode, b.anneeScolaire);
-                refreshCount++;
-            }
-        }
-
-        // Re-fetch populated bulletins after refreshes
+        // Re-fetch populated bulletins directly. 
+        // We skip the redundant refresh loop here as it causes 504 timeouts on large classes.
+        // Data is already refreshed by getBulletinsByClasse when viewing the list.
         bulletins = await Bulletin.find(query)
             .populate('eleve', 'nom prenom matricule dateNaissance lieuNaissance photo')
             .populate('classe', 'niveau section filiere')

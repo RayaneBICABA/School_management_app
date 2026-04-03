@@ -119,8 +119,14 @@ const createOrUpdateBulletin = async (eleveId, classeId, periode, anneeScolaire,
     const dispensations = await Dispensation.find({ eleve: eleveId, anneeScolaire: anneeScolaire });
     const dispensedMatiereIds = dispensations.map(d => d.matiere.toString());
 
+    // Filter notesDocs to only include subjects officially in the class curriculum
+    // This allows dynamically removing a subject from a class and having it disappear from the bulletin
+    const filteredNotesDocs = notesDocs.filter(noteDoc => {
+        return assignmentMap[noteDoc.matiere._id.toString()];
+    });
+
     // Mapper les notes
-    const mappedNotes = notesDocs.map(noteDoc => {
+    const mappedNotes = filteredNotesDocs.map(noteDoc => {
         const isDispensed = dispensedMatiereIds.includes(noteDoc.matiere._id.toString());
         const intNotes = noteDoc.notes.filter(n => {
             const t = n.type.toLowerCase();

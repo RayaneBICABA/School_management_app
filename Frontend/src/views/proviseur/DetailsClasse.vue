@@ -43,9 +43,10 @@
             </div>
           </div>
           <div class="flex items-center gap-3">
-            <button @click="telechargerClassePDF" class="flex items-center gap-2 px-5 py-2.5 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-bold rounded-lg hover:bg-slate-200 dark:hover:bg-slate-700 shadow-sm border border-slate-200 dark:border-slate-700 transition-colors">
-              <span class="material-symbols-outlined text-[20px]">download</span>
-              Télécharger tous les bulletins
+            <button @click="telechargerClassePDF" :disabled="isDownloading" class="flex items-center gap-2 px-5 py-2.5 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-bold rounded-lg hover:bg-slate-200 dark:hover:bg-slate-700 shadow-sm border border-slate-200 dark:border-slate-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+              <span v-if="!isDownloading" class="material-symbols-outlined text-[20px]">download</span>
+              <span v-else class="material-symbols-outlined text-[20px] animate-spin">progress_activity</span>
+              <span>{{ isDownloading ? 'Génération...' : 'Télécharger tous les bulletins' }}</span>
             </button>
             <button @click="validerClasseEntiere" class="flex items-center gap-2 px-5 py-2.5 bg-primary text-white font-bold rounded-lg hover:bg-blue-600 shadow-md transition-colors">
               <span class="material-symbols-outlined text-[20px]">verified</span>
@@ -200,6 +201,7 @@ const stats = ref({
 
 const activePeriode = ref('')
 const activeAnneeScolaire = ref('')
+const isDownloading = ref(false)
 
 const students = ref([])
 
@@ -295,6 +297,10 @@ const telechargerBulletinPDF = async (student) => {
 // Télécharger tous les bulletins de la classe en PDF
 const telechargerClassePDF = async () => {
     try {
+        isDownloading.value = true
+        showError('Génération du PDF groupé en cours, veuillez patienter...') // Using showError as common feedback if primary toast is slow, but wait, success is better?
+        // Actually, let's just use the button text for generation info and a success toast after.
+        
         const response = await api.downloadClassBulletins(classeId, {
             periode: activePeriode.value,
             anneeScolaire: activeAnneeScolaire.value
@@ -308,10 +314,12 @@ const telechargerClassePDF = async () => {
         link.click();
         document.body.removeChild(link);
         window.URL.revokeObjectURL(url);
-        success('Génération du PDF de la classe réussie');
+        success('PDF de la classe généré avec succès !');
     } catch (e) {
         console.error("Erreur lors du téléchargement de la classe:", e);
         showError('Erreur lors de la génération du PDF de la classe');
+    } finally {
+        isDownloading.value = false
     }
 }
 

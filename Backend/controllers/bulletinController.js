@@ -786,8 +786,20 @@ exports.downloadClassBulletinsPDF = asyncHandler(async (req, res, next) => {
             .populate('classe', 'niveau section filiere')
             .populate('notes.matiere', 'nom coefficient')
             .populate('notes.professeur', 'nom prenom civilite')
-            .populate('genereePar', 'nom prenom')
-            .sort('eleve.nom eleve.prenom');
+            .populate('genereePar', 'nom prenom');
+
+        // Note: Manual sort by student name in JS because MongoDB can't sort by populated fields directly
+        bulletins.sort((a, b) => {
+            const nomA = (a.eleve?.nom || '').toLowerCase();
+            const nomB = (b.eleve?.nom || '').toLowerCase();
+            const compareNom = nomA.localeCompare(nomB);
+            
+            if (compareNom !== 0) return compareNom;
+            
+            const prenomA = (a.eleve?.prenom || '').toLowerCase();
+            const prenomB = (b.eleve?.prenom || '').toLowerCase();
+            return prenomA.localeCompare(prenomB);
+        });
 
         const validBulletins = bulletins;
 

@@ -515,8 +515,8 @@ exports.getBulletin = asyncHandler(async (req, res, next) => {
         return next(new ErrorResponse('Bulletin non trouvé', 404));
     }
 
-    // Refresh data if it's still a draft to ensure lately validated notes are included
-    if (bulletin.statut === 'BROUILLON') {
+    // Refresh data if it's still a draft or finalized to ensure coefficient changes are reflected
+    if (bulletin.statut === 'BROUILLON' || bulletin.statut === 'FINALISE') {
         bulletin = await createOrUpdateBulletin(
             bulletin.eleve,
             bulletin.classe,
@@ -670,16 +670,23 @@ exports.deleteBulletin = asyncHandler(async (req, res, next) => {
 // @access  Private
 exports.downloadBulletinPDF = asyncHandler(async (req, res, next) => {
     try {
-        const bulletin = await Bulletin.findById(req.params.id)
-            .populate('eleve', 'nom prenom matricule dateNaissance lieuNaissance photo')
-            .populate('classe', 'niveau section filiere')
-            .populate('notes.matiere', 'nom coefficient')
-            .populate('notes.professeur', 'nom prenom civilite')
-            .populate('genereePar', 'nom prenom');
-
+        let bulletin = await Bulletin.findById(req.params.id);
         if (!bulletin) {
             return next(new ErrorResponse('Bulletin non trouvé', 404));
         }
+
+        // Refresh data if it's still a draft or finalized to ensure coefficient changes are reflected in PDF
+        if (bulletin.statut === 'BROUILLON' || bulletin.statut === 'FINALISE') {
+            bulletin = await createOrUpdateBulletin(bulletin.eleve, bulletin.classe, bulletin.periode, bulletin.anneeScolaire);
+        }
+
+        await bulletin.populate([
+            { path: 'eleve', select: 'nom prenom matricule dateNaissance lieuNaissance photo' },
+            { path: 'classe', select: 'niveau section filiere' },
+            { path: 'notes.matiere', select: 'nom coefficient' },
+            { path: 'notes.professeur', select: 'nom prenom civilite' },
+            { path: 'genereePar', select: 'nom prenom' }
+        ]);
 
         // Vérifier que l'utilisateur a le droit de télécharger ce bulletin
         const canDownload = await checkBulletinAccess(req.user, bulletin);
@@ -726,7 +733,23 @@ exports.downloadClassBulletinsPDF = asyncHandler(async (req, res, next) => {
         if (anneeScolaire) query.anneeScolaire = anneeScolaire;
 
         // Récupérer les bulletins
-        const bulletins = await Bulletin.find(query)
+        let bulletins = await Bulletin.find(query);
+
+        if (!bulletins || bulletins.length === 0) {
+            return next(new ErrorResponse('Aucun bulletin trouvé pour cette classe et cette période', 404));
+        }
+
+        // Aggressive Refresh: Ensure all non-distributed bulletins have latest data before PDF generation
+        let refreshCount = 0;
+        for (const b of bulletins) {
+            if (b.statut !== 'DISTRIBUE') {
+                await createOrUpdateBulletin(b.eleve._id || b.eleve, b.classe._id || b.classe, b.periode, b.anneeScolaire);
+                refreshCount++;
+            }
+        }
+
+        // Re-fetch populated bulletins after refreshes
+        bulletins = await Bulletin.find(query)
             .populate('eleve', 'nom prenom matricule dateNaissance lieuNaissance photo')
             .populate('classe', 'niveau section filiere')
             .populate('notes.matiere', 'nom coefficient')
@@ -734,11 +757,6 @@ exports.downloadClassBulletinsPDF = asyncHandler(async (req, res, next) => {
             .populate('genereePar', 'nom prenom')
             .sort('eleve.nom eleve.prenom');
 
-        if (!bulletins || bulletins.length === 0) {
-            return next(new ErrorResponse('Aucun bulletin trouvé pour cette classe et cette période', 404));
-        }
-
-        // Vérification: Inclure TOUS les bulletins trouvés (permet de visualiser avant validation)
         const validBulletins = bulletins;
 
         if (validBulletins.length === 0) {

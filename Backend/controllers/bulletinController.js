@@ -774,6 +774,12 @@ exports.downloadClassBulletinsPDF = asyncHandler(async (req, res, next) => {
         // Aggressive Refresh: Ensure all non-distributed bulletins have latest data before PDF generation
         let refreshCount = 0;
         for (const b of bulletins) {
+            // Safety: Skip if no student is linked to this bulletin
+            if (!b.eleve) {
+                console.warn(`WARNING: Bulletin ${b._id} has no student linked. Skipping refresh.`);
+                continue;
+            }
+            
             if (b.statut !== 'DISTRIBUE') {
                 await createOrUpdateBulletin(b.eleve._id || b.eleve, b.classe._id || b.classe, b.periode, b.anneeScolaire);
                 refreshCount++;
@@ -801,7 +807,7 @@ exports.downloadClassBulletinsPDF = asyncHandler(async (req, res, next) => {
             return prenomA.localeCompare(prenomB);
         });
 
-        const validBulletins = bulletins;
+        const validBulletins = bulletins.filter(b => b.eleve !== null);
 
         if (validBulletins.length === 0) {
             return next(new ErrorResponse('Aucun bulletin disponible pour cette classe.', 400));
@@ -817,7 +823,7 @@ exports.downloadClassBulletinsPDF = asyncHandler(async (req, res, next) => {
         // Générer le PDF combiné avec SEULEMENT les bulletins valides
         const pdfBuffer = await generateClassBulletinsPDF(validBulletins, schoolConfig);
 
-        const classeInfo = bulletins[0].classe;
+        const classeInfo = validBulletins[0].classe;
 
         // Determine period name safely
         let periodeName = periode;
@@ -833,10 +839,12 @@ exports.downloadClassBulletinsPDF = asyncHandler(async (req, res, next) => {
         res.setHeader('Content-Length', pdfBuffer.length);
 
         res.send(pdfBuffer);
-
     } catch (error) {
-        console.error('Erreur lors de la génération du PDF de classe:', error);
-        return next(new ErrorResponse('Erreur lors de la génération du PDF', 500));
+        console.error('Erreur downloadClassBulletinsPDF:', error);
+        return res.status(500).json({
+            success: false,
+            error: `Une erreur est survenue: ${error.message}`
+        });
     }
 });
 

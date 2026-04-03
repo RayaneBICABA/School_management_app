@@ -43,7 +43,7 @@ exports.generateClassBulletinsPDF = async (bulletins, schoolConfig) => {
 
         bulletins.forEach((bulletin, index) => {
             const html = exports.getBulletinHTML(bulletin, schoolConfig);
-            const bodyMatch = html.match(/<body>([\s\S]*)<\/body>/);
+            const bodyMatch = html.match(/<body[^>]*>([\s\S]*)<\/body>/i);
             const content = bodyMatch ? bodyMatch[1] : html;
             fullHtml += `<div class="page-break">${content}</div>`;
         });
@@ -51,12 +51,18 @@ exports.generateClassBulletinsPDF = async (bulletins, schoolConfig) => {
         const baseHtml = exports.getBulletinHTML(bulletins[0], schoolConfig);
         const completeHtml = baseHtml.replace(/<body>[\s\S]*<\/body>/, `<body>${fullHtml}</body>`);
 
-        await page.setContent(completeHtml, { waitUntil: 'networkidle0' });
+        // Increase timeout for large classes
+        await page.setDefaultNavigationTimeout(60000);
+        await page.setContent(completeHtml, { 
+            waitUntil: 'networkidle0',
+            timeout: 60000
+        });
 
         const pdf = await page.pdf({
             format: 'A4',
             printBackground: true,
-            margin: { top: '0px', right: '0px', bottom: '0px', left: '0px' }
+            margin: { top: '0px', right: '0px', bottom: '0px', left: '0px' },
+            timeout: 60000
         });
 
         return pdf;

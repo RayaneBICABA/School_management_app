@@ -198,6 +198,9 @@ const stats = ref({
   bulletinsPrets: 0
 })
 
+const activePeriode = ref('')
+const activeAnneeScolaire = ref('')
+
 const students = ref([])
 
 // Pagination variables
@@ -292,16 +295,20 @@ const telechargerBulletinPDF = async (student) => {
 // Télécharger tous les bulletins de la classe en PDF
 const telechargerClassePDF = async () => {
     try {
-        const response = await api.downloadClassBulletins(classeId);
+        const response = await api.downloadClassBulletins(classeId, {
+            periode: activePeriode.value,
+            anneeScolaire: activeAnneeScolaire.value
+        });
         const url = window.URL.createObjectURL(new Blob([response.data]));
         const link = document.createElement('a');
         link.href = url;
-        link.setAttribute('download', `Bulletins_Classe_${classeInfo.value.nom.replace(/\s+/g, '_')}.pdf`);
+        const fileName = `Bulletins_${classeInfo.value.nom.replace(/\s+/g, '_')}_${activePeriode.value.replace(/\s+/g, '_')}.pdf`;
+        link.setAttribute('download', fileName);
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
         window.URL.revokeObjectURL(url);
-        success('Téléchargement de la classe démarré');
+        success('Génération du PDF de la classe réussie');
     } catch (e) {
         console.error("Erreur lors du téléchargement de la classe:", e);
         showError('Erreur lors de la génération du PDF de la classe');
@@ -360,6 +367,12 @@ const fetchClasseDetails = async () => {
     const bulletins = bulletinsResponse.data?.data || [];
     const studentsData = studentsResponse.data?.data || [];
     
+    // Store period and year from the first available bulletin
+    if (bulletins.length > 0) {
+      activePeriode.value = bulletins[0].periode
+      activeAnneeScolaire.value = bulletins[0].anneeScolaire
+    }
+
     // Create a map of student ID -> bulletin
     const bulletinMap = {};
     bulletins.forEach(b => {

@@ -731,12 +731,38 @@ exports.downloadBulletinPDF = asyncHandler(async (req, res, next) => {
 // @access  Private (Admin, Proviseur, Censeur, Secrétaire)
 exports.downloadClassBulletinsPDF = asyncHandler(async (req, res, next) => {
     try {
-        const { periode, anneeScolaire } = req.query;
+        let { periode, anneeScolaire } = req.query;
+
+        // Detection logic for defaults (similar to getBulletinsByClasse)
+        if (!anneeScolaire) {
+            const academicSetting = await Setting.findOne({ key: 'academic_year_config' });
+            anneeScolaire = academicSetting ? (academicSetting.value.year || academicSetting.value.academicYear) : '2025-2026';
+        }
+
+        const classeObj = await Classe.findById(req.params.classeId);
+        if (!periode) {
+            // Determine active period based on class structure (Trimestre vs Semestre)
+            const academicSetting = await Setting.findOne({ key: 'academic_year_config' });
+            if (academicSetting) {
+                const s = academicSetting.value.activePeriod || academicSetting.value.currentPeriod;
+                if (s) {
+                    periode = s;
+                    // Auto-convert for technical classes if needed
+                    if (classeObj && classeObj.filiere === 'Technique') {
+                        if (s.includes('1') || s.includes('2')) periode = 'Semestre 1';
+                        else if (s.includes('3')) periode = 'Semestre 2';
+                    }
+                }
+            }
+            if (!periode) periode = 'Trimestre 1';
+        }
 
         // Construire la requête
-        let query = { classe: req.params.classeId };
-        if (periode) query.periode = periode;
-        if (anneeScolaire) query.anneeScolaire = anneeScolaire;
+        let query = { 
+            classe: req.params.classeId,
+            periode: periode,
+            anneeScolaire: anneeScolaire
+        };
 
         // Récupérer les bulletins
         let bulletins = await Bulletin.find(query);

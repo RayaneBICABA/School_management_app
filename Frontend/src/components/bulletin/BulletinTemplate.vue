@@ -334,8 +334,8 @@ const maxCompo = computed(() => {
 const totalCols = computed(() => 7);
 const compactClasses = computed(() => {
   const count = props.bulletin.notes?.length || 0;
-  if (count > 16) return 'compact-2';
-  if (count > 12) return 'compact-1';
+  if (count > 20) return 'compact-2';
+  if (count > 15) return 'compact-1';
   return '';
 });
 
@@ -427,10 +427,11 @@ const downloadPDF = async () => {
 .bulletin {
   display: flex !important;
   flex-direction: column !important;
-  min-height: 287mm;
+  min-height: 290mm;
   padding: 8mm !important;
   background: white !important;
   font-family: Arial, Helvetica, sans-serif !important;
+  line-height: 1 !important;
 }
 
 .header-left p {
@@ -461,61 +462,65 @@ td, th {
 }
 
 th {
-  height: 35px;
+  height: 32px;
   background-color: #f3f4f6;
   font-weight: bold;
   font-size: 9px;
 }
 
-.data-row td {
-  padding: 5px 4px !important;
-}
-
-.cat-header-row td {
-  padding: 4px 4px !important;
-  background-color: #eee;
+.data-row td, .cat-header-row td {
+  height: 28px;
 }
 
 /* Compact Modes */
 .compact-1 .bulletin {
-  padding: 5mm !important;
+  padding: 6mm !important;
   font-size: 9.5px;
 }
+
+.compact-1 th {
+  height: 28px;
+  font-size: 9px;
+}
+
 .compact-1 .data-row td, 
 .compact-1 .cat-header-row td {
-  padding: 4px 4px !important;
-}
-.compact-1 th {
-  padding: 6px 4px !important;
-}
-.compact-1 .bilan-table td {
-  height: 28px;
+  height: 24px;
 }
 
 .compact-2 .bulletin {
   padding: 4mm !important;
   font-size: 9px;
 }
+
+.compact-2 th {
+  height: 25px;
+  font-size: 8.5px;
+}
+
 .compact-2 .data-row td, 
 .compact-2 .cat-header-row td {
-  padding: 2px 4px !important;
+  height: 21px;
 }
-.compact-2 th {
-  padding: 4px 4px !important;
-}
-.compact-2 .bilan-table td {
-  padding: 4px 4px !important;
-}
+
 .cat-total-row td {
-  padding: 8px 4px !important;
+  height: 30px;
 }
 
 .total-general-row td {
-  padding: 10px 4px !important;
+  height: 34px;
+}
+
+.compact-1 .bilan-table td {
+  height: 28px;
+}
+
+.compact-2 .bilan-table td {
+  padding: 4px 4px !important;
 }
 
 .compact-2 .council-box {
-  min-height: 80px;
+  min-height: 70px;
 }
 
 @media print {

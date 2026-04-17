@@ -155,7 +155,7 @@ exports.getBulletinHTML = (bulletin, schoolConfig) => {
     const formatDate = (date) => date ? new Date(date).toLocaleDateString('fr-FR') : 'Non renseigné';
 
     const totalNotes = bulletin.notes?.length || 0;
-    const compactLevel = totalNotes > 16 ? 2 : (totalNotes > 12 ? 1 : 0);
+    const compactLevel = totalNotes > 20 ? 2 : (totalNotes > 15 ? 1 : 0);
     const compactClass = compactLevel === 2 ? 'compact-2' : (compactLevel === 1 ? 'compact-1' : '');
 
     return `
@@ -164,19 +164,26 @@ exports.getBulletinHTML = (bulletin, schoolConfig) => {
 <head>
     <style>
         /* Core Layout - Full Page Flexbox */
-        html, body { font-family: Arial, Helvetica, sans-serif; color: #333; font-size: 10px; padding: 0; margin: 0; background: white; line-height: 1.1; height: auto; min-height: 0; -webkit-print-color-adjust: exact; }
+        html, body { font-family: Arial, Helvetica, sans-serif; color: #333; font-size: 10px; padding: 0; margin: 0; background: white; line-height: 1; height: auto; min-height: 0; -webkit-print-color-adjust: exact; }
         p { margin: 0; padding: 0; }
-        .bulletin-card { width: 100%; display: flex; flex-direction: column; box-sizing: border-box; padding: 6mm; min-height: 250mm; page-break-before: avoid !important; page-break-after: avoid; }
+        .bulletin-card { width: 100%; display: flex; flex-direction: column; box-sizing: border-box; padding: 8mm; min-height: 290mm; page-break-before: avoid !important; page-break-after: avoid; }
         
-        /* Compact Modes */
-        .compact-1 body { font-size: 9.5px; padding: 4mm; }
-        .compact-1 .data-row td, .compact-1 .cat-header-row td { height: 26px; }
-        .compact-1 th { height: 30px; font-size: 8.5px; }
+        /* Base Row Heights for Consistency */
+        .data-row td, .cat-header-row td { height: 28px; vertical-align: middle !important; }
+        th { height: 32px; vertical-align: middle !important; }
+
+        /* Compact Mode 1 (> 15 subjects) */
+        .compact-1 body { font-size: 9.5px; }
+        .compact-1 .bulletin-card { padding: 6mm; }
+        .compact-1 .data-row td, .compact-1 .cat-header-row td { height: 24px; }
+        .compact-1 th { height: 28px; font-size: 9px; }
         .compact-1 .council-box { min-height: 80px; }
         
-        .compact-2 body { font-size: 9px; padding: 3mm; }
-        .compact-2 .data-row td, .compact-2 .cat-header-row td { height: 22px; font-size: 8.5px; }
-        .compact-2 th { height: 26px; font-size: 8.5px; }
+        /* Compact Mode 2 (> 20 subjects) */
+        .compact-2 body { font-size: 9px; }
+        .compact-2 .bulletin-card { padding: 4mm; }
+        .compact-2 .data-row td, .compact-2 .cat-header-row td { height: 21px; font-size: 8.5px; }
+        .compact-2 th { height: 25px; font-size: 8.5px; }
         .compact-2 .council-box { min-height: 70px; }
         .compact-2 .logo-text { font-size: 20px; }
         
@@ -202,13 +209,11 @@ exports.getBulletinHTML = (bulletin, schoolConfig) => {
         .grid-item span { color: #000; font-size: 8.5px; }
         
         /* Table Styles */
-        .table-container { flex: 1; display: flex; flex-direction: column; min-height: 0; }
+        .table-container { flex-shrink: 0; min-height: 0; }
         table.main-table { width: 100%; border-spacing: 0; border-collapse: separate; border-top: 1px solid #000; border-left: 1px solid #000; table-layout: fixed; }
-        table.main-table th, table.main-table td { border-right: 1px solid #000; border-bottom: 1px solid #000; padding: 0 6px; text-align: center; vertical-align: middle !important; box-sizing: border-box; line-height: 1.2; }
-        table.main-table th { background: #ddd; font-weight: bold; text-transform: uppercase; font-size: 9px; height: 26px; color: #000; }
-        .cat-header { background: #eee; font-weight: bold; text-transform: uppercase; font-size: 9px; height: 22px; text-align: center !important; color: #000; }
-        .data-row td { padding: 2.5px 4px; }
-        .cat-header-row td { padding: 2.5px 4px; }
+        table.main-table th, table.main-table td { border-right: 1px solid #000; border-bottom: 1px solid #000; padding: 0 6px; text-align: center; vertical-align: middle !important; box-sizing: border-box; }
+        table.main-table th { background: #ddd; font-weight: bold; text-transform: uppercase; color: #000; }
+        .cat-header { background: #eee; font-weight: bold; text-transform: uppercase; text-align: center !important; color: #000; }
         .cat-total-row td { padding: 0 4px; height: 30px; }
         .total-general-row td { padding: 0 4px; height: 34px; }
         .text-left { text-align: left; }

@@ -362,7 +362,7 @@ exports.getBulletinHTML = (bulletin, schoolConfig) => {
                 <tr class="data-row">
                     <td>Meilleure moyenne</td>
                     <td class="font-bold">${(bulletin.meilleureMoyenneClasse || 0).toFixed(2)}</td>
-                    <td style="width: 25%; text-transform: uppercase;">Rang du trimestre</td>
+                    <td style="width: 25%; text-transform: uppercase;">${filiere === 'Technique' ? 'Rang du semestre' : 'Rang du trimestre'}</td>
                     <td class="font-bold text-lg">${bulletin.rang || '-'}</td>
                     <td class="font-bold uppercase" style="width: 10%;">Conduite</td>
                     <td colspan="3" class="font-bold">${bulletin.conduite || ''}</td>

@@ -152,7 +152,7 @@
             <tr class="data-row text-center">
               <td class="text-left font-semibold">Meilleure moyenne</td>
               <td>{{ (bulletin.meilleureMoyenneClasse || 0).toFixed(2) }}</td>
-              <td class="uppercase">Rang du trimestre</td>
+              <td class="uppercase">{{ classe.filiere === 'Technique' ? 'Rang du semestre' : 'Rang du trimestre' }}</td>
               <td class="font-bold text-lg">{{ bulletin.rang || '-' }}</td>
               <td class="uppercase font-bold">Conduite</td>
               <td colspan="3" class="font-bold">{{ bulletin.conduite }}</td>
